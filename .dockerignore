@@ -1,0 +1,64 @@
+# ────────────────────────────────────────────────────────────────────────────
+# FUD Portal — .dockerignore
+# Excludes unnecessary files from the Docker build context.
+# This reduces image build time and final image size.
+# ────────────────────────────────────────────────────────────────────────────
+
+# Dependencies (reinstalled in container)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files (injected at runtime, never baked into image)
+.env
+.env.local
+.env.*.local
+
+# Development / test files
+*.test.js
+*.spec.js
+e2e_tests.js
+security_audit.js
+full_audit_test.js
+website_check.js
+email_system_test.js
+media_upload_test.js
+*.ps1
+audit_report.json
+
+# Migration / one-off scripts
+migrate_*.js
+create_zip.js
+check_*.js
+test_*.js
+cbt_test.ps1
+e2e_final.ps1
+
+# Local database (persisted via Docker volume)
+backend/database/*.db
+backend/database/*.db-shm
+backend/database/*.db-wal
+
+# Uploads (persisted via Docker volume)
+uploads/
+
+# Logs (persisted via Docker volume)
+logs/
+*.log
+
+# Version control
+.git/
+.gitignore
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+*.zip

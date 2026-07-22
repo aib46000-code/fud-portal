@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications – FUD Portal | Ahmaditech School</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/notifications.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/notifications.html">
+  <meta property="og:title"       content="Notifications – FUD Portal">
+  <meta property="og:description" content="Stay up to date with FUD Portal announcements and exam notifications.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Notifications – FUD Portal">
+  <meta name="twitter:description" content="Stay up to date with FUD Portal announcements and exam notifications.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div><div class="sidebar-title">FUD Portal</div><div class="sidebar-subtitle">Ahmaditech School</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <a href="results.html"   class="nav-item student-only"><i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">My Results</span></a>
+      <div class="nav-section-label admin-only">Administration</div>
+      <a href="users.html"     class="nav-item admin-only"><i class="fas fa-users nav-item-icon"></i><span class="nav-item-text">Users</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item active"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-folder-open nav-item-icon"></i><span class="nav-item-text">Media</span></a>
+      <a href="profile.html"   class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info"><div class="user-name" id="sidebar-user-name">Loading…</div><div class="user-role" id="sidebar-user-role">student</div></div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout" style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div><div class="topbar-title">Notifications</div><div class="topbar-subtitle">Stay up to date</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary" id="btn-mark-all" onclick="markAllRead()"><i class="fas fa-check-double"></i> Mark All Read</button>
+        <button class="btn btn-sm btn-primary admin-only hidden" onclick="showModal('modal-broadcast')"><i class="fas fa-bullhorn"></i> Broadcast</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Filters -->
+      <div class="card mb-lg" style="padding:.75rem var(--space-lg)">
+        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary"   id="filter-all"    onclick="setFilter('all')">All</button>
+          <button class="btn btn-sm btn-secondary" id="filter-unread" onclick="setFilter('unread')">Unread</button>
+          <button class="btn btn-sm btn-secondary" id="filter-info"        onclick="setFilter('info')">ℹ️ Info</button>
+          <button class="btn btn-sm btn-secondary" id="filter-announcement" onclick="setFilter('announcement')">📢 Announcements</button>
+          <button class="btn btn-sm btn-secondary" id="filter-warning"  onclick="setFilter('warning')">⚠️ Warnings</button>
+          <span style="margin-left:auto;font-size:.82rem;color:var(--txt-400)" id="notif-count"></span>
+        </div>
+      </div>
+
+      <!-- Notification list -->
+      <div id="notif-list-container" style="display:flex;flex-direction:column;gap:.75rem"></div>
+      <div id="notif-loading" style="text-align:center;padding:3rem;color:var(--txt-400)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+      <div class="empty-state hidden" id="notif-empty">
+        <div class="empty-state-icon">🔔</div>
+        <h3>No Notifications</h3>
+        <p>You're all caught up! New notifications will appear here.</p>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:1.5rem">
+        <button class="btn btn-secondary hidden" id="btn-load-more" onclick="loadMore()"><i class="fas fa-chevron-down"></i> Load More</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Broadcast Modal (admin) -->
+<div class="modal-overlay hidden" id="modal-broadcast">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-bullhorn"></i> Broadcast Notification</div>
+      <span class="modal-close" onclick="hideModal('modal-broadcast')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Title <span>*</span></label>
+        <div class="input-wrap"><i class="fas fa-heading input-icon"></i>
+          <input type="text" id="bc-title" class="form-input" placeholder="Notification title">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message <span>*</span></label>
+        <textarea id="bc-message" rows="4" class="form-input" style="padding:12px;resize:vertical" placeholder="Enter your message…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select id="bc-type" class="form-select">
+            <option value="info">ℹ️ Info</option>
+            <option value="announcement">📢 Announcement</option>
+            <option value="warning">⚠️ Warning</option>
+            <option value="success">✅ Success</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Role</label>
+          <select id="bc-role" class="form-select">
+            <option value="">Everyone</option>
+            <option value="student">Students only</option>
+            <option value="admin">Admins only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-broadcast')">Cancel</button>
+      <button class="btn btn-primary" id="btn-send-broadcast" onclick="sendBroadcast()">
+        <span class="btn-text"><i class="fas fa-paper-plane"></i> Send Broadcast</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let page = 1, activeFilter = 'all', hasMore = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  initSidebar(); renderSidebarUser();
+  const isAdmin = ['admin','superadmin','staff'].includes(Auth.getRole());
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
+  document.querySelectorAll('.student-only').forEach(el => el.classList.toggle('hidden', isAdmin));
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    try { await API.logout(Auth.getRefresh()); } catch {}
+    Auth.clear(); window.location.href = 'index.html';
+  });
+  await loadNotifications();
+});
+
+function setFilter(f) {
+  activeFilter = f; page = 1;
+  ['all','unread','info','announcement','warning'].forEach(k => {
+    const btn = document.getElementById('filter-'+k);
+    if (btn) btn.className = k===f ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary';
+  });
+  loadNotifications();
+}
+
+async function loadNotifications(append=false) {
+  const container = document.getElementById('notif-list-container');
+  const loading   = document.getElementById('notif-loading');
+  const empty     = document.getElementById('notif-empty');
+  const loadMore  = document.getElementById('btn-load-more');
+  if (!append) { container.innerHTML=''; loading.classList.remove('hidden'); empty.classList.add('hidden'); }
+
+  const params = { page, limit: 15 };
+  if (activeFilter === 'unread') params.is_read = false;
+  else if (activeFilter !== 'all') params.type = activeFilter;
+
+  try {
+    const res    = await API.getNotifications(params);
+    const notifs = res?.data?.rows || [];
+    const total  = res?.data?.total || 0;
+    hasMore = (page * 15) < total;
+
+    document.getElementById('notif-count').textContent = `${total} notification${total!==1?'s':''}`;
+    loading.classList.add('hidden');
+    loadMore.classList.toggle('hidden', !hasMore);
+
+    if (!notifs.length && !append) { empty.classList.remove('hidden'); return; }
+
+    const typeIcon = { info:'ℹ️', warning:'⚠️', success:'✅', error:'❌', announcement:'📢' };
+    const typeClass= { info:'badge-info', warning:'badge-warning', success:'badge-success', error:'badge-danger', announcement:'badge-primary' };
+
+    notifs.forEach(n => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.style.cssText = `padding:1rem 1.25rem;cursor:pointer;border-color:${n.is_read?'var(--border-subtle)':'var(--border-medium)'};transition:all .2s`;
+      el.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:1rem">
+          <div style="font-size:1.5rem;flex-shrink:0;margin-top:.1rem">${typeIcon[n.type]||'🔔'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">
+              <span style="font-weight:${n.is_read?'500':'700'};font-size:.92rem;color:${n.is_read?'var(--txt-200)':'var(--txt-100)'}">${esc(n.title||'Notification')}</span>
+              <span class="badge ${typeClass[n.type]||'badge-neutral'}">${n.type||'info'}</span>
+              ${!n.is_read?'<span class="badge badge-primary">New</span>':''}
+            </div>
+            <p style="font-size:.85rem;color:var(--txt-300);margin-bottom:.4rem;line-height:1.5">${esc(n.message||'')}</p>
+            <span style="font-size:.75rem;color:var(--txt-muted)">${timeAgo(n.created_at)}</span>
+          </div>
+          ${!n.is_read?`<button class="btn btn-sm btn-ghost" onclick="markOne(${n.id},event)" title="Mark as read" style="flex-shrink:0"><i class="fas fa-check"></i></button>`:''}
+        </div>`;
+      el.addEventListener('click', () => { if (!n.is_read) markOne(n.id); });
+      container.appendChild(el);
+    });
+    await updateUnreadBadge();
+  } catch (err) {
+    loading.classList.add('hidden');
+    Toast.error('Failed to load notifications: '+err.message);
+  }
+}
+
+async function markOne(id, e) {
+  if (e) e.stopPropagation();
+  try { await API.markRead(id); await loadNotifications(); } catch(err){ Toast.error(err.message); }
+}
+async function markAllRead() {
+  try { await API.markAllRead(); Toast.success('All notifications marked as read'); await loadNotifications(); }
+  catch(err){ Toast.error(err.message); }
+}
+async function loadMore() { page++; await loadNotifications(true); }
+
+async function sendBroadcast() {
+  const btn = document.getElementById('btn-send-broadcast');
+  const data = {
+    title:   document.getElementById('bc-title').value.trim(),
+    message: document.getElementById('bc-message').value.trim(),
+    type:    document.getElementById('bc-type').value,
+    role:    document.getElementById('bc-role').value || undefined,
+  };
+  if (!data.title || !data.message) { Toast.warning('Title and message are required'); return; }
+  btn.classList.add('btn-loading'); btn.disabled=true;
+  try {
+    await API.broadcast(data);
+    Toast.success('Broadcast sent successfully!');
+    hideModal('modal-broadcast');
+    document.getElementById('bc-title').value=''; document.getElementById('bc-message').value='';
+    await loadNotifications();
+  } catch(err){ Toast.error(err.message); }
+  finally { btn.classList.remove('btn-loading'); btn.disabled=false; }
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

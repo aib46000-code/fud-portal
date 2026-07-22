@@ -1,0 +1,60 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment (NEVER commit secrets)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database files (keep .example, ignore actual DB)
+backend/database/*.db
+backend/database/*.db-shm
+backend/database/*.db-wal
+
+# Uploads (persisted via volume)
+uploads/*
+!uploads/.gitkeep
+
+# Logs (persisted via volume)
+logs/*
+!logs/.gitkeep
+
+# Backups
+backups/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build / Archives
+dist/
+build/
+*.zip
+
+# PM2 runtime files
+.pm2/
+
+# Dev/Test/Audit scripts (not needed in production)
+audit_report.json
+cbt_test.ps1
+check_pages.ps1
+e2e_final.ps1
+media_test.ps1
+check_assets.js
+create_zip.js
+test_db.js
+test_health.js
+website_check.js
+migrate_cbt.js
+migrate_fix_fk.js

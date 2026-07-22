@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="Create your FUD Portal student account to access CBT tests and results.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/register.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/register.html">
+  <meta property="og:title"       content="Register – FUD Portal | Ahmaditech School">
+  <meta property="og:description" content="Create your FUD Portal student account to access CBT exams, results, and notifications.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Register – FUD Portal | Ahmaditech School">
+  <meta name="twitter:description" content="Create your FUD Portal student account to access CBT exams, results, and notifications.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="auth-page">
+
+  <!-- ── Left Brand Panel ────────────────────────────────────────── -->
+  <section class="auth-brand">
+    <div class="auth-brand-logo">F</div>
+    <div class="auth-brand-title">Join FUD Portal</div>
+    <p class="auth-brand-subtitle">Create your student account and get access to CBT exams, results, and campus notifications.</p>
+    <div class="auth-brand-features">
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">⚡</div>
+        <div class="auth-feature-text">Instant Account Creation</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">📝</div>
+        <div class="auth-feature-text">Take CBT Exams Online</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">📈</div>
+        <div class="auth-feature-text">Track Your Academic Progress</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">🏆</div>
+        <div class="auth-feature-text">View Results &amp; Certificates</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Right Form Panel ───────────────────────────────────────── -->
+  <section class="auth-form-panel" style="padding-top:2rem;padding-bottom:2rem">
+    <div class="auth-card" style="max-width:480px">
+      <div class="auth-card-header">
+        <div class="auth-card-logo"><i class="fas fa-graduation-cap" style="font-size:1.3rem"></i></div>
+        <h1 class="auth-card-title">Create Student Account</h1>
+        <p class="auth-card-subtitle">Fill in your details to get started</p>
+      </div>
+
+      <!-- Success message (hidden until register succeeds) -->
+      <div id="reg-success" class="hidden" style="text-align:center;padding:2rem 0">
+        <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
+        <h2 style="font-size:1.3rem;font-weight:700;color:var(--clr-success);margin-bottom:.5rem">Registration Successful!</h2>
+        <p style="color:var(--txt-300);font-size:.88rem;margin-bottom:1.5rem">Your account has been created. Please verify your email.</p>
+        <div id="reg-verify-box" style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:12px;padding:1rem;margin-bottom:1.5rem;display:none">
+          <p style="font-size:.78rem;color:var(--txt-400);margin-bottom:.4rem">Verification Token:</p>
+          <code id="reg-verify-token" style="font-family:var(--font-mono);font-size:.8rem;color:var(--clr-primary);word-break:break-all"></code>
+        </div>
+        <p style="font-size:.82rem;color:var(--txt-400)">Redirecting to login in <span id="reg-countdown">3</span>s…</p>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="register-form" novalidate>
+        <!-- Alert -->
+        <div id="reg-alert" class="alert alert-danger hidden">
+          <span class="alert-icon"><i class="fas fa-exclamation-circle"></i></span>
+          <span id="reg-alert-msg"></span>
+        </div>
+
+        <!-- Name + Email -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="full_name">Full Name <span>*</span></label>
+            <div class="input-wrap">
+              <i class="fas fa-user input-icon"></i>
+              <input type="text" id="full_name" class="form-input" placeholder="Abubakar Musa" autocomplete="name" required>
+            </div>
+            <span class="form-error" id="full_name-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email <span>*</span></label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="reg-email" class="form-input" placeholder="you@fud.edu.ng" required>
+            </div>
+            <span class="form-error" id="reg-email-error"></span>
+          </div>
+        </div>
+
+        <!-- Matric + Phone -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="matric_no">Matric Number <span>*</span></label>
+            <div class="input-wrap">
+              <i class="fas fa-id-card input-icon"></i>
+              <input type="text" id="matric_no" class="form-input" placeholder="FUD/CSC/21/001" required>
+            </div>
+            <span class="form-error" id="matric_no-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone Number</label>
+            <div class="input-wrap">
+              <i class="fas fa-phone input-icon"></i>
+              <input type="tel" id="phone" class="form-input" placeholder="+2348012345678">
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password <span>*</span></label>
+          <div class="input-wrap">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="reg-password" class="form-input" placeholder="Min 8 chars, uppercase, number, symbol" required>
+            <span class="input-suffix" onclick="togglePw('reg-password',this)"><i class="fas fa-eye"></i></span>
+          </div>
+          <div class="pw-strength" id="reg-pw-strength">
+            <div class="pw-strength-bar">
+              <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+              <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+              <div class="pw-strength-seg"></div>
+            </div>
+            <div class="pw-strength-label"></div>
+          </div>
+          <span class="form-error" id="reg-password-error"></span>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password <span>*</span></label>
+          <div class="input-wrap">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="confirm_password" class="form-input" placeholder="Repeat your password" required>
+            <span class="input-suffix" onclick="togglePw('confirm_password',this)"><i class="fas fa-eye"></i></span>
+          </div>
+          <span class="form-error" id="confirm_password-error"></span>
+        </div>
+
+        <!-- Department + Faculty -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="department">Department <span>*</span></label>
+            <div class="input-wrap">
+              <i class="fas fa-building input-icon"></i>
+              <input type="text" id="department" class="form-input" placeholder="Computer Science" required>
+            </div>
+            <span class="form-error" id="department-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="faculty">Faculty <span>*</span></label>
+            <div class="input-wrap">
+              <i class="fas fa-university input-icon"></i>
+              <input type="text" id="faculty" class="form-input" placeholder="Computing" required>
+            </div>
+            <span class="form-error" id="faculty-error"></span>
+          </div>
+        </div>
+
+        <!-- Level + Gender -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="level">Level <span>*</span></label>
+            <select id="level" class="form-select">
+              <option value="100">100 Level</option>
+              <option value="200" selected>200 Level</option>
+              <option value="300">300 Level</option>
+              <option value="400">400 Level</option>
+              <option value="500">500 Level</option>
+              <option value="600">600 Level</option>
+              <option value="PG">Postgraduate</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="gender">Gender <span>*</span></label>
+            <select id="gender" class="form-select">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:1.5rem">
+          <input type="checkbox" id="terms" style="accent-color:var(--clr-primary);width:16px;height:16px;margin-top:3px;flex-shrink:0">
+          <label for="terms" style="font-size:.83rem;color:var(--txt-300);cursor:pointer;line-height:1.5">
+            I agree to the <a href="#" class="text-primary">Terms of Service</a> and
+            <a href="#" class="text-primary">Privacy Policy</a> of FUD Portal.
+          </label>
+        </div>
+        <span class="form-error" id="terms-error"></span>
+
+        <button type="submit" class="btn btn-primary" id="btn-register">
+          <span class="btn-text"><i class="fas fa-user-plus"></i> Create Account</span>
+        </button>
+      </form>
+
+      <div class="divider">or</div>
+      <p class="text-center text-sm" style="color:var(--txt-400)">
+        Already have an account? <a href="index.html" class="text-primary fw-600">Sign In</a>
+      </p>
+    </div>
+
+    <p class="text-center text-sm" style="color:var(--txt-muted);margin-top:1.5rem">
+      FUD Portal &copy; 2024 &ndash; Ahmaditech School
+    </p>
+  </section>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.requireGuest();
+    initPasswordStrength('reg-password', 'reg-pw-strength');
+    document.getElementById('register-form').addEventListener('submit', submitRegister);
+  });
+
+  function togglePw(inputId, el) {
+    const input = document.getElementById(inputId);
+    const icon  = el.querySelector('i');
+    if (input.type === 'password') { input.type = 'text';     icon.className = 'fas fa-eye-slash'; }
+    else                           { input.type = 'password'; icon.className = 'fas fa-eye'; }
+  }
+
+  async function submitRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-register');
+
+    // Clear previous errors
+    ['full_name','reg-email','matric_no','reg-password','confirm_password','department','faculty'].forEach(f => clearFieldError(f));
+    document.getElementById('reg-alert').classList.add('hidden');
+    document.getElementById('terms-error').classList.remove('show');
+
+    // Validate
+    const pw   = document.getElementById('reg-password').value;
+    const conf = document.getElementById('confirm_password').value;
+    const terms= document.getElementById('terms').checked;
+    if (pw !== conf) { showFieldError('confirm_password', 'Passwords do not match'); return; }
+    if (!terms) {
+      const te = document.getElementById('terms-error');
+      te.textContent = 'You must accept the terms and conditions';
+      te.classList.add('show'); return;
+    }
+
+    const data = {
+      email:       document.getElementById('reg-email').value.trim(),
+      password:    pw,
+      full_name:   document.getElementById('full_name').value.trim(),
+      matric_no:   document.getElementById('matric_no').value.trim(),
+      phone:       document.getElementById('phone').value.trim() || undefined,
+      department:  document.getElementById('department').value.trim(),
+      faculty:     document.getElementById('faculty').value.trim(),
+      level:       document.getElementById('level').value,
+      gender:      document.getElementById('gender').value,
+    };
+
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    try {
+      const res = await API.register(data);
+      // Show success
+      document.getElementById('register-form').classList.add('hidden');
+      const success = document.getElementById('reg-success');
+      success.classList.remove('hidden');
+      if (res.data?.verify_token) {
+        document.getElementById('reg-verify-token').textContent = res.data.verify_token;
+        document.getElementById('reg-verify-box').style.display = 'block';
+      }
+      // Countdown redirect
+      let n = 3;
+      const cd = document.getElementById('reg-countdown');
+      const iv = setInterval(() => {
+        n--; if (cd) cd.textContent = n;
+        if (n <= 0) { clearInterval(iv); window.location.href = 'index.html'; }
+      }, 1000);
+    } catch (err) {
+      if (err.data?.errors) {
+        handleApiErrors(err.data.errors, {
+          email:'reg-email', password:'reg-password',
+          full_name:'full_name', matric_no:'matric_no',
+          department:'department', faculty:'faculty',
+        });
+      } else {
+        const al = document.getElementById('reg-alert');
+        document.getElementById('reg-alert-msg').textContent = err.message || 'Registration failed';
+        al.classList.remove('hidden');
+      }
+    } finally {
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

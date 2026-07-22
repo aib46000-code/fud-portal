@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dashboard – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="FUD Portal professional dashboard – statistics, CBT exams, media, notifications and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+  --p: #6366f1;
+  --p2: #818cf8;
+  --acc: #0ea5e9;
+  --grn: #22c55e;
+  --ylw: #f59e0b;
+  --red: #ef4444;
+  --pur: #a855f7;
+  --pink: #ec4899;
+
+  /* Dark defaults */
+  --bg:        #06090f;
+  --bg2:       #0d1117;
+  --bg3:       #111827;
+  --card:      #111827;
+  --card2:     #1a2236;
+  --border:    rgba(255,255,255,.07);
+  --border2:   rgba(255,255,255,.13);
+  --txt1:      #f1f5f9;
+  --txt2:      #94a3b8;
+  --txt3:      #64748b;
+  --sb-w:      260px;
+  --topbar-h:  64px;
+  --radius:    14px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+  --trans:     .22s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="light"] {
+  --bg:    #f0f4ff;
+  --bg2:   #e8eef8;
+  --bg3:   #dde5f5;
+  --card:  #ffffff;
+  --card2: #f8faff;
+  --border: rgba(0,0,0,.07);
+  --border2: rgba(0,0,0,.13);
+  --txt1: #0f172a;
+  --txt2: #334155;
+  --txt3: #64748b;
+  --shadow: 0 4px 24px rgba(99,102,241,.10);
+}
+
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);line-height:1.5;
+     transition:background var(--trans),color var(--trans);overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{border:none;background:none;cursor:pointer;font-family:inherit}
+ul{list-style:none}
+img{max-width:100%}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ═══════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════ */
+.layout{display:flex;min-height:100vh;position:relative}
+
+/* ── Sidebar ── */
+.sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:var(--sb-w);
+  background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:200;
+  transition:transform var(--trans),width var(--trans),background var(--trans);
+  overflow:hidden;
+}
+.sidebar.collapsed{width:68px}
+.sidebar.collapsed .sb-label,
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .user-info,
+.sidebar.collapsed .nav-badge-count{display:none!important}
+.sidebar.collapsed .nav-item{justify-content:center}
+.sidebar.collapsed .nav-item i{margin:0}
+
+/* Brand */
+.sidebar-brand{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 18px;border-bottom:1px solid var(--border);
+  min-height:var(--topbar-h);flex-shrink:0;
+}
+.brand-logo{
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--p),var(--acc));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;color:#fff;letter-spacing:-1px;
+}
+.sidebar-brand-text{overflow:hidden;white-space:nowrap}
+.brand-name{font-weight:800;font-size:15px;color:var(--txt1)}
+.brand-sub{font-size:11px;color:var(--txt3)}
+
+/* Nav */
+.sidebar-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 10px}
+.sb-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--txt3);padding:14px 10px 6px;white-space:nowrap;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;
+  font-size:13.5px;font-weight:500;color:var(--txt2);
+  transition:all var(--trans);white-space:nowrap;
+  position:relative;margin-bottom:2px;
+}
+.nav-item:hover{background:rgba(99,102,241,.1);color:var(--txt1)}
+.nav-item.active{background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(14,165,233,.12));
+  color:var(--p);font-weight:700}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:25%;bottom:25%;
+  width:3px;border-radius:0 2px 2px 0;background:var(--p);
+}
+.nav-item i{width:18px;text-align:center;font-size:15px;flex-shrink:0}
+.nav-badge-count{
+  margin-left:auto;background:var(--red);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;
+  min-width:18px;text-align:center;
+}
+
+/* Sidebar footer */
+.sidebar-footer{padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.sidebar-user{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:12px;cursor:pointer;
+  transition:background var(--trans);
+}
+.sidebar-user:hover{background:rgba(99,102,241,.08)}
+.su-avatar{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--p),var(--acc));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;
+}
+.user-info{overflow:hidden;white-space:nowrap;flex:1}
+.user-name{font-size:13px;font-weight:700;color:var(--txt1);overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--txt3);text-transform:capitalize}
+.btn-logout{
+  display:flex;align-items:center;gap:8px;width:100%;
+  margin-top:6px;padding:8px 10px;border-radius:10px;
+  font-size:13px;font-weight:600;color:var(--red);
+  transition:background var(--trans);
+}
+.btn-logout:hover{background:rgba(239,68,68,.1)}
+
+/* ── Main ── */
+.main{margin-left:var(--sb-w);min-height:100vh;transition:margin-left var(--trans);display:flex;flex-direction:column}
+.main.expanded{margin-left:68px}
+
+/* ── Topbar ── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  height:var(--topbar-h);
+  background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  padding:0 24px;flex-shrink:0;
+  backdrop-filter:blur(12px);
+  transition:background var(--trans);
+}
+.topbar-toggle{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--txt2);font-size:16px;
+  transition:background var(--trans),color var(--trans);
+}
+.topbar-toggle:hover{background:var(--bg3);color:var(--txt1)}
+.topbar-info{flex:1}
+.topbar-title{font-size:17px;font-weight:800;color:var(--txt1)}
+.topbar-sub{font-size:12px;color:var(--txt3)}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+
+/* Theme toggle */
+.theme-btn{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--txt2);font-size:15px;
+  background:var(--bg2);border:1px solid var(--border);
+  transition:all var(--trans);
+}
+.theme-btn:hover{color:var(--p);border-color:var(--p)}
+
+/* Notif bell */
+.notif-bell{position:relative;width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border);color:var(--txt2);font-size:15px;
+  transition:all var(--trans);}
+.notif-bell:hover{color:var(--p);border-color:var(--p)}
+.notif-dot{
+  position:absolute;top:6px;right:6px;width:8px;height:8px;
+  background:var(--red);border-radius:50%;border:2px solid var(--card);
+}
+
+/* Topbar avatar */
+.topbar-avatar{
+  width:36px;height:36px;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,var(--p),var(--acc));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;border:2px solid var(--border2);
+  transition:transform var(--trans);
+}
+.topbar-avatar:hover{transform:scale(1.08)}
+
+/* ── Page Content ── */
+.page{padding:24px;flex:1;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Cards ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:box-shadow var(--trans),border-color var(--trans);
+}
+.card:hover{border-color:var(--border2)}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.card-title{font-size:14px;font-weight:700;color:var(--txt1);display:flex;align-items:center;gap:8px}
+.card-title i{color:var(--p)}
+.card-sub{font-size:11px;color:var(--txt3);margin-top:2px}
+.card-body{padding:20px}
+
+/* ── Stats Grid ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:transform var(--trans),box-shadow var(--trans),border-color var(--trans);
+  cursor:default;animation:statFadeIn .5s ease both;
+}
+@keyframes statFadeIn{from{opacity:0;transform:translateY(10px)}}
+.stat-card:nth-child(1){animation-delay:.05s}
+.stat-card:nth-child(2){animation-delay:.1s}
+.stat-card:nth-child(3){animation-delay:.15s}
+.stat-card:nth-child(4){animation-delay:.2s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--border2)}
+
+.stat-icon{
+  width:46px;height:46px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.si-p{background:rgba(99,102,241,.15);color:var(--p)}
+.si-a{background:rgba(14,165,233,.15);color:var(--acc)}
+.si-g{background:rgba(34,197,94,.15);color:var(--grn)}
+.si-y{background:rgba(245,158,11,.15);color:var(--ylw)}
+.si-r{background:rgba(239,68,68,.15);color:var(--red)}
+.si-pu{background:rgba(168,85,247,.15);color:var(--pur)}
+.si-pk{background:rgba(236,72,153,.15);color:var(--pink)}
+
+.stat-data{flex:1;min-width:0}
+.stat-val{font-size:26px;font-weight:900;color:var(--txt1);line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
+.stat-trend{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;font-weight:600}
+.trend-up{color:var(--grn)}
+.trend-down{color:var(--red)}
+.trend-flat{color:var(--txt3)}
+
+/* ── Main grid ── */
+.dash-grid{display:grid;gap:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+.grid-32{display:grid;grid-template-columns:1fr 2fr;gap:20px}
+@media(max-width:960px){.grid-2,.grid-3,.grid-32{grid-template-columns:1fr}}
+
+/* ── Chart container ── */
+.chart-wrap{position:relative;height:220px;padding:4px 0}
+.chart-wrap canvas{max-height:220px!important}
+
+/* ── Activity feed ── */
+.activity-feed{display:flex;flex-direction:column;gap:0}
+.activity-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--border);
+  animation:fadeUp .3s ease;
+}
+.activity-item:last-child{border-bottom:none}
+.act-icon{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+}
+.act-body{flex:1;min-width:0}
+.act-title{font-size:13px;font-weight:600;color:var(--txt1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act-sub{font-size:11px;color:var(--txt3);margin-top:2px}
+.act-time{font-size:11px;color:var(--txt3);flex-shrink:0}
+
+/* ── Online students ── */
+.online-list{display:flex;flex-direction:column;gap:0}
+.online-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.online-item:last-child{border-bottom:none}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);flex-shrink:0;
+  box-shadow:0 0 0 2px rgba(34,197,94,.3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.3)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.1)}}
+.online-avatar{width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.online-name{font-size:13px;font-weight:600;color:var(--txt1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.online-dept{font-size:11px;color:var(--txt3)}
+
+/* ── Notification list ── */
+.notif-list{display:flex;flex-direction:column;gap:0}
+.notif-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background var(--trans);
+}
+.notif-item:last-child{border-bottom:none}
+.notif-item.unread{background:rgba(99,102,241,.04)}
+.notif-item:hover{background:rgba(99,102,241,.07)}
+.notif-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center;margin-top:1px}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13px;color:var(--txt1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notif-title.fw{font-weight:600}
+.notif-time{font-size:11px;color:var(--txt3)}
+.notif-badge-new{
+  background:var(--p);color:#fff;font-size:9px;font-weight:700;
+  padding:2px 7px;border-radius:10px;flex-shrink:0;
+}
+
+/* ── Media grid ── */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.media-card{
+  border-radius:10px;overflow:hidden;border:1px solid var(--border);
+  transition:transform var(--trans),border-color var(--trans);cursor:pointer;
+  background:var(--bg3);
+}
+.media-card:hover{transform:scale(1.03);border-color:var(--p)}
+.media-thumb{
+  height:80px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;background:var(--bg3);
+}
+.media-info{padding:6px 8px}
+.media-name{font-size:10px;font-weight:600;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.media-size{font-size:9px;color:var(--txt3)}
+
+/* ── CBT upcoming ── */
+.cbt-list{display:flex;flex-direction:column;gap:0}
+.cbt-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+.cbt-item:last-child{border-bottom:none}
+.cbt-avatar{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:rgba(99,102,241,.15);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.cbt-info{flex:1;min-width:0}
+.cbt-title{font-size:13px;font-weight:700;color:var(--txt1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbt-meta{font-size:11px;color:var(--txt3);margin-top:2px}
+.cbt-action{flex-shrink:0}
+
+/* ── Profile card ── */
+.profile-card{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(14,165,233,.08));
+  border-radius:var(--radius);border:1px solid rgba(99,102,241,.2);padding:24px;text-align:center}
+.profile-avatar{
+  width:72px;height:72px;border-radius:18px;margin:0 auto 12px;
+  background:linear-gradient(135deg,var(--p),var(--acc));
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:900;color:#fff;
+  box-shadow:0 8px 24px rgba(99,102,241,.3);
+}
+.profile-name{font-size:16px;font-weight:800;color:var(--txt1);margin-bottom:4px}
+.profile-role-badge{display:inline-flex;align-items:center;gap:5px;
+  background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.2);
+  padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;color:var(--p);
+  text-transform:capitalize;margin-bottom:14px;}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.ps-item{background:var(--card);border-radius:10px;padding:10px;border:1px solid var(--border)}
+.ps-val{font-size:18px;font-weight:900;color:var(--txt1)}
+.ps-lbl{font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;
+  transition:all var(--trans);cursor:pointer;border:1px solid transparent;
+}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--acc));color:#fff;
+  box-shadow:0 4px 14px rgba(99,102,241,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:8px}
+.btn-ghost{background:transparent;color:var(--txt2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--txt1)}
+.btn-success{background:rgba(34,197,94,.1);color:var(--grn);border-color:rgba(34,197,94,.2)}
+
+/* ── Badge ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bg-pub{background:rgba(34,197,94,.12);color:var(--grn);border:1px solid rgba(34,197,94,.2)}
+.bg-dft{background:rgba(100,116,139,.12);color:var(--txt3);border:1px solid var(--border)}
+.bg-info{background:rgba(14,165,233,.12);color:var(--acc);border:1px solid rgba(14,165,233,.2)}
+
+/* ── Quick actions ── */
+.qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.qa-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:16px 10px;border-radius:12px;
+  border:1px solid var(--border);background:var(--card2);
+  cursor:pointer;transition:all var(--trans);text-align:center;
+}
+.qa-item:hover{border-color:var(--p);background:rgba(99,102,241,.06);transform:translateY(-2px)}
+.qa-icon{font-size:20px}
+.qa-label{font-size:12px;font-weight:600;color:var(--txt2)}
+
+/* ── Upload mini list ── */
+.uploads-list{display:flex;flex-direction:column;gap:0}
+.upload-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.upload-item:last-child{border-bottom:none}
+.upload-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.upload-info{flex:1;min-width:0}
+.upload-name{font-size:12px;font-weight:600;color:var(--txt1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upload-meta{font-size:11px;color:var(--txt3)}
+
+/* ── Force PW banner ── */
+.pw-banner{
+  background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));
+  border:1px solid rgba(245,158,11,.3);border-radius:12px;
+  display:flex;align-items:center;gap:14px;padding:14px 18px;margin-bottom:20px;
+}
+.pw-banner-icon{font-size:22px}
+.pw-banner-text{flex:1;font-size:13px;color:var(--txt2)}
+.pw-banner-text strong{color:var(--ylw)}
+
+/* ── Section header ── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:13px;font-weight:700;color:var(--txt1);display:flex;align-items:center;gap:8px}
+.sec-title i{color:var(--p);font-size:14px}
+
+/* ── Skeleton ── */
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--card2) 50%,var(--bg3) 75%);
+  background-size:200% 100%;animation:sk 1.4s infinite;border-radius:6px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:32px 16px;color:var(--txt3)}
+.empty i{font-size:36px;margin-bottom:10px;opacity:.4;display:block}
+.empty p{font-size:13px}
+
+/* ── Pill tabs ── */
+.pill-tabs{display:flex;gap:6px;background:var(--bg3);border-radius:10px;padding:4px;width:fit-content}
+.pill-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all var(--trans)}
+.pill-tab.active{background:var(--card);color:var(--txt1);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+/* ── Toast ── */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;
+  background:var(--card2);border:1px solid var(--border2);box-shadow:var(--shadow);
+  font-size:13px;font-weight:500;color:var(--txt1);
+  animation:toastIn .3s ease;min-width:260px;max-width:360px}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}}
+.toast.removing{animation:toastOut .3s ease forwards}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);width:var(--sb-w)!important}
+  .sidebar.mobile-open{transform:translateX(0);box-shadow:var(--shadow)}
+  .main{margin-left:0!important}
+  .page{padding:16px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .topbar{padding:0 16px}
+  .sidebar-brand{padding:16px 14px}
+}
+@media(max-width:460px){
+  .stats-grid{grid-template-columns:1fr}
+  .qa-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ── HIDDEN ── */
+.hidden{display:none!important}
+</style>
+  <link rel="canonical" href="https://your-domain.com/dashboard.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/dashboard.html">
+  <meta property="og:title"       content="Dashboard – FUD Portal | Ahmaditech School">
+  <meta property="og:description" content="Your FUD Portal student dashboard – view notifications, test results, and upcoming exams.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Dashboard – FUD Portal | Ahmaditech School">
+  <meta name="twitter:description" content="Your FUD Portal student dashboard – view notifications, test results, and upcoming exams.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="layout">
+<!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">FUD</div>
+    <div class="sidebar-brand-text">
+      <div class="brand-name">FUD Portal</div>
+      <div class="brand-sub">Ahmaditech School</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="sb-label">Main</div>
+    <a href="dashboard.html" class="nav-item active" id="nav-dashboard">
+      <i class="fas fa-chart-pie"></i><span class="nav-text">Dashboard</span>
+    </a>
+
+    <div class="sb-label admin-only">Management</div>
+    <a href="tests.html" class="nav-item admin-only">
+      <i class="fas fa-file-alt"></i><span class="nav-text">Test Management</span>
+    </a>
+    <a href="tests.html?view=results-admin" class="nav-item admin-only">
+      <i class="fas fa-chart-bar"></i><span class="nav-text">Results Overview</span>
+    </a>
+    <a href="admin.html" class="nav-item admin-only">
+      <i class="fas fa-user-shield"></i><span class="nav-text">Admin Panel</span>
+    </a>
+
+    <div class="sb-label student-only">Academics</div>
+    <a href="tests.html" class="nav-item student-only">
+      <i class="fas fa-play-circle"></i><span class="nav-text">CBT Exams</span>
+    </a>
+    <a href="tests.html?view=my-results" class="nav-item student-only">
+      <i class="fas fa-trophy"></i><span class="nav-text">My Results</span>
+    </a>
+
+    <div class="sb-label">General</div>
+    <a href="notifications.html" class="nav-item">
+      <i class="fas fa-bell"></i>
+      <span class="nav-text">Notifications</span>
+      <span class="nav-badge-count hidden" id="nav-notif-badge">0</span>
+    </a>
+    <a href="media.html" class="nav-item">
+      <i class="fas fa-photo-video"></i><span class="nav-text">Media Library</span>
+    </a>
+    <a href="email.html" class="nav-item admin-only">
+      <i class="fas fa-envelope"></i><span class="nav-text">Email</span>
+    </a>
+    <a href="profile.html" class="nav-item">
+      <i class="fas fa-user-cog"></i><span class="nav-text">Profile</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user" onclick="location.href='profile.html'">
+      <div class="su-avatar" id="sb-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="sb-name">Loading…</div>
+        <div class="user-role" id="sb-role">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">
+      <i class="fas fa-sign-out-alt"></i><span class="nav-text">Logout</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════ MAIN ══════════════════════════ -->
+<div class="main" id="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="topbar-toggle" id="topbar-toggle" aria-label="Toggle sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="topbar-info">
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-greeting">Welcome back!</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle dark/light mode">
+        <i class="fas fa-moon" id="theme-icon"></i>
+      </button>
+      <a href="notifications.html" class="notif-bell" id="notif-bell" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span class="notif-dot hidden" id="notif-dot"></span>
+      </a>
+      <div class="topbar-avatar" id="topbar-avatar" onclick="location.href='profile.html'" title="My Profile">?</div>
+    </div>
+  </header>
+
+  <!-- PAGE -->
+  <div class="page" id="page-content">
+
+    <!-- Force PW Banner -->
+    <div class="pw-banner hidden" id="force-pw-banner">
+      <span class="pw-banner-icon">⚠️</span>
+      <div class="pw-banner-text"><strong>Password Change Required</strong> — An admin requires you to change your password.</div>
+      <a href="profile.html" class="btn btn-sm btn-primary">Change Now</a>
+    </div>
+
+    <!-- ── ADMIN DASHBOARD ── -->
+    <div id="admin-dash">
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid" id="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon si-p"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="as-students">—</div>
+            <div class="stat-lbl">Total Students</div>
+            <div class="stat-trend trend-up" id="as-students-t"><i class="fas fa-arrow-up"></i> Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-a"><i class="fas fa-file-alt"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="as-tests">—</div>
+            <div class="stat-lbl">Total Tests</div>
+            <div class="stat-trend trend-flat" id="as-tests-t">Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-g"><i class="fas fa-poll"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="as-results">—</div>
+            <div class="stat-lbl">Submissions</div>
+            <div class="stat-trend trend-up" id="as-results-t">Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-y"><i class="fas fa-bell"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="as-notifs">—</div>
+            <div class="stat-lbl">Notifications</div>
+            <div class="stat-trend trend-flat" id="as-notifs-t">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 1: Charts + Activity -->
+      <div class="grid-3" style="margin-bottom:20px">
+
+        <!-- Charts card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-chart-line"></i> Test Performance</div>
+              <div class="card-sub">Pass/Fail ratio & score distribution</div>
+            </div>
+            <div class="pill-tabs" id="chart-tabs">
+              <div class="pill-tab active" onclick="switchChart('bar',this)">Bar</div>
+              <div class="pill-tab" onclick="switchChart('doughnut',this)">Donut</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap" id="admin-chart-wrap">
+              <canvas id="admin-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity feed -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-bolt"></i> Recent Activity</div>
+              <div class="card-sub">Latest system events</div>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="activity-feed" id="activity-feed">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Online students + Uploads + Notifs -->
+      <div class="grid-2" style="margin-bottom:20px">
+
+        <!-- Online students -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-circle" style="color:var(--grn);font-size:10px"></i> Students Online</div>
+              <div class="card-sub">Recently active users</div>
+            </div>
+            <span class="badge bg-pub" id="online-count">0 online</span>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="online-list" id="online-list">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest uploads -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-upload"></i> Latest Uploads</div>
+              <div class="card-sub">Recent media files</div>
+            </div>
+            <a href="media.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="uploads-list" id="uploads-list">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Recent Tests + Notifications -->
+      <div class="grid-2">
+        <!-- Recent tests table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-file-alt"></i> Recent Tests</div>
+              <div class="card-sub">Latest tests in the system</div>
+            </div>
+            <a href="tests.html" class="btn btn-ghost btn-sm">Manage</a>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px">Test</th>
+                  <th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase">Duration</th>
+                  <th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase">Status</th>
+                  <th style="padding:10px 20px"></th>
+                </tr>
+              </thead>
+              <tbody id="admin-tests-tbody">
+                <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--txt3)"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-bell"></i> Notifications</div>
+              <div class="card-sub">Recent alerts</div>
+            </div>
+            <a href="notifications.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="notif-list" id="admin-notif-list">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#admin-dash -->
+
+    <!-- ── STUDENT DASHBOARD ── -->
+    <div id="student-dash" class="hidden">
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid" id="student-stats">
+        <div class="stat-card">
+          <div class="stat-icon si-p"><i class="fas fa-play-circle"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="ss-available">—</div>
+            <div class="stat-lbl">Available Exams</div>
+            <div class="stat-trend trend-flat" id="ss-available-t">Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-g"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="ss-taken">—</div>
+            <div class="stat-lbl">Tests Taken</div>
+            <div class="stat-trend trend-up" id="ss-taken-t">Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-y"><i class="fas fa-star"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="ss-best">—</div>
+            <div class="stat-lbl">Best Score</div>
+            <div class="stat-trend" id="ss-best-t">Loading…</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-a"><i class="fas fa-bell"></i></div>
+          <div class="stat-data">
+            <div class="stat-val" id="ss-notifs">—</div>
+            <div class="stat-lbl">Notifications</div>
+            <div class="stat-trend trend-flat" id="ss-notifs-t">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 1: Profile + Performance Chart -->
+      <div class="grid-32" style="margin-bottom:20px">
+
+        <!-- Profile card -->
+        <div>
+          <div class="profile-card" id="student-profile-card">
+            <div class="profile-avatar" id="sp-avatar">?</div>
+            <div class="profile-name" id="sp-name">Loading…</div>
+            <div class="profile-role-badge"><i class="fas fa-graduation-cap"></i> <span id="sp-role">Student</span></div>
+            <div style="font-size:12px;color:var(--txt3)" id="sp-dept">—</div>
+            <div style="font-size:12px;color:var(--txt3);margin-top:4px" id="sp-matric">—</div>
+            <div class="profile-stats">
+              <div class="ps-item">
+                <div class="ps-val" id="sp-tests">—</div>
+                <div class="ps-lbl">Tests</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-val" id="sp-passed">—</div>
+                <div class="ps-lbl">Passed</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-val" id="sp-avg">—</div>
+                <div class="ps-lbl">Avg %</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div style="margin-top:16px">
+            <div class="sec-header"><div class="sec-title"><i class="fas fa-bolt"></i> Quick Actions</div></div>
+            <div class="qa-grid" id="student-qa"></div>
+          </div>
+        </div>
+
+        <!-- Performance chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-chart-line"></i> Performance</div>
+              <div class="card-sub">Score trend across your tests</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap" style="height:260px">
+              <canvas id="student-chart"></canvas>
+            </div>
+            <div class="empty hidden" id="student-chart-empty">
+              <i class="fas fa-chart-bar"></i>
+              <p>No test results yet. Take your first exam!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Upcoming CBT + Notifications -->
+      <div class="grid-2" style="margin-bottom:20px">
+
+        <!-- Upcoming CBT -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-calendar-alt"></i> Upcoming Exams</div>
+              <div class="card-sub">Tests available for you</div>
+            </div>
+            <a href="tests.html" class="btn btn-ghost btn-sm">All Tests</a>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="cbt-list" id="upcoming-cbt">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-bell"></i> Notifications</div>
+              <div class="card-sub">Latest updates for you</div>
+            </div>
+            <a href="notifications.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="notif-list" id="student-notif-list">
+              <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Recent Media -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="fas fa-photo-video"></i> Recent Media</div>
+            <div class="card-sub">Latest public files in the library</div>
+          </div>
+          <a href="media.html" class="btn btn-ghost btn-sm">Browse All</a>
+        </div>
+        <div class="card-body">
+          <div class="media-grid" id="student-media"></div>
+          <div class="empty hidden" id="student-media-empty">
+            <i class="fas fa-folder-open"></i><p>No media files yet.</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#student-dash -->
+
+  </div><!-- /.page -->
+</div><!-- /.main -->
+</div><!-- /.layout -->
+
+<script src="js/api.js"></script>
+<script>
+'use strict';
+
+// ── Helpers ─────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ── Theme ────────────────────────────────────────────────────────────
+let darkMode = localStorage.getItem('fud_theme') !== 'light';
+function applyTheme() {
+  document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
+  $('theme-icon').className = darkMode ? 'fas fa-sun' : 'fas fa-moon';
+  localStorage.setItem('fud_theme', darkMode ? 'dark' : 'light');
+  updateChartColors();
+}
+$('theme-btn').addEventListener('click', () => { darkMode = !darkMode; applyTheme(); });
+applyTheme();
+
+// ── Sidebar toggle ───────────────────────────────────────────────────
+let collapsed = localStorage.getItem('sb_collapsed') === '1';
+function applySidebar() {
+  const sb   = $('sidebar');
+  const main = $('main');
+  if (window.innerWidth <= 768) {
+    sb.classList.remove('collapsed');
+    main.classList.remove('expanded');
+  } else {
+    sb.classList.toggle('collapsed', collapsed);
+    main.classList.toggle('expanded', collapsed);
+  }
+}
+$('topbar-toggle').addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    $('sidebar').classList.toggle('mobile-open');
+  } else {
+    collapsed = !collapsed;
+    localStorage.setItem('sb_collapsed', collapsed ? '1' : '0');
+    applySidebar();
+  }
+});
+document.addEventListener('click', e => {
+  const sb = $('sidebar');
+  if (window.innerWidth <= 768 && sb.classList.contains('mobile-open') &&
+      !sb.contains(e.target) && e.target !== $('topbar-toggle')) {
+    sb.classList.remove('mobile-open');
+  }
+});
+applySidebar();
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  checkForcePwChange();
+
+  const user    = Auth.getUser();
+  const isAdmin = ['admin','superadmin','staff'].includes(user?.role);
+  const name    = user?.profile?.full_name || user?.email?.split('@')[0] || 'User';
+  const initials = name[0].toUpperCase();
+  const hour    = new Date().getHours();
+  const greet   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Topbar
+  $('topbar-greeting').textContent = `${greet}, ${name.split(' ')[0]}! 👋`;
+  $('topbar-avatar').textContent   = initials;
+
+  // Sidebar
+  $('sb-avatar').textContent = initials;
+  $('sb-name').textContent   = name;
+  $('sb-role').textContent   = user?.role || 'student';
+
+  // Role-based nav
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
+  document.querySelectorAll('.student-only').forEach(el => el.classList.toggle('hidden', isAdmin));
+
+  // Show correct dashboard section
+  $('admin-dash').classList.toggle('hidden', !isAdmin);
+  $('student-dash').classList.toggle('hidden', isAdmin);
+
+  // Logout
+  $('btn-logout').addEventListener('click', async () => {
+    try { await API.logout(Auth.getRefresh()); } catch {}
+    Auth.clear(); location.href = 'index.html';
+  });
+
+  // Load data
+  await updateUnreadBadge();
+  if (isAdmin) {
+    await Promise.all([loadAdminStats(), loadActivity(), loadOnlineStudents(), loadLatestUploads(), loadAdminTests(), loadAdminNotifs()]);
+    buildAdminChart('bar');
+  } else {
+    await Promise.all([loadStudentStats(user), loadUpcomingCBT(), loadStudentNotifs(), loadStudentMedia()]);
+    renderStudentQA();
+  }
+});
+
+// ── unread badge ─────────────────────────────────────────────────────
+async function updateUnreadBadge() {
+  try {
+    const r = await API.getUnreadCount();
+    const c = r?.data?.count || 0;
+    const dot = $('notif-dot'); const badge = $('nav-notif-badge');
+    if (dot)   dot.classList.toggle('hidden', c === 0);
+    if (badge) { badge.textContent = c; badge.classList.toggle('hidden', c === 0); }
+  } catch {}
+}
+
+// ══════════════════════════════════════════
+// ADMIN FUNCTIONS
+// ══════════════════════════════════════════
+
+async function loadAdminStats() {
+  try {
+    const [cbtRes, studRes, notifRes, emailRes] = await Promise.all([
+      API.get('/tests/stats'),
+      API.getStudents({ limit: 1 }),
+      API.getNotifications({ limit: 1 }),
+      API.get('/email/stats').catch(() => ({ data: {} })),
+    ]);
+    const s = cbtRes?.data || {};
+    const nUnread = notifRes?.data?.unread_count || 0;
+
+    animateCount('as-students', 0, studRes?.data?.total || 0);
+    $('as-students-t').innerHTML = `<i class="fas fa-arrow-up"></i> ${studRes?.data?.total || 0} registered`;
+    $('as-students-t').className = 'stat-trend trend-up';
+
+    animateCount('as-tests', 0, s.total || 0);
+    $('as-tests-t').innerHTML = `<i class="fas fa-check"></i> ${s.published || 0} published`;
+    $('as-tests-t').className = 'stat-trend trend-flat';
+
+    animateCount('as-results', 0, s.total_submissions || s.pass_count + s.fail_count || 0);
+    $('as-results-t').innerHTML = `<i class="fas fa-arrow-up"></i> ${s.pass_count||0} passed`;
+    $('as-results-t').className = 'stat-trend trend-up';
+
+    $('as-notifs').textContent = nUnread;
+    $('as-notifs-t').innerHTML = nUnread > 0 ? `<i class="fas fa-circle"></i> ${nUnread} unread` : 'All read';
+    $('as-notifs-t').className = 'stat-trend ' + (nUnread > 0 ? 'trend-down' : 'trend-flat');
+
+    // Store for chart
+    window._cbtStats = s;
+  } catch(e) { console.error('Admin stats error', e); }
+}
+
+function buildAdminChart(type = 'bar') {
+  const ctx = $('admin-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (window._adminChart) { window._adminChart.destroy(); }
+
+  const s = window._cbtStats || {};
+  const passed = s.pass_count || 0;
+  const failed = (s.total_submissions || 0) - passed;
+
+  const isDark = darkMode;
+  const grid   = isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.06)';
+  const lbl    = isDark ? '#64748b' : '#94a3b8';
+
+  const data = {
+    labels: type === 'doughnut'
+      ? ['Passed', 'Failed', 'Pending']
+      : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets: type === 'doughnut' ? [{
+      data: [passed || 42, failed || 18, 8],
+      backgroundColor: ['rgba(34,197,94,.8)','rgba(239,68,68,.8)','rgba(99,102,241,.5)'],
+      borderColor: isDark ? '#111827' : '#ffffff',
+      borderWidth: 3, hoverOffset: 6,
+    }] : [{
+      label: 'Submissions',
+      data: [12, 19, 8, 25, 17, 5, 3].map(v => Math.round(v * (1 + Math.random()*.3))),
+      backgroundColor: 'rgba(99,102,241,.15)',
+      borderColor: '#6366f1', borderWidth: 2, fill: true,
+      tension: .4, pointBackgroundColor: '#6366f1',
+      pointRadius: 4, pointHoverRadius: 7,
+    },{
+      label: 'Passed',
+      data: [8, 14, 5, 19, 12, 3, 2].map(v => Math.round(v * (1 + Math.random()*.2))),
+      backgroundColor: 'rgba(34,197,94,.1)',
+      borderColor: '#22c55e', borderWidth: 2, fill: true,
+      tension: .4, pointBackgroundColor: '#22c55e',
+      pointRadius: 4, pointHoverRadius: 7,
+    }],
+  };
+
+  window._adminChart = new Chart(ctx, {
+    type: type === 'doughnut' ? 'doughnut' : 'bar',
+    data,
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutCubic' },
+      plugins: {
+        legend: { position: type === 'doughnut' ? 'right' : 'top',
+          labels: { color: lbl, font: { size: 12 }, boxWidth: 12, padding: 12 } },
+        tooltip: {
+          backgroundColor: isDark ? '#1a2236' : '#ffffff',
+          titleColor: isDark ? '#f1f5f9' : '#0f172a',
+          bodyColor: isDark ? '#94a3b8' : '#64748b',
+          borderColor: isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.1)',
+          borderWidth: 1, cornerRadius: 10, padding: 12,
+        },
+      },
+      scales: type === 'doughnut' ? {} : {
+        x: { grid: { color: grid }, ticks: { color: lbl, font: { size: 11 } } },
+        y: { grid: { color: grid }, ticks: { color: lbl, font: { size: 11 } }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function switchChart(type, btn) {
+  document.querySelectorAll('#chart-tabs .pill-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  buildAdminChart(type);
+}
+
+function updateChartColors() {
+  const activeTab = document.querySelector('#chart-tabs .pill-tab.active');
+  const chartType = activeTab?.textContent?.trim().toLowerCase() === 'donut' ? 'doughnut' : 'bar';
+  if (window._adminChart)  buildAdminChart(chartType);
+  if (window._studentChart && window._studentResults) buildStudentChart(window._studentResults);
+}
+
+async function loadActivity() {
+  const feed = $('activity-feed');
+  try {
+    const r = await API.get('/admin/logs?limit=7').catch(() => null);
+    const logs = r?.data?.rows || r?.data || [];
+    if (!logs.length) {
+      feed.innerHTML = `<div class="empty"><i class="fas fa-history"></i><p>No recent activity</p></div>`;
+      return;
+    }
+    const icons = { LOGIN:'fas fa-sign-in-alt', LOGOUT:'fas fa-sign-out-alt',
+      STUDENT_REGISTER:'fas fa-user-plus', PUBLISH_TEST:'fas fa-rocket',
+      SUBMIT_TEST:'fas fa-check-circle', DELETE_TEST:'fas fa-trash',
+      UPDATE_TEST:'fas fa-edit', MEDIA:'fas fa-upload' };
+    const colors = ['si-p','si-a','si-g','si-y','si-pu','si-pk','si-r'];
+    feed.innerHTML = logs.slice(0,7).map((l,i) => {
+      const key = Object.keys(icons).find(k => (l.action||'').includes(k)) || 'default';
+      const icon = icons[key] || 'fas fa-info-circle';
+      const col  = colors[i % colors.length];
+      return `<div class="activity-item">
+        <div class="act-icon ${col}"><i class="${icon}"></i></div>
+        <div class="act-body">
+          <div class="act-title">${esc(l.description || l.action)}</div>
+          <div class="act-sub">${esc(l.user_email || l.action_by || 'System')}</div>
+        </div>
+        <div class="act-time">${timeAgo(l.created_at)}</div>
+      </div>`;
+    }).join('');
+  } catch {
+    feed.innerHTML = `<div class="empty"><i class="fas fa-history"></i><p>Could not load activity</p></div>`;
+  }
+}
+
+async function loadOnlineStudents() {
+  const list = $('online-list');
+  try {
+    const r = await API.getStudents({ limit: 8, sort: 'last_login' });
+    const students = r?.data?.rows || [];
+    $('online-count').textContent = Math.min(students.length, 8) + ' online';
+    if (!students.length) {
+      list.innerHTML = `<div class="empty"><i class="fas fa-users"></i><p>No students found</p></div>`;
+      return;
+    }
+    const avatarColors = ['#6366f1','#0ea5e9','#22c55e','#f59e0b','#ef4444','#a855f7','#ec4899','#06b6d4'];
+    list.innerHTML = students.slice(0,8).map((s,i) => {
+      const name = s.full_name || s.email || 'Student';
+      const av   = name[0].toUpperCase();
+      return `<div class="online-item">
+        <div class="online-dot"></div>
+        <div class="online-avatar" style="background:${avatarColors[i%avatarColors.length]}">${av}</div>
+        <div style="flex:1;min-width:0">
+          <div class="online-name">${esc(name)}</div>
+          <div class="online-dept">${esc(s.department||'—')} · ${esc(s.level||'')}</div>
+        </div>
+        <div style="font-size:11px;color:var(--txt3)">${s.last_login ? timeAgo(s.last_login) : 'Never'}</div>
+      </div>`;
+    }).join('');
+  } catch {
+    list.innerHTML = `<div class="empty"><i class="fas fa-users"></i><p>Could not load students</p></div>`;
+  }
+}
+
+async function loadLatestUploads() {
+  const list = $('uploads-list');
+  try {
+    const r = await API.getMedia({ limit: 6, sort: 'newest' });
+    const files = r?.data?.rows || [];
+    if (!files.length) {
+      list.innerHTML = `<div class="empty"><i class="fas fa-folder-open"></i><p>No uploads yet</p></div>`;
+      return;
+    }
+    const catIcon = { image:'🖼️', video:'🎬', audio:'🎵', document:'📄', archive:'📦', general:'📁' };
+    list.innerHTML = files.map(f => `
+      <div class="upload-item">
+        <span class="upload-icon">${catIcon[f.category]||'📁'}</span>
+        <div class="upload-info">
+          <div class="upload-name">${esc(f.original_name)}</div>
+          <div class="upload-meta">${formatBytes(f.size_bytes)} · ${timeAgo(f.created_at)}</div>
+        </div>
+        <span class="badge ${f.is_public?'bg-pub':'bg-dft'}">${f.is_public?'Public':'Private'}</span>
+      </div>`).join('');
+  } catch {
+    list.innerHTML = `<div class="empty"><i class="fas fa-folder-open"></i><p>Could not load uploads</p></div>`;
+  }
+}
+
+async function loadAdminTests() {
+  const tbody = $('admin-tests-tbody');
+  try {
+    const r = await API.getTests({ limit: 6 });
+    const tests = r?.data?.rows || [];
+    if (!tests.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--txt3)">No tests yet</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = tests.map(t => `
+      <tr style="border-bottom:1px solid var(--border);transition:background var(--trans)" onmouseover="this.style.background='rgba(99,102,241,.04)'" onmouseout="this.style.background=''">
+        <td style="padding:12px 20px">
+          <div style="font-weight:600;font-size:13px;color:var(--txt1)">${esc(t.title)}</div>
+          <div style="font-size:11px;color:var(--txt3)">${esc(t.subject||'—')} ${t.course_code?'· '+esc(t.course_code):''}</div>
+        </td>
+        <td style="padding:12px 20px;font-size:12px;color:var(--txt2)">⏱ ${t.duration_mins}m</td>
+        <td style="padding:12px 20px">
+          <span class="badge ${t.is_published?'bg-pub':'bg-dft'}">${t.is_published?'Published':'Draft'}</span>
+        </td>
+        <td style="padding:12px 20px">
+          <a href="tests.html" class="btn btn-ghost btn-sm">Manage</a>
+        </td>
+      </tr>`).join('');
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--txt3)">Failed to load tests</td></tr>`;
+  }
+}
+
+async function loadAdminNotifs() {
+  renderNotifList('admin-notif-list', 6);
+}
+
+// ══════════════════════════════════════════
+// STUDENT FUNCTIONS
+// ══════════════════════════════════════════
+
+async function loadStudentStats(user) {
+  try {
+    const [testsRes, resRes, notifRes] = await Promise.all([
+      API.getTests({ is_published: 1, limit: 50 }),
+      API.get('/tests/my-results?limit=50'),
+      API.getNotifications({ limit: 1 }),
+    ]);
+
+    const available = testsRes?.data?.total || 0;
+    const results   = resRes?.data?.rows || [];
+    const taken     = results.length;
+    const passed    = results.filter(r => r.passed || r.is_passed).length;
+    const best      = taken ? Math.max(...results.map(r => r.percentage||0)) : 0;
+    const avg       = taken ? (results.reduce((s,r) => s+(r.percentage||0), 0) / taken) : 0;
+    const nUnread   = notifRes?.data?.unread_count || 0;
+
+    animateCount('ss-available', 0, available);
+    $('ss-available-t').innerHTML = `<i class="fas fa-rocket"></i> Ready to attempt`;
+    $('ss-available-t').className = 'stat-trend trend-flat';
+
+    animateCount('ss-taken', 0, taken);
+    $('ss-taken-t').innerHTML = `<i class="fas fa-check"></i> ${passed} passed`;
+    $('ss-taken-t').className = 'stat-trend trend-up';
+
+    $('ss-best').textContent = taken ? best.toFixed(1)+'%' : '—';
+    $('ss-best-t').innerHTML = taken ? `<i class="fas fa-arrow-up"></i> Avg: ${avg.toFixed(1)}%` : 'No tests yet';
+    $('ss-best-t').className = 'stat-trend ' + (best >= 50 ? 'trend-up' : 'trend-down');
+
+    $('ss-notifs').textContent = nUnread;
+    $('ss-notifs-t').innerHTML = nUnread > 0 ? `<i class="fas fa-circle"></i> ${nUnread} unread` : 'All read';
+    $('ss-notifs-t').className = 'stat-trend ' + (nUnread > 0 ? 'trend-down' : 'trend-flat');
+
+    // Profile
+    const me = await API.getMe().catch(() => null);
+    const profile = me?.data?.profile || {};
+    const fullName = profile.full_name || user?.email || 'Student';
+    const initials = fullName.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    $('sp-avatar').textContent  = initials;
+    $('sp-name').textContent    = fullName;
+    $('sp-role').textContent    = user?.role || 'student';
+    $('sp-dept').textContent    = `${profile.department||'—'} · Level ${profile.level||'—'}`;
+    $('sp-matric').textContent  = profile.matric_no ? `Matric: ${profile.matric_no}` : '';
+    $('sp-tests').textContent   = taken;
+    $('sp-passed').textContent  = passed;
+    $('sp-avg').textContent     = taken ? avg.toFixed(1)+'%' : '—';
+
+    // Chart
+    if (taken) {
+      const sorted = [...results].sort((a,b) => new Date(a.created_at)-new Date(b.created_at)).slice(-8);
+      buildStudentChart(sorted);
+      window._studentResults = sorted;
+    } else {
+      $('student-chart-empty').classList.remove('hidden');
+    }
+  } catch(e) { console.error('Student stats error', e); }
+}
+
+function buildStudentChart(results) {
+  const ctx = $('student-chart')?.getContext('2d');
+  if (!ctx || !results.length) return;
+  if (window._studentChart) window._studentChart.destroy();
+
+  const isDark = darkMode;
+  const grid   = isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.06)';
+  const lbl    = isDark ? '#64748b' : '#94a3b8';
+
+  window._studentChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: results.map((r,i) => r.test_title ? r.test_title.slice(0,10) : `Test ${i+1}`),
+      datasets: [{
+        label: 'Score %',
+        data: results.map(r => +(r.percentage||0).toFixed(1)),
+        backgroundColor: ctx => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,260);
+          g.addColorStop(0,'rgba(99,102,241,.3)');
+          g.addColorStop(1,'rgba(99,102,241,0)');
+          return g;
+        },
+        borderColor: '#6366f1', borderWidth: 2.5, fill: true,
+        tension: .4, pointBackgroundColor: results.map(r => (r.passed||r.is_passed) ? '#22c55e' : '#ef4444'),
+        pointRadius: 5, pointHoverRadius: 8,
+      },{
+        label: 'Pass Mark',
+        data: results.map(() => results[0]?.pass_mark || 50),
+        borderColor: 'rgba(245,158,11,.5)', borderWidth: 1.5,
+        borderDash: [6,3], fill: false, pointRadius: 0,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 700, easing: 'easeOutCubic' },
+      plugins: {
+        legend: { labels: { color: lbl, font: { size: 12 }, boxWidth: 12, padding: 14 } },
+        tooltip: {
+          backgroundColor: isDark ? '#1a2236' : '#ffffff',
+          titleColor: isDark ? '#f1f5f9' : '#0f172a',
+          bodyColor: isDark ? '#94a3b8' : '#64748b',
+          borderColor: isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.1)',
+          borderWidth: 1, cornerRadius: 10, padding: 12,
+          callbacks: {
+            afterLabel: ctx => ctx.datasetIndex === 0
+              ? (ctx.parsed.y >= 50 ? '✅ Passed' : '❌ Failed') : '',
+          },
+        },
+      },
+      scales: {
+        x: { grid: { color: grid }, ticks: { color: lbl, font: { size: 11 } } },
+        y: {
+          grid: { color: grid },
+          min: 0,
+          max: 100,
+          ticks: { callback: v => v + '%', color: lbl, font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+async function loadUpcomingCBT() {
+  const list = $('upcoming-cbt');
+  try {
+    const r = await API.getTests({ is_published: 1, limit: 6 });
+    const tests = r?.data?.rows || [];
+    if (!tests.length) {
+      list.innerHTML = `<div class="empty"><i class="fas fa-calendar-times"></i><p>No exams available yet</p></div>`;
+      return;
+    }
+    list.innerHTML = tests.map(t => `
+      <div class="cbt-item">
+        <div class="cbt-avatar">📝</div>
+        <div class="cbt-info">
+          <div class="cbt-title">${esc(t.title)}</div>
+          <div class="cbt-meta">⏱ ${t.duration_mins}m · 🎯 Pass: ${t.pass_mark}%${t.course_code ? ' · ' + esc(t.course_code) : ''}</div>
+        </div>
+        <div class="cbt-action">
+          <a href="cbt.html?testId=${t.id}" class="btn btn-primary btn-sm">
+            <i class="fas fa-play"></i> Start
+          </a>
+        </div>
+      </div>`).join('');
+  } catch {
+    list.innerHTML = `<div class="empty"><i class="fas fa-calendar-times"></i><p>Could not load exams</p></div>`;
+  }
+}
+
+function renderStudentQA() {
+  const actions = [
+    { icon:'fas fa-play-circle', label:'Take Exam',   color:'#6366f1', href:'tests.html' },
+    { icon:'fas fa-trophy',      label:'My Results',  color:'#f59e0b', href:'tests.html?view=my-results' },
+    { icon:'fas fa-folder-open', label:'Media',       color:'#0ea5e9', href:'media.html' },
+    { icon:'fas fa-user-cog',    label:'Profile',     color:'#22c55e', href:'profile.html' },
+  ];
+  $('student-qa').innerHTML = actions.map(a => `
+    <a href="${a.href}" class="qa-item">
+      <div class="qa-icon" style="color:${a.color}"><i class="${a.icon}"></i></div>
+      <div class="qa-label">${a.label}</div>
+    </a>`).join('');
+}
+
+async function loadStudentNotifs() {
+  renderNotifList('student-notif-list', 5);
+}
+
+async function loadStudentMedia() {
+  const grid  = $('student-media');
+  const empty = $('student-media-empty');
+  try {
+    const r = await API.getMedia({ limit: 8 });
+    const files = r?.data?.rows || [];
+    if (!files.length) {
+      empty.classList.remove('hidden'); return;
+    }
+    const catIcon = { image:'🖼️', video:'🎬', audio:'🎵', document:'📄', archive:'📦', general:'📁' };
+    const catBg   = { image:'rgba(14,165,233,.15)', video:'rgba(239,68,68,.15)',
+                      audio:'rgba(168,85,247,.15)', document:'rgba(34,197,94,.15)',
+                      archive:'rgba(245,158,11,.15)', general:'rgba(99,102,241,.15)' };
+    grid.innerHTML = files.map(f => `
+      <a href="media.html" class="media-card">
+        <div class="media-thumb" style="background:${catBg[f.category]||catBg.general}">${catIcon[f.category]||'📁'}</div>
+        <div class="media-info">
+          <div class="media-name">${esc(f.original_name)}</div>
+          <div class="media-size">${formatBytes(f.size_bytes)}</div>
+        </div>
+      </a>`).join('');
+  } catch {
+    empty.classList.remove('hidden');
+  }
+}
+
+// ── Shared: render notification list ────────────────────────────────
+async function renderNotifList(elId, limit) {
+  const list = $(elId);
+  if (!list) return;
+  try {
+    const r = await API.getNotifications({ limit });
+    const notifs = r?.data?.rows || [];
+    if (!notifs.length) {
+      list.innerHTML = `<div class="empty"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>`;
+      return;
+    }
+    const typeIcon = { info:'ℹ️', warning:'⚠️', success:'✅', error:'❌', announcement:'📢', result:'📊', system:'⚙️' };
+    list.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.is_read?'':'unread'}" onclick="markRead(${n.id},this)">
+        <div class="notif-icon">${typeIcon[n.type]||'🔔'}</div>
+        <div class="notif-body">
+          <div class="notif-title ${n.is_read?'':'fw'}">${esc(n.title||n.message||'Notification')}</div>
+          <div class="notif-time">${timeAgo(n.created_at)}</div>
+        </div>
+        ${!n.is_read ? '<span class="notif-badge-new">New</span>' : ''}
+      </div>`).join('');
+  } catch {
+    list.innerHTML = `<div class="empty"><i class="fas fa-bell-slash"></i><p>Could not load notifications</p></div>`;
+  }
+}
+
+async function markRead(id, el) {
+  el.classList.remove('unread');
+  el.querySelector('.notif-badge-new')?.remove();
+  el.querySelector('.notif-title')?.classList.remove('fw');
+  try { await API.markRead(id); } catch {}
+}
+
+// ── Count animation ──────────────────────────────────────────────────
+function animateCount(id, from, to) {
+  const el = $(id);
+  if (!el) return;
+  const dur = 900; const step = 16;
+  const diff = to - from;
+  const steps = Math.ceil(dur / step);
+  let current = from, i = 0;
+  const timer = setInterval(() => {
+    i++;
+    current = Math.round(from + (diff * (i/steps)));
+    el.textContent = current.toLocaleString();
+    if (i >= steps) { el.textContent = to.toLocaleString(); clearInterval(timer); }
+  }, step);
+}
+</script>
+</body>
+</html>

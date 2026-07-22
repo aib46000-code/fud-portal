@@ -1,0 +1,291 @@
+'use strict';
+/**
+ * ╔═══════════════════════════════════════════════════════════════╗
+ * ║         FUD Portal – Ahmaditech School                        ║
+ * ║         server.js – Express Application Entry Point           ║
+ * ╚═══════════════════════════════════════════════════════════════╝
+ */
+
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const express    = require('express');
+const cors       = require('cors');
+const helmet     = require('helmet');
+const morgan     = require('morgan');
+const fs         = require('fs');
+const compression = require('compression');
+
+// ─── Internal Modules ─────────────────────────────────────────────────────────
+const logger                 = require('./utils/logger');
+const { initialize,
+        purgeExpiredTokens } = require('./database/db');
+const errorHandler           = require('./middleware/errorHandler');
+const { apiLimiter }         = require('./middleware/rateLimiter');
+const requirePasswordChange  = require('./middleware/requirePasswordChange');
+
+// ─── Route Imports ────────────────────────────────────────────────────────────
+const authRoutes         = require('./routes/authRoutes');
+const userRoutes         = require('./routes/userRoutes');
+const testRoutes         = require('./routes/testRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const mediaRoutes        = require('./routes/mediaRoutes');
+const adminRoutes        = require('./routes/adminRoutes');
+const emailRoutes        = require('./routes/emailRoutes');
+
+// ─── Upload & Log Dirs ────────────────────────────────────────────────────────
+const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || './uploads');
+const LOG_DIR    = path.resolve(process.cwd(), process.env.LOG_DIR    || './logs');
+[UPLOAD_DIR, LOG_DIR].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
+
+// ─── Express App ──────────────────────────────────────────────────────────────
+const app  = express();
+const PORT = parseInt(process.env.PORT || '5000', 10);
+
+// ─── Compression (gzip + brotli fallback) ────────────────────────────────────
+app.use(compression({
+  level: 6,
+  threshold: 1024,
+  filter: (req, res) => {
+    // Don't compress already-compressed uploads
+    if (req.path.startsWith('/uploads/')) return false;
+    return compression.filter(req, res);
+  },
+}));
+
+// ─── Security: Helmet ─────────────────────────────────────────────────────────
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   [
+        "'self'", "'unsafe-inline'",
+        'https://fonts.googleapis.com',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.jsdelivr.net',     // Chart.js
+      ],
+      styleSrc:    [
+        "'self'", "'unsafe-inline'",
+        'https://fonts.googleapis.com',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.jsdelivr.net',
+      ],
+      fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+      imgSrc:      ["'self'", 'data:', 'blob:', 'https:'],
+      connectSrc:  ["'self'", 'https://api.ethereal.email'],
+      frameSrc:    ["'none'"],
+      objectSrc:   ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge:            31536000,
+    includeSubDomains: true,
+    preload:           true,
+  },
+}));
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:5000')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: Origin "${origin}" not allowed`));
+  },
+  methods:        ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+  credentials:    true,
+  maxAge:         86400,
+}));
+app.options('*', cors());
+
+// ─── Trust Proxy (for correct IP behind nginx/load-balancer) ─────────────────
+app.set('trust proxy', 1);
+
+// ─── Body Parser ──────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// ─── Request ID (for tracing) ─────────────────────────────────────────────────
+app.use((req, _res, next) => {
+  req.id = require('crypto').randomUUID();
+  next();
+});
+
+// ─── HTTP Request Logger (Morgan → Winston) ───────────────────────────────────
+const accessLogStream = fs.createWriteStream(path.join(LOG_DIR, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogStream }));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+// ─── Static Files ─────────────────────────────────────────────────────────────
+// Versioned/hashed assets get long cache; index.html gets no-cache
+app.use(express.static(path.join(__dirname, '../frontend'), {
+  maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,
+  etag:         true,
+  lastModified: true,
+  setHeaders(res, filePath) {
+    // HTML: always revalidate (SPA entry points change)
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    // Fonts/icons: long cache
+    if (/\.(woff2?|ttf|eot|ico)$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  },
+}));
+
+// Serve uploaded files with strict security headers (VULN-07)
+app.use('/uploads', (req, res, next) => {
+  // SECURITY: Prevent browsers from executing uploaded files as scripts
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  next();
+}, express.static(UPLOAD_DIR, {
+  maxAge: '1d',
+  etag:   true,
+  // SECURITY: Never allow directory listing
+  index:  false,
+}));
+
+// ─── Rate Limiting (API-wide) ─────────────────────────────────────────────────
+app.use('/api', apiLimiter);
+
+// ─── Global Auth Middleware: Force Password Change Guard ──────────────────────
+// NOTE: Applied once here — not repeated on individual routes
+app.use('/api', requirePasswordChange);
+
+// ─── API Routes ───────────────────────────────────────────────────────────────
+app.use('/api/auth',          authRoutes);
+app.use('/api/users',         userRoutes);
+app.use('/api/tests',         testRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/media',         mediaRoutes);         // requirePasswordChange already applied globally
+app.use('/api/admin',         adminRoutes);
+app.use('/api/email',         emailRoutes);
+
+// ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/api/health', (_req, res) => {
+  res.json({
+    success:   true,
+    message:   'FUD Portal API is running',
+    version:   process.env.npm_package_version || '1.0.0',
+    env:       process.env.NODE_ENV || 'development',
+    uptime:    Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ─── Metrics / Monitoring Endpoint (internal — restrict in nginx) ─────────────
+app.get('/api/metrics', (_req, res) => {
+  const mem = process.memoryUsage();
+  res.json({
+    success: true,
+    data: {
+      uptime_seconds:  Math.floor(process.uptime()),
+      memory: {
+        rss_mb:        +(mem.rss / 1024 / 1024).toFixed(1),
+        heap_used_mb:  +(mem.heapUsed / 1024 / 1024).toFixed(1),
+        heap_total_mb: +(mem.heapTotal / 1024 / 1024).toFixed(1),
+        external_mb:   +(mem.external / 1024 / 1024).toFixed(1),
+      },
+      node_version:    process.version,
+      pid:             process.pid,
+      env:             process.env.NODE_ENV || 'development',
+      timestamp:       new Date().toISOString(),
+    },
+  });
+});
+
+// ─── 404 for unknown API routes ───────────────────────────────────────────────
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
+});
+
+// ─── Frontend SPA Fallback ────────────────────────────────────────────────────
+// SECURITY (VULN-15): Only serve SPA for non-API, non-upload routes
+// API routes must never fall through to index.html — they return 404 above
+app.get(/^(?!\/api\/|\/uploads\/).*$/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
+// ─── Global Error Handler (must be last) ─────────────────────────────────────
+app.use(errorHandler);
+
+// ─── Start Server ─────────────────────────────────────────────────────────────
+async function startServer() {
+  try {
+    await initialize();
+
+    const server = app.listen(PORT, () => {
+      logger.info(`╔══════════════════════════════════════════════╗`);
+      logger.info(`║   FUD Portal – Ahmaditech School             ║`);
+      logger.info(`║   Server running on http://localhost:${PORT}    ║`);
+      logger.info(`║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(28)}║`);
+      logger.info(`╚══════════════════════════════════════════════╝`);
+    });
+
+    // Graceful shutdown
+    function shutdown(signal) {
+      logger.info(`[Server] ${signal} received – shutting down gracefully`);
+      server.close(() => {
+        logger.info('[Server] HTTP server closed');
+        process.exit(0);
+      });
+      setTimeout(() => { logger.error('[Server] Forced exit'); process.exit(1); }, 10000);
+    }
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT',  () => shutdown('SIGINT'));
+
+    // Purge expired tokens every 6 hours
+    setInterval(async () => {
+      try {
+        const purged = await purgeExpiredTokens();
+        if (purged.tokens > 0 || purged.passwordResets > 0) {
+          logger.info(`[Purge] Removed ${purged.tokens} expired tokens, ${purged.passwordResets} reset tokens`);
+        }
+      } catch (err) {
+        logger.error('Token purge failed:', err.message);
+      }
+    }, 6 * 60 * 60 * 1000);
+
+    // Start email queue worker (polls every 30 seconds)
+    const emailService = require('./services/emailService');
+    emailService.startWorker(30000);
+
+    // Purge old sent emails daily
+    setInterval(async () => {
+      try {
+        const EmailQueue = require('./models/EmailQueue');
+        const purged = await EmailQueue.purgeSent(30);
+        if (purged > 0) logger.info(`[EmailPurge] Removed ${purged} old sent email records`);
+      } catch (err) { logger.error('Email purge failed:', err.message); }
+    }, 24 * 60 * 60 * 1000);
+
+  } catch (err) {
+    logger.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
+
+// ─── Handle Uncaught Errors ───────────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  // In production exit; in development just log (avoids crashing dev server on typos)
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Rejection:', reason);
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+});
+
+startServer();
+
+module.exports = app;

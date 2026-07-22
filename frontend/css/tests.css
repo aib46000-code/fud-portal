@@ -1,0 +1,42 @@
+/* tests.html – additional styles for quiz UI */
+
+/* Question blocks */
+.question-block {
+  background: rgba(6,11,20,0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg) var(--space-xl);
+  margin-bottom: var(--space-md);
+  transition: border-color var(--t-normal);
+}
+.question-block:hover { border-color: var(--border-medium); }
+.q-num {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--clr-primary); text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+}
+.q-text {
+  font-size: 0.95rem; font-weight: 500; color: var(--txt-100);
+  margin-bottom: var(--space-md); line-height: 1.6;
+}
+.q-options { display: flex; flex-direction: column; gap: var(--space-sm); }
+.q-option {
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: 11px var(--space-lg); border-radius: var(--radius-md);
+  background: rgba(6,11,20,0.3); border: 1px solid var(--border-subtle);
+  cursor: pointer; transition: all var(--t-fast); font-size: 0.9rem;
+}
+.q-option:hover { background: rgba(45,212,191,0.07); border-color: var(--border-medium); }
+.q-option input[type=radio] { accent-color: var(--clr-primary); width: 16px; height: 16px; flex-shrink: 0; }
+.q-option:has(input:checked) {
+  background: rgba(45,212,191,0.1); border-color: var(--clr-primary);
+  color: var(--clr-primary);
+}
+
+/* Test modal full screen */
+#modal-take-test .modal { max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; }
+#modal-take-test .modal-body { overflow-y: auto; flex: 1; }
+.test-timer {
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
+}

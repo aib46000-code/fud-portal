@@ -1,0 +1,83 @@
+# ────────────────────────────────────────────────────────────────────────────
+# Render.com — FUD Portal Deployment Config
+# Place this file at: render.yaml (project root)
+# Deploy: https://dashboard.render.com → New → Web Service → Import from repo
+# Docs:   https://render.com/docs/blueprint-spec
+# ────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: fud-portal
+    runtime: node
+    region: oregon          # or: frankfurt, singapore, ohio, virginia
+    plan: starter           # free / starter / standard / pro
+    branch: main
+
+    # Build command
+    buildCommand: npm ci --omit=dev
+
+    # Start command
+    startCommand: node backend/server.js
+
+    # Health check
+    healthCheckPath: /api/health
+
+    # Auto-deploy on push
+    autoDeploy: true
+
+    # Environment variables (set secrets in Render dashboard, not here)
+    envVars:
+      - key:   NODE_ENV
+        value: production
+
+      - key:   PORT
+        value: "5000"
+
+      # DB stored on Render Disk (persistent)
+      - key:   DB_PATH
+        value: /var/data/fud_portal.db
+
+      - key:   UPLOAD_DIR
+        value: /var/data/uploads
+
+      - key:   LOG_DIR
+        value: /var/data/logs
+
+      - key:   LOG_LEVEL
+        value: warn
+
+      # SECRETS — add these in Render Dashboard → Environment
+      - key:   JWT_SECRET
+        sync:  false           # marks as secret — set in dashboard
+
+      - key:   JWT_REFRESH_SECRET
+        sync:  false
+
+      - key:   ADMIN_EMAIL
+        sync:  false
+
+      - key:   ADMIN_PASSWORD
+        sync:  false
+
+      - key:   EMAIL_USER
+        sync:  false
+
+      - key:   EMAIL_PASS
+        sync:  false
+
+      - key:   FRONTEND_URL
+        sync:  false           # e.g. https://fud-portal.onrender.com
+
+    # Persistent disk (required for SQLite + uploads)
+    disk:
+      name:       fud-portal-data
+      mountPath:  /var/data
+      sizeGB:     5             # increase as needed
+
+    # Build environment
+    buildFilter:
+      paths:
+        - backend/**
+        - frontend/**
+        - package.json
+        - package-lock.json

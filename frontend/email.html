@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Email Management – FUD Portal</title>
+  <meta name="description" content="Manage bulk emails, view the email queue, and configure notifications for the FUD Portal.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --email-primary: #6366f1;
+      --email-secondary: #0ea5e9;
+      --email-success: #22c55e;
+      --email-warning: #f59e0b;
+      --email-danger: #ef4444;
+    }
+
+    /* ── Page layout ───────────────────────────────────── */
+    .email-page { display: flex; flex-direction: column; gap: 28px; }
+
+    /* ── Stats bar ─────────────────────────────────────── */
+    .email-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+    .email-stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 18px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .email-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+    .email-stat-icon { font-size: 22px; width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .email-stat-card.pending  .email-stat-icon { background:rgba(99,102,241,.15); color:#6366f1; }
+    .email-stat-card.sent     .email-stat-icon { background:rgba(34,197,94,.15); color:#22c55e; }
+    .email-stat-card.failed   .email-stat-icon { background:rgba(239,68,68,.15); color:#ef4444; }
+    .email-stat-card.total    .email-stat-icon { background:rgba(14,165,233,.15); color:#0ea5e9; }
+    .email-stat-val { font-size: 28px; font-weight: 900; color: var(--text-primary); }
+    .email-stat-lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Section cards ─────────────────────────────────── */
+    .email-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .email-card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--card-bg);
+    }
+    .email-card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .email-card-title i { color: var(--email-primary); font-size: 17px; }
+    .email-card-body { padding: 24px; }
+
+    /* ── Compose form ──────────────────────────────────── */
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media(max-width:640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .form-input, .form-select, .form-textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--email-primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+    }
+    .form-textarea { resize: vertical; min-height: 120px; }
+
+    /* Rich text toolbar */
+    .rich-toolbar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      background: var(--sidebar-bg);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      padding: 8px 10px;
+    }
+    .rich-btn {
+      border: none; background: transparent;
+      color: var(--text-secondary);
+      width: 30px; height: 30px; border-radius: 6px;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .rich-btn:hover { background: var(--border); color: var(--text-primary); }
+    .rich-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; align-self: center; }
+    #compose-body {
+      border-radius: 0 0 10px 10px;
+      border: 1px solid var(--border);
+      min-height: 180px;
+      padding: 14px;
+      outline: none;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      line-height: 1.6;
+    }
+    #compose-body:focus { box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+
+    /* Recipient target pills */
+    .target-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .target-pill {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .target-pill:hover { border-color: var(--email-primary); color: var(--email-primary); }
+    .target-pill.active { border-color: var(--email-primary); background: rgba(99,102,241,.1); color: var(--email-primary); }
+
+    /* ── Queue table ───────────────────────────────────── */
+    .queue-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .filter-select { background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+    .search-input { background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; color: var(--text-primary); flex: 1; min-width: 160px; }
+
+    .queue-table-wrap { overflow-x: auto; }
+    .queue-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .queue-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted);
+      border-bottom: 2px solid var(--border); background: var(--sidebar-bg); }
+    .queue-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: middle; }
+    .queue-table tr:last-child td { border-bottom: none; }
+    .queue-table tr:hover td { background: rgba(99,102,241,.03); }
+
+    /* Status badges */
+    .badge-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .badge-pending  { background:rgba(99,102,241,.15); color:#6366f1; }
+    .badge-sending  { background:rgba(245,158,11,.15); color:#d97706; }
+    .badge-sent     { background:rgba(34,197,94,.15);  color:#16a34a; }
+    .badge-failed   { background:rgba(239,68,68,.15);  color:#dc2626; }
+
+    /* Action buttons */
+    .btn-icon { width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 13px;
+      transition: background .15s, transform .1s; }
+    .btn-icon:hover { transform: scale(1.1); }
+    .btn-retry  { background: rgba(99,102,241,.1); color: #6366f1; }
+    .btn-view   { background: rgba(14,165,233,.1); color: #0ea5e9; }
+    .btn-danger-sm { background: rgba(239,68,68,.1); color: #ef4444; }
+
+    /* ── Template preview grid ─────────────────────────── */
+    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .template-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+    }
+    .template-card:hover { border-color: var(--email-primary); background: rgba(99,102,241,.05); transform: translateY(-2px); }
+    .template-icon { font-size: 28px; margin-bottom: 10px; }
+    .template-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .template-desc { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Progress bar ──────────────────────────────────── */
+    .send-progress { display: none; }
+    .send-progress.show { display: block; }
+    .progress-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg,#6366f1,#0ea5e9); border-radius: 3px;
+      transition: width .4s; width: 0; }
+
+    /* ── SMTP config form ──────────────────────────────── */
+    .smtp-status { display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    .smtp-status.ethereal { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3); color: #92400e; }
+    .smtp-status.live { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); color: #15803d; }
+
+    /* ── Preview modal ─────────────────────────────────── */
+    .preview-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .preview-modal {
+      background: var(--card-bg);
+      border-radius: 16px;
+      width: 100%; max-width: 700px;
+      max-height: 85vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+    .preview-modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; }
+    .preview-modal-body { flex: 1; overflow-y: auto; padding: 0; }
+    .preview-iframe { width: 100%; height: 500px; border: none; }
+
+    /* ── Pagination ────────────────────────────────────── */
+    .pagination { display: flex; align-items: center; gap: 8px; justify-content: center; padding-top: 16px; flex-wrap: wrap; }
+    .page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card-bg); color: var(--text-secondary); font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+    .page-btn:hover, .page-btn.active { background: var(--email-primary); color: #fff; border-color: var(--email-primary); }
+    .page-info { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Tabs ──────────────────────────────────────────── */
+    .tab-nav { display: flex; gap: 4px; border-bottom: 2px solid var(--border); }
+    .tab-btn { padding: 10px 20px; background: none; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; font-size: 14px; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; transition: color .2s, border-color .2s; display: flex; align-items: center; gap: 6px; }
+    .tab-btn.active { color: var(--email-primary); border-bottom-color: var(--email-primary); }
+    .tab-btn .tab-badge { background: var(--email-primary); color: #fff; font-size: 10px;
+      width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Empty state ───────────────────────────────────── */
+    .queue-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .queue-empty i { font-size: 40px; margin-bottom: 12px; opacity: .4; display: block; }
+
+    .hidden { display: none !important; }
+  </style>
+  <link rel="canonical" href="https://your-domain.com/email.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/email.html">
+  <meta property="og:title"       content="Email Settings – FUD Portal">
+  <meta property="og:description" content="Configure email notifications and settings for FUD Portal.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Email Settings – FUD Portal">
+  <meta name="twitter:description" content="Configure email notifications and settings for FUD Portal.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon">FUD</div>
+        <div class="logo-text">
+          <div class="logo-name">FUD Portal</div>
+          <div class="logo-sub">Ahmaditech School</div>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="admin.html"     class="nav-item"><i class="fas fa-user-shield nav-item-icon"></i><span class="nav-item-text">Admin Panel</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-photo-video nav-item-icon"></i><span class="nav-item-text">Media Library</span></a>
+      <a href="email.html"     class="nav-item active"><i class="fas fa-envelope nav-item-icon"></i><span class="nav-item-text">Email</span></a>
+      <a href="profile.html"   class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-user-name">Loading...</div>
+        <div class="sidebar-user-role" id="sidebar-user-role">—</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon-only" id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Email Management</h1>
+          <p class="page-subtitle">Compose, schedule & track all portal emails</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" id="btn-compose" onclick="showTab('tab-compose')">
+          <i class="fas fa-pen"></i> Compose Email
+        </button>
+      </div>
+    </div>
+
+    <!-- SMTP Status Banner -->
+    <div id="smtp-banner" class="smtp-status ethereal" style="margin-bottom:8px">
+      <i class="fas fa-flask"></i>
+      <span id="smtp-banner-text">Using Ethereal test SMTP — emails are simulated. Configure SMTP in <code>.env</code> for real delivery.</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="email-stats" id="email-stats">
+      <div class="email-stat-card pending">
+        <div class="email-stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="email-stat-val" id="stat-pending">—</div>
+        <div class="email-stat-lbl">Pending</div>
+      </div>
+      <div class="email-stat-card sent">
+        <div class="email-stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="email-stat-val" id="stat-sent">—</div>
+        <div class="email-stat-lbl">Sent</div>
+      </div>
+      <div class="email-stat-card failed">
+        <div class="email-stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <div class="email-stat-val" id="stat-failed">—</div>
+        <div class="email-stat-lbl">Failed</div>
+      </div>
+      <div class="email-stat-card total">
+        <div class="email-stat-icon"><i class="fas fa-envelope"></i></div>
+        <div class="email-stat-val" id="stat-total">—</div>
+        <div class="email-stat-lbl">All Time</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="email-page">
+      <div class="email-card">
+        <div class="email-card-body" style="padding-top:0;padding-bottom:0">
+          <div class="tab-nav" id="email-tabs">
+            <button class="tab-btn active" id="tab-btn-compose"  onclick="showTab('tab-compose')"> <i class="fas fa-pen"></i> Compose</button>
+            <button class="tab-btn"        id="tab-btn-queue"    onclick="showTab('tab-queue')">   <i class="fas fa-list"></i> Queue <span class="tab-badge" id="pending-badge">0</span></button>
+            <button class="tab-btn"        id="tab-btn-templates" onclick="showTab('tab-templates')"><i class="fas fa-palette"></i> Templates</button>
+          </div>
+        </div>
+
+        <!-- ── TAB: COMPOSE ────────────────────────────────── -->
+        <div class="tab-content active" id="tab-compose">
+          <div class="email-card-body">
+            <form id="compose-form">
+              <div style="display:grid;gap:20px">
+
+                <!-- Recipients -->
+                <div class="form-group">
+                  <label class="form-label"><i class="fas fa-users" style="color:#6366f1"></i> Send To</label>
+                  <div class="target-pills" id="target-pills">
+                    <label class="target-pill active" data-val="all">
+                      <i class="fas fa-globe-africa"></i> All Users
+                    </label>
+                    <label class="target-pill" data-val="students">
+                      <i class="fas fa-user-graduate"></i> Students Only
+                    </label>
+                    <label class="target-pill" data-val="admins">
+                      <i class="fas fa-user-shield"></i> Admins Only
+                    </label>
+                    <label class="target-pill" data-val="custom">
+                      <i class="fas fa-user-tag"></i> Custom
+                    </label>
+                  </div>
+                  <input type="hidden" id="compose-target" value="all">
+                </div>
+
+                <!-- Custom recipient input -->
+                <div class="form-group hidden" id="custom-recipients-wrap">
+                  <label class="form-label">Custom Email Addresses <span style="color:var(--text-muted);font-weight:400">(comma-separated)</span></label>
+                  <input type="text" class="form-input" id="custom-emails" placeholder="email1@fud.edu.ng, email2@fud.edu.ng">
+                </div>
+
+                <!-- Subject + Category -->
+                <div class="form-grid-2">
+                  <div class="form-group" style="grid-column:1/3">
+                    <label class="form-label"><i class="fas fa-heading" style="color:#6366f1"></i> Subject *</label>
+                    <input type="text" class="form-input" id="compose-subject" placeholder="Enter email subject line…" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label"><i class="fas fa-tag" style="color:#6366f1"></i> Category</label>
+                    <select class="form-select" id="compose-category">
+                      <option value="announcement">📢 Announcement</option>
+                      <option value="info">ℹ️ Information</option>
+                      <option value="warning">⚠️ Warning</option>
+                      <option value="success">✅ Success</option>
+                      <option value="general">📣 General</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label"><i class="fas fa-link" style="color:#6366f1"></i> CTA Button Text (optional)</label>
+                    <input type="text" class="form-input" id="compose-cta-text" placeholder="e.g. Visit Portal">
+                  </div>
+                  <div class="form-group" style="grid-column:2/3">
+                    <label class="form-label"><i class="fas fa-external-link-alt" style="color:#6366f1"></i> CTA URL (optional)</label>
+                    <input type="url" class="form-input" id="compose-cta-url" placeholder="https://…">
+                  </div>
+                </div>
+
+                <!-- Message body -->
+                <div class="form-group">
+                  <label class="form-label"><i class="fas fa-align-left" style="color:#6366f1"></i> Message *</label>
+                  <div class="rich-toolbar">
+                    <button type="button" class="rich-btn" onclick="fmt('bold')"        title="Bold"><i class="fas fa-bold"></i></button>
+                    <button type="button" class="rich-btn" onclick="fmt('italic')"      title="Italic"><i class="fas fa-italic"></i></button>
+                    <button type="button" class="rich-btn" onclick="fmt('underline')"   title="Underline"><i class="fas fa-underline"></i></button>
+                    <div class="rich-sep"></div>
+                    <button type="button" class="rich-btn" onclick="fmtBlock('h2')"     title="Heading"><i class="fas fa-heading"></i></button>
+                    <button type="button" class="rich-btn" onclick="fmt('insertUnorderedList')" title="List"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" class="rich-btn" onclick="fmt('insertOrderedList')"   title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                    <div class="rich-sep"></div>
+                    <button type="button" class="rich-btn" onclick="fmt('justifyLeft')"   title="Align Left"><i class="fas fa-align-left"></i></button>
+                    <button type="button" class="rich-btn" onclick="fmt('justifyCenter')" title="Center"><i class="fas fa-align-center"></i></button>
+                    <div class="rich-sep"></div>
+                    <button type="button" class="rich-btn" onclick="clearBody()" title="Clear"><i class="fas fa-eraser"></i></button>
+                  </div>
+                  <div id="compose-body" contenteditable="true" spellcheck="true"></div>
+                </div>
+
+                <!-- Send progress -->
+                <div class="send-progress" id="send-progress">
+                  <div style="font-size:13px;color:var(--text-muted)" id="send-progress-text">Queueing emails…</div>
+                  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="send-bar" style="width:30%"></div></div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                  <button type="submit" class="btn btn-primary" id="btn-send" style="min-width:160px">
+                    <i class="fas fa-paper-plane"></i> Send Email
+                  </button>
+                  <button type="button" class="btn btn-secondary" onclick="previewCompose()">
+                    <i class="fas fa-eye"></i> Preview
+                  </button>
+                  <button type="button" class="btn btn-secondary" onclick="resetCompose()">
+                    <i class="fas fa-undo"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── TAB: QUEUE ──────────────────────────────────── -->
+        <div class="tab-content" id="tab-queue">
+          <div class="email-card-body">
+            <!-- Toolbar -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+              <div class="queue-filters">
+                <select class="filter-select" id="filter-status" onchange="loadQueue()">
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="sending">Sending</option>
+                  <option value="sent">Sent</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <select class="filter-select" id="filter-type" onchange="loadQueue()">
+                  <option value="">All Types</option>
+                  <option value="welcome">Welcome</option>
+                  <option value="password_reset">Password Reset</option>
+                  <option value="exam_notification">Exam Notification</option>
+                  <option value="result">Result</option>
+                  <option value="security">Security</option>
+                  <option value="bulk">Bulk</option>
+                  <option value="general">General</option>
+                </select>
+                <input type="search" class="search-input" id="queue-search" placeholder="Search email/subject…" oninput="debounceSearch()">
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" onclick="retryAllFailed()"><i class="fas fa-redo"></i> Retry Failed</button>
+                <button class="btn btn-secondary" onclick="processQueue()"><i class="fas fa-bolt"></i> Flush Queue</button>
+                <button class="btn btn-secondary" onclick="loadQueue()"><i class="fas fa-sync"></i></button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="queue-table-wrap">
+              <table class="queue-table">
+                <thead>
+                  <tr>
+                    <th>To</th>
+                    <th>Subject</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Retries</th>
+                    <th>Sent At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="queue-tbody">
+                  <tr><td colspan="7" class="queue-empty"><i class="fas fa-inbox"></i>Loading queue…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="queue-pagination"></div>
+          </div>
+        </div>
+
+        <!-- ── TAB: TEMPLATES ──────────────────────────────── -->
+        <div class="tab-content" id="tab-templates">
+          <div class="email-card-body">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px">Click any template to preview the rendered HTML email in a new view.</p>
+            <div class="template-grid" id="template-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /.email-page -->
+  </main>
+</div>
+
+<!-- Preview Modal -->
+<div class="preview-modal-overlay hidden" id="preview-overlay" onclick="closePreview(event)">
+  <div class="preview-modal" onclick="event.stopPropagation()">
+    <div class="preview-modal-header">
+      <span style="font-weight:700;font-size:15px;color:var(--text-primary)" id="preview-title">Email Preview</span>
+      <button class="btn btn-secondary" onclick="closePreview()" style="padding:6px 14px;font-size:13px"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="preview-modal-body">
+      <iframe class="preview-iframe" id="preview-iframe" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+'use strict';
+
+// ── Auth guard ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  if (!Auth.requireRole(['admin','superadmin','staff'])) return;
+  initSidebar();
+  renderSidebarUser();
+  updateUnreadBadge();
+  await loadStats();
+  await loadQueue();
+  renderTemplates();
+});
+
+// ── Templates list ─────────────────────────────────────────────────
+const TEMPLATES = [
+  { key:'welcome',          icon:'🎉', name:'Welcome Email',       desc:'Sent on student/admin registration' },
+  { key:'password_reset',   icon:'🔐', name:'Password Reset',      desc:'Sent when user requests password reset' },
+  { key:'exam',             icon:'📝', name:'Exam Notification',   desc:'Sent when an exam is published' },
+  { key:'result',           icon:'📊', name:'Result (Pass)',        desc:'Exam result – student passed' },
+  { key:'result_fail',      icon:'😔', name:'Result (Fail)',        desc:'Exam result – student failed' },
+  { key:'announcement',     icon:'📢', name:'Announcement',        desc:'General bulk announcement email' },
+  { key:'password_changed', icon:'🔒', name:'Password Changed',    desc:'Security notification after password change' },
+];
+
+function renderTemplates() {
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = TEMPLATES.map(t => `
+    <div class="template-card" onclick="previewTemplate('${t.key}','${t.name}')">
+      <div class="template-icon">${t.icon}</div>
+      <div class="template-name">${t.name}</div>
+      <div class="template-desc">${t.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ── Load stats ─────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await API.get('/email/stats');
+    const s = r.data;
+    document.getElementById('stat-pending').textContent = s.pending;
+    document.getElementById('stat-sent').textContent    = s.sent;
+    document.getElementById('stat-failed').textContent  = s.failed;
+    document.getElementById('stat-total').textContent   = s.total;
+    document.getElementById('pending-badge').textContent = s.pending;
+
+    // Detect Ethereal vs real SMTP
+    const isReal = !!(document.cookie.includes('smtp_live') || s.smtp_live);
+    const banner = document.getElementById('smtp-banner');
+    // Keep ethereal banner by default (we can't detect from client easily)
+  } catch(e) {}
+}
+
+// ── Queue ──────────────────────────────────────────────────────────
+let queuePage = 1;
+const queueLimit = 20;
+let searchTimer = null;
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { queuePage = 1; loadQueue(); }, 400);
+}
+
+async function loadQueue() {
+  const status  = document.getElementById('filter-status').value;
+  const type    = document.getElementById('filter-type').value;
+  const search  = document.getElementById('queue-search').value.trim();
+  const tbody   = document.getElementById('queue-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="queue-empty"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+  try {
+    const params = { page: queuePage, limit: queueLimit };
+    if (status) params.status = status;
+    if (type)   params.type   = type;
+    if (search) params.search = search;
+
+    const r    = await API.get('/email/queue?' + new URLSearchParams(params));
+    const data = r.data;
+
+    if (!data.rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="queue-empty"><i class="fas fa-inbox"></i><br>No emails found.</td></tr>';
+      document.getElementById('queue-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.rows.map(row => `
+      <tr>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.to_address}">${row.to_address}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.subject}">${escHtml(row.subject)}</td>
+        <td><span class="badge badge-info" style="font-size:11px">${row.type}</span></td>
+        <td><span class="badge-status badge-${row.status}">
+          <i class="fas fa-${row.status==='sent'?'check':row.status==='failed'?'times':row.status==='sending'?'spinner fa-spin':'clock'}"></i>
+          ${row.status}
+        </span></td>
+        <td style="text-align:center">${row.retry_count}/${row.max_retries}</td>
+        <td>${row.sent_at ? timeAgo(row.sent_at) : '—'}</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn-icon btn-view"   onclick="viewJob(${row.id})"   title="Details"><i class="fas fa-eye"></i></button>
+            ${row.status==='failed'?`<button class="btn-icon btn-retry" onclick="retryJob(${row.id})" title="Retry"><i class="fas fa-redo"></i></button>`:''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination(data.total, data.page, data.limit);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="queue-empty"><i class="fas fa-exclamation-circle"></i><br>Failed to load queue.</td></tr>';
+    Toast.error('Failed to load email queue');
+  }
+}
+
+function renderPagination(total, page, limit) {
+  const pages = Math.ceil(total / limit);
+  const p = document.getElementById('queue-pagination');
+  if (pages <= 1) { p.innerHTML = ''; return; }
+
+  let html = `<span class="page-info">${total} emails</span>`;
+  if (page > 1) html += `<button class="page-btn" onclick="changePage(${page-1})"><i class="fas fa-chevron-left"></i></button>`;
+  for (let i = Math.max(1,page-2); i <= Math.min(pages, page+2); i++) {
+    html += `<button class="page-btn ${i===page?'active':''}" onclick="changePage(${i})">${i}</button>`;
+  }
+  if (page < pages) html += `<button class="page-btn" onclick="changePage(${page+1})"><i class="fas fa-chevron-right"></i></button>`;
+  p.innerHTML = html;
+}
+
+function changePage(p) { queuePage = p; loadQueue(); }
+
+// ── View job detail ────────────────────────────────────────────────
+async function viewJob(id) {
+  try {
+    const r   = await API.get(`/email/queue/${id}`);
+    const job = r.data;
+    document.getElementById('preview-title').textContent = `Job #${id} — ${job.to_address}`;
+    const iframe = document.getElementById('preview-iframe');
+    iframe.srcdoc = job.html_body || '<p style="padding:20px;font-family:sans-serif;color:#64748b">No HTML body.</p>';
+    document.getElementById('preview-overlay').classList.remove('hidden');
+  } catch(e) { Toast.error('Failed to load job'); }
+}
+
+// ── Retry job ──────────────────────────────────────────────────────
+async function retryJob(id) {
+  try {
+    await API.post(`/email/retry/${id}`);
+    Toast.success('Email re-queued');
+    loadQueue(); loadStats();
+  } catch(e) { Toast.error('Retry failed'); }
+}
+
+async function retryAllFailed() {
+  try {
+    const r = await API.post('/email/retry-all');
+    Toast.success(`${r.data.retried} emails re-queued`);
+    loadQueue(); loadStats();
+  } catch(e) { Toast.error('Retry all failed: ' + e.message); }
+}
+
+async function processQueue() {
+  try {
+    await API.post('/email/process-queue');
+    Toast.info('Queue flush triggered');
+    setTimeout(() => { loadQueue(); loadStats(); }, 1500);
+  } catch(e) { Toast.error('Queue flush failed'); }
+}
+
+// ── Compose ────────────────────────────────────────────────────────
+// Target pills
+document.getElementById('target-pills')?.addEventListener('click', e => {
+  const pill = e.target.closest('[data-val]');
+  if (!pill) return;
+  document.querySelectorAll('.target-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  const val = pill.dataset.val;
+  document.getElementById('compose-target').value = val;
+  const customWrap = document.getElementById('custom-recipients-wrap');
+  customWrap.classList.toggle('hidden', val !== 'custom');
+});
+
+function fmt(cmd) {
+  document.getElementById('compose-body').focus();
+  document.execCommand(cmd, false, null);
+}
+function fmtBlock(tag) {
+  document.getElementById('compose-body').focus();
+  document.execCommand('formatBlock', false, tag);
+}
+function clearBody() {
+  document.getElementById('compose-body').innerHTML = '';
+}
+
+document.getElementById('compose-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const subject  = document.getElementById('compose-subject').value.trim();
+  const body     = document.getElementById('compose-body').innerHTML.trim();
+  const target   = document.getElementById('compose-target').value;
+  const category = document.getElementById('compose-category').value;
+  const ctaText  = document.getElementById('compose-cta-text').value.trim();
+  const ctaUrl   = document.getElementById('compose-cta-url').value.trim();
+
+  if (!subject) { Toast.warning('Subject is required'); return; }
+  if (!body || body === '<br>') { Toast.warning('Message body is required'); return; }
+
+  const progress  = document.getElementById('send-progress');
+  const bar       = document.getElementById('send-bar');
+  const btnSend   = document.getElementById('btn-send');
+  const statusTxt = document.getElementById('send-progress-text');
+
+  progress.classList.add('show');
+  bar.style.width = '20%';
+  statusTxt.textContent = 'Queuing emails…';
+  btnSend.disabled = true;
+
+  try {
+    const payload = { subject, message_html: body, target, category };
+    if (ctaText) payload.cta_text = ctaText;
+    if (ctaUrl)  payload.cta_url  = ctaUrl;
+    if (target === 'custom') {
+      const emails = document.getElementById('custom-emails').value.split(',').map(e => e.trim()).filter(Boolean);
+      if (!emails.length) { Toast.warning('Enter at least one email address'); btnSend.disabled = false; progress.classList.remove('show'); return; }
+      payload.target    = 'custom';
+      payload.user_ids  = []; // will be resolved by email on server
+      // For custom, use send-one for each or bulk
+    }
+
+    bar.style.width = '60%';
+    const r = await API.post('/email/send', payload);
+    bar.style.width = '100%';
+    statusTxt.textContent = `✅ ${r.data.queued} email(s) queued!`;
+    Toast.success(`${r.data.queued} email(s) queued for delivery`);
+
+    setTimeout(() => {
+      progress.classList.remove('show');
+      bar.style.width = '0';
+      resetCompose();
+      showTab('tab-queue');
+      loadQueue(); loadStats();
+    }, 1800);
+
+  } catch(err) {
+    bar.style.width = '0';
+    statusTxt.textContent = '';
+    progress.classList.remove('show');
+    Toast.error(err.message || 'Send failed');
+  } finally {
+    btnSend.disabled = false;
+  }
+});
+
+function resetCompose() {
+  document.getElementById('compose-form').reset();
+  document.getElementById('compose-body').innerHTML = '';
+  document.querySelectorAll('.target-pill').forEach((p,i) => p.classList.toggle('active', i===0));
+  document.getElementById('compose-target').value = 'all';
+  document.getElementById('custom-recipients-wrap').classList.add('hidden');
+}
+
+async function previewCompose() {
+  const subject = document.getElementById('compose-subject').value.trim() || 'Preview';
+  const body    = document.getElementById('compose-body').innerHTML.trim();
+  if (!body) { Toast.warning('Nothing to preview'); return; }
+  document.getElementById('preview-title').textContent = 'Compose Preview — ' + subject;
+  document.getElementById('preview-iframe').srcdoc = body;
+  document.getElementById('preview-overlay').classList.remove('hidden');
+}
+
+// ── Template preview ───────────────────────────────────────────────
+async function previewTemplate(key, name) {
+  try {
+    const res = await fetch(`/api/email/preview/${key}`, {
+      headers: { Authorization: 'Bearer ' + Auth.getAccess() },
+    });
+    if (!res.ok) { Toast.error('Template not found'); return; }
+    const html = await res.text();
+    document.getElementById('preview-title').textContent = name + ' — Preview';
+    document.getElementById('preview-iframe').srcdoc = html;
+    document.getElementById('preview-overlay').classList.remove('hidden');
+  } catch(e) { Toast.error('Preview failed'); }
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  document.getElementById('tab-btn-' + id.replace('tab-',''))?.classList.add('active');
+  if (id === 'tab-queue') { queuePage = 1; loadQueue(); }
+}
+
+// ── Preview modal ──────────────────────────────────────────────────
+function closePreview(e) {
+  if (!e || e.target === document.getElementById('preview-overlay')) {
+    document.getElementById('preview-overlay').classList.add('hidden');
+    document.getElementById('preview-iframe').srcdoc = 'about:blank';
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-refresh stats every 30s
+setInterval(() => { loadStats(); if (document.getElementById('tab-queue').classList.contains('active')) loadQueue(); }, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Management – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="FUD Portal CBT Test Management – create, edit, publish tests and manage questions.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* ── Question Builder ───────────────────────────────────── */
+    .q-card {
+      background: rgba(6,11,20,.55); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: .75rem;
+      position: relative; transition: border-color var(--t-fast);
+    }
+    .q-card:hover { border-color: rgba(45,212,191,.25); }
+    .q-card-header {
+      display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem;
+    }
+    .q-num {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--clr-primary-dark);
+      color: var(--clr-primary); font-weight: 700; font-size: .8rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .q-remove { margin-left: auto; }
+    .option-row {
+      display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem;
+    }
+    .option-label {
+      width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: rgba(45,212,191,.1); color: var(--clr-primary); border: 1px solid rgba(45,212,191,.2);
+    }
+    .option-label.correct-label {
+      background: rgba(52,211,153,.15); color: var(--clr-success); border-color: rgba(52,211,153,.3);
+    }
+    .marks-badge {
+      display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem;
+      color: var(--txt-400); background: rgba(45,212,191,.07); border-radius: var(--radius-pill);
+      padding: 3px 10px; border: 1px solid var(--border-subtle);
+    }
+    /* ── Test card (list view) ──────────────────────────────── */
+    .test-card {
+      background: var(--card-bg); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); padding: 1.25rem;
+      transition: border-color var(--t-fast), transform var(--t-fast);
+    }
+    .test-card:hover { border-color: rgba(45,212,191,.3); transform: translateY(-2px); }
+    .test-card-header { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .75rem; }
+    .test-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .test-meta { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; }
+    .test-actions { display: flex; gap: .5rem; flex-wrap: wrap; border-top: 1px solid var(--border-subtle); padding-top: .75rem; }
+    /* Stats bar */
+    .tests-stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .tests-stat { background: var(--card-bg); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: .9rem 1.2rem; text-align: center; }
+    .tests-stat-val { font-size: 1.8rem; font-weight: 800; color: var(--txt-100); }
+    .tests-stat-lab { font-size: .78rem; color: var(--txt-muted); margin-top: .2rem; }
+    @media(max-width:640px) { .tests-stats-bar { grid-template-columns: 1fr 1fr; } }
+    /* Results table */
+    .result-pill {
+      display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill);
+      font-size: .75rem; font-weight: 700;
+    }
+    .result-pill.pass { background: rgba(52,211,153,.15); color: var(--clr-success); }
+    .result-pill.fail { background: rgba(248,113,113,.12); color: var(--clr-danger); }
+    /* Progress bar */
+    .pct-bar { width: 80px; height: 6px; background: var(--bg-600); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .pct-fill { height: 100%; border-radius: 3px; }
+  </style>
+  <link rel="canonical" href="https://your-domain.com/tests.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/tests.html">
+  <meta property="og:title"       content="CBT Tests – FUD Portal">
+  <meta property="og:description" content="Browse and manage Computer-Based Tests on FUD Portal.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="CBT Tests – FUD Portal">
+  <meta name="twitter:description" content="Browse and manage Computer-Based Tests on FUD Portal.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div><div class="sidebar-title">FUD Portal</div><div class="sidebar-subtitle">CBT Management</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-home nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+
+      <div class="nav-section-label">CBT System</div>
+      <a href="#" class="nav-item active" data-tab="tests" onclick="switchView('tests',this)">
+        <i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">All Tests</span>
+      </a>
+      <a href="#" class="nav-item admin-only" data-tab="results-admin" onclick="switchView('results-admin',this)">
+        <i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">Results Overview</span>
+      </a>
+
+      <div class="nav-section-label">Student</div>
+      <a href="#" class="nav-item student-only" data-tab="available" onclick="switchView('available',this)">
+        <i class="fas fa-play-circle nav-item-icon"></i><span class="nav-item-text">Available Tests</span>
+      </a>
+      <a href="#" class="nav-item" data-tab="my-results" onclick="switchView('my-results',this)">
+        <i class="fas fa-trophy nav-item-icon"></i><span class="nav-item-text">My Results</span>
+      </a>
+
+      <div class="nav-section-label">Portal</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span></a>
+      <a href="admin.html" class="nav-item admin-only"><i class="fas fa-cogs nav-item-icon"></i><span class="nav-item-text">Admin Panel</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">User</div>
+          <div class="user-role" id="sidebar-user-role">student</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout"
+        style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="topbar-title" id="topbar-title">CBT Tests</div>
+        <div class="topbar-subtitle" id="topbar-subtitle">Manage all tests and questions</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-primary admin-only" id="btn-create-test" onclick="openTestModal()">
+          <i class="fas fa-plus"></i> <span class="hide-mobile">New Test</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ═══════════ VIEW: TESTS LIST ═══════════ -->
+      <section class="tab-panel active" id="view-tests">
+        <!-- Stat Cards -->
+        <div class="tests-stats-bar admin-only" id="stat-bar">
+          <div class="tests-stat"><div class="tests-stat-val" id="st-total">—</div><div class="tests-stat-lab">Total Tests</div></div>
+          <div class="tests-stat"><div class="tests-stat-val" id="st-published" style="color:var(--clr-success)">—</div><div class="tests-stat-lab">Published</div></div>
+          <div class="tests-stat"><div class="tests-stat-val" id="st-subjects" style="color:var(--clr-accent)">—</div><div class="tests-stat-lab">Subjects</div></div>
+          <div class="tests-stat"><div class="tests-stat-val" id="st-active" style="color:var(--clr-warning)">—</div><div class="tests-stat-lab">Active</div></div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="admin-toolbar mb-lg">
+          <div class="toolbar-left">
+            <div class="search-box" style="width:240px">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="test-search" placeholder="Search tests…" oninput="debounce(loadTests,400)()">
+            </div>
+            <select class="form-select admin-only" id="filter-published" style="width:140px" onchange="loadTests()">
+              <option value="">All Status</option>
+              <option value="1">Published</option>
+              <option value="0">Draft</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-sm btn-primary admin-only" onclick="openTestModal()">
+              <i class="fas fa-plus"></i> New Test
+            </button>
+          </div>
+        </div>
+
+        <div id="tests-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem">
+          <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        </div>
+        <div class="pagination-bar" id="test-pagination"></div>
+      </section>
+
+      <!-- ═══════════ VIEW: AVAILABLE TESTS (Student) ═══════════ -->
+      <section class="tab-panel" id="view-available">
+        <div id="avail-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem">
+          <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        </div>
+      </section>
+
+      <!-- ═══════════ VIEW: MY RESULTS ═══════════ -->
+      <section class="tab-panel" id="view-my-results">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title"><i class="fas fa-trophy" style="color:var(--clr-warning)"></i> My Test Results</div>
+            <div class="card-subtitle" id="my-results-count">—</div></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Test</th><th>Subject</th><th>Score</th><th>Grade</th><th>Result</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody id="my-results-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="my-results-pagination"></div>
+        </div>
+      </section>
+
+      <!-- ═══════════ VIEW: RESULTS OVERVIEW (Admin) ═══════════ -->
+      <section class="tab-panel" id="view-results-admin">
+        <div id="results-overview">
+          <div style="text-align:center;padding:3rem;color:var(--txt-muted)">Select a test to view results.</div>
+        </div>
+      </section>
+
+      <!-- ═══════════ VIEW: QUESTION BUILDER ═══════════ -->
+      <section class="tab-panel" id="view-builder">
+        <div class="mb-lg" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <button class="btn btn-sm btn-secondary" onclick="switchView('tests',null)">
+            <i class="fas fa-arrow-left"></i> Back to Tests
+          </button>
+          <div>
+            <div class="topbar-title" id="builder-test-title">Question Builder</div>
+            <div class="card-subtitle" id="builder-test-meta"></div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:.6rem">
+            <button class="btn btn-sm btn-secondary" onclick="openImportModal()"><i class="fas fa-upload"></i> Bulk Import</button>
+            <button class="btn btn-sm btn-primary" onclick="addQuestionCard()"><i class="fas fa-plus"></i> Add Question</button>
+          </div>
+        </div>
+
+        <!-- Question stats -->
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem" id="builder-stats"></div>
+
+        <!-- Questions container -->
+        <div id="questions-container"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1rem">
+          <button class="btn btn-secondary" onclick="switchView('tests',null)">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-questions" onclick="saveAllQuestions()" style="width:auto">
+            <i class="fas fa-save"></i> Save All Questions
+          </button>
+        </div>
+      </section>
+
+      <!-- ═══════════ VIEW: RESULT REVIEW ═══════════ -->
+      <section class="tab-panel" id="view-review">
+        <div class="mb-lg" style="display:flex;align-items:center;gap:1rem">
+          <button class="btn btn-sm btn-secondary" onclick="switchView('my-results',null)">
+            <i class="fas fa-arrow-left"></i> Back to Results
+          </button>
+          <div class="topbar-title" id="review-title">Answer Review</div>
+        </div>
+        <!-- Result scorecard -->
+        <div class="card mb-lg" id="result-scorecard"></div>
+        <!-- Review questions -->
+        <div id="review-questions"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- Test Create/Edit Modal -->
+<div class="modal-overlay hidden" id="modal-test">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="test-modal-title"><i class="fas fa-file-alt"></i> Create Test</div>
+      <span class="modal-close" onclick="hideModal('modal-test')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-test-id">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Test Title <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-heading input-icon"></i>
+            <input type="text" id="t-title" class="form-input" placeholder="e.g. CSC 101 Mid-Semester Exam"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Test Type</label>
+          <select id="t-type" class="form-select">
+            <option value="mcq">MCQ</option>
+            <option value="exam">Exam</option>
+            <option value="quiz">Quiz</option>
+            <option value="assignment">Assignment</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <div class="input-wrap"><i class="fas fa-book input-icon"></i>
+            <input type="text" id="t-subject" class="form-input" placeholder="Computer Science"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Course Code</label>
+          <div class="input-wrap"><i class="fas fa-code input-icon"></i>
+            <input type="text" id="t-code" class="form-input" placeholder="CSC 101"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Duration (minutes) <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-clock input-icon"></i>
+            <input type="number" id="t-duration" class="form-input" value="60" min="5" max="360"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pass Mark (%)</label>
+          <div class="input-wrap"><i class="fas fa-check-circle input-icon"></i>
+            <input type="number" id="t-passmark" class="form-input" value="50" min="1" max="100"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Semester</label>
+          <select id="t-semester" class="form-select">
+            <option value="">Any</option>
+            <option value="First">First</option>
+            <option value="Second">Second</option>
+            <option value="Summer">Summer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Target Level</label>
+          <select id="t-level" class="form-select">
+            <option value="">All Levels</option>
+            <option>100</option><option>200</option><option>300</option>
+            <option>400</option><option>500</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Department</label>
+          <div class="input-wrap"><i class="fas fa-building input-icon"></i>
+            <input type="text" id="t-dept" class="form-input" placeholder="All departments"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start Date/Time</label>
+          <input type="datetime-local" id="t-starts" class="form-input" style="padding:9px 12px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date/Time</label>
+          <input type="datetime-local" id="t-ends" class="form-input" style="padding:9px 12px">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Instructions</label>
+        <textarea id="t-instructions" class="form-input" rows="3" style="resize:vertical"
+          placeholder="Instructions shown to students before the test starts…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-test')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-test" onclick="saveTest()" style="width:auto">
+        <i class="fas fa-save"></i> Save Test
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal-overlay hidden" id="modal-import">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-file-upload"></i> Bulk Import Questions</div>
+      <span class="modal-close" onclick="hideModal('modal-import')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--txt-400);font-size:.85rem;margin-bottom:1rem">
+        Paste JSON array of questions. Each question must have: <code>question_text</code>, <code>option_a</code>–<code>option_d</code>, <code>correct_answer</code> (A/B/C/D).
+      </p>
+      <textarea id="import-json" class="form-input" rows="12" style="font-family:monospace;font-size:.82rem;resize:vertical"
+        placeholder='[
+  {
+    "question_text": "What is 2+2?",
+    "option_a": "3",
+    "option_b": "4",
+    "option_c": "5",
+    "option_d": "6",
+    "correct_answer": "B",
+    "explanation": "Basic arithmetic",
+    "marks": 1
+  }
+]'></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-import')">Cancel</button>
+      <button class="btn btn-primary" onclick="importQuestions()" style="width:auto"><i class="fas fa-upload"></i> Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay hidden" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title" id="confirm-title">Confirm</div>
+      <span class="modal-close" onclick="hideModal('modal-confirm')">&times;</span>
+    </div>
+    <div class="modal-body"><p id="confirm-msg" style="color:var(--txt-300)"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="btn-confirm-ok"><i class="fas fa-check"></i> Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/tests.js"></script>
+</body>
+</html>

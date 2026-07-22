@@ -1,0 +1,111 @@
+# ────────────────────────────────────────────────────────────────────────────
+#  FUD Portal – Docker Compose
+#  Services: app + nginx reverse proxy
+#  Usage:    docker-compose up -d --build
+# ────────────────────────────────────────────────────────────────────────────
+
+version: '3.9'
+
+services:
+
+  # ── Application ─────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: fud-portal-app
+    restart: unless-stopped
+
+    # Load secrets from .env (never commit .env to git)
+    env_file: .env
+
+    environment:
+      NODE_ENV:    production
+      PORT:        5000
+      DB_PATH:     /app/data/fud_portal.db
+      UPLOAD_DIR:  /app/uploads
+      LOG_DIR:     /app/logs
+
+    volumes:
+      # Persist database
+      - db_data:/app/data
+      # Persist uploaded files
+      - uploads:/app/uploads
+      # Persist logs
+      - logs:/app/logs
+
+    networks:
+      - internal
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout:  10s
+      retries:  3
+      start_period: 20s
+
+    # Resource limits (adjust for your server)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus:   '1.0'
+        reservations:
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: fud-portal-nginx
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # TLS certificates (Let's Encrypt / manual)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # Nginx logs
+      - nginx_logs:/var/log/nginx
+
+    networks:
+      - internal
+      - external
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ── Named Volumes ──────────────────────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+  uploads:
+    driver: local
+  logs:
+    driver: local
+  nginx_logs:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────────────────────────
+networks:
+  internal:
+    driver: bridge
+    internal: true      # app not directly exposed to host
+  external:
+    driver: bridge      # nginx exposed to internet

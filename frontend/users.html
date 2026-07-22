@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users – FUD Portal | Ahmaditech School</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/users.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/users.html">
+  <meta property="og:title"       content="User Management – FUD Portal">
+  <meta property="og:description" content="Manage students, staff, and admin accounts on FUD Portal.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="User Management – FUD Portal">
+  <meta name="twitter:description" content="Manage students, staff, and admin accounts on FUD Portal.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div><div class="sidebar-title">FUD Portal</div><div class="sidebar-subtitle">Ahmaditech School</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <div class="nav-section-label">Administration</div>
+      <a href="users.html"     class="nav-item active"><i class="fas fa-users nav-item-icon"></i><span class="nav-item-text">Users</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-folder-open nav-item-icon"></i><span class="nav-item-text">Media</span></a>
+      <a href="profile.html"   class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info"><div class="user-name" id="sidebar-user-name">Loading…</div><div class="user-role" id="sidebar-user-role">admin</div></div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout" style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div><div class="topbar-title">User Management</div><div class="topbar-subtitle">Manage students and staff accounts</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-primary" onclick="showModal('modal-add-admin')"><i class="fas fa-user-plus"></i> Add Admin</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Stats -->
+      <div class="stats-grid mb-xl">
+        <div class="stat-card"><div class="stat-icon teal"><i class="fas fa-graduation-cap"></i></div>
+          <div><div class="stat-value" id="us-students">—</div><div class="stat-label">Students</div></div></div>
+        <div class="stat-card"><div class="stat-icon indigo"><i class="fas fa-user-shield"></i></div>
+          <div><div class="stat-value" id="us-admins">—</div><div class="stat-label">Admins / Staff</div></div></div>
+        <div class="stat-card"><div class="stat-icon emerald"><i class="fas fa-check-circle"></i></div>
+          <div><div class="stat-value" id="us-active">—</div><div class="stat-label">Active Accounts</div></div></div>
+        <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-envelope-open"></i></div>
+          <div><div class="stat-value" id="us-verified">—</div><div class="stat-label">Verified Emails</div></div></div>
+      </div>
+
+      <!-- Filters + Table -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:1rem">
+          <div><div class="card-title"><i class="fas fa-users" style="color:var(--clr-primary)"></i> All Users</div>
+          <div class="card-subtitle" id="users-count">Loading…</div></div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-left:auto">
+            <div class="search-box" style="width:200px">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="users-search" placeholder="Search users…">
+            </div>
+            <select class="form-select" id="filter-role" style="width:130px">
+              <option value="">All Roles</option>
+              <option value="student">Students</option>
+              <option value="admin">Admins</option>
+              <option value="staff">Staff</option>
+            </select>
+            <select class="form-select" id="filter-active" style="width:130px">
+              <option value="">All Status</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>ID / Matric</th>
+                <th>Dept / Faculty</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--txt-muted)">
+                <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading users…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem" id="users-pagination"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add Admin Modal -->
+<div class="modal-overlay hidden" id="modal-add-admin">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-user-shield"></i> Add Admin / Staff</div>
+      <span class="modal-close" onclick="hideModal('modal-add-admin')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-user input-icon"></i><input type="text" id="aa-name" class="form-input" placeholder="Admin Full Name"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-envelope input-icon"></i><input type="email" id="aa-email" class="form-input" placeholder="admin@fud.edu.ng"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Staff ID <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-id-card input-icon"></i><input type="text" id="aa-staffid" class="form-input" placeholder="FUD/STAFF/001"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role <span>*</span></label>
+          <select id="aa-role" class="form-select">
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span>*</span></label>
+        <div class="input-wrap"><i class="fas fa-lock input-icon"></i>
+          <input type="password" id="aa-password" class="form-input" placeholder="Strong password">
+          <span class="input-suffix" onclick="togglePw('aa-password',this)"><i class="fas fa-eye"></i></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <div class="input-wrap"><i class="fas fa-building input-icon"></i><input type="text" id="aa-dept" class="form-input" placeholder="ICT Department"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-add-admin')">Cancel</button>
+      <button class="btn btn-primary" id="btn-add-admin" onclick="addAdmin()">
+        <span class="btn-text"><i class="fas fa-user-plus"></i> Create Account</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Force-change PW confirmation -->
+<div class="modal-overlay hidden" id="modal-force-pw">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ Force Password Change</div>
+      <span class="modal-close" onclick="hideModal('modal-force-pw')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--txt-300);font-size:.9rem">
+        Force <strong id="force-user-name" style="color:var(--txt-100)"></strong> to change their password on next login?
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-force-pw')">Cancel</button>
+      <button class="btn btn-warning" id="btn-confirm-force" style="background:var(--clr-warning);color:var(--bg-900)" onclick="confirmForcePw()">
+        <i class="fas fa-lock"></i> Force Change
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let userPage = 1, forcePwUserId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  if (!Auth.requireRole(['admin','superadmin','staff'])) return;
+  initSidebar(); renderSidebarUser();
+  await updateUnreadBadge();
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    try { await API.logout(Auth.getRefresh()); } catch {}
+    Auth.clear(); window.location.href = 'index.html';
+  });
+
+  // Filter listeners
+  let searchTimeout;
+  document.getElementById('users-search').addEventListener('input', e => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { userPage=1; loadUsers(); }, 400);
+  });
+  document.getElementById('filter-role').addEventListener('change', () => { userPage=1; loadUsers(); });
+  document.getElementById('filter-active').addEventListener('change', () => { userPage=1; loadUsers(); });
+
+  await loadUsers();
+});
+
+async function loadUsers() {
+  const tbody  = document.getElementById('users-body');
+  const search = document.getElementById('users-search').value.trim();
+  const role   = document.getElementById('filter-role').value;
+  const active = document.getElementById('filter-active').value;
+  const params = { page: userPage, limit: 15 };
+  if (search) params.search = search;
+  if (role)   params.role   = role;
+  if (active !== '') params.is_active = active;
+
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+
+  try {
+    const res   = await API.getUsers(params);
+    const users = res?.data?.rows || [];
+    const total = res?.data?.total || 0;
+
+    // Calc stats from first load (no filter)
+    if (userPage===1 && !search && !role && !active) {
+      document.getElementById('us-students').textContent = users.filter(u=>u.role==='student').length || total;
+      document.getElementById('us-admins').textContent   = users.filter(u=>u.role==='admin'||u.role==='staff'||u.role==='superadmin').length;
+      document.getElementById('us-active').textContent   = users.filter(u=>u.is_active).length;
+      document.getElementById('us-verified').textContent = users.filter(u=>u.is_verified).length;
+    }
+    document.getElementById('users-count').textContent = `${total} user${total!==1?'s':''}`;
+
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">👥</div>
+        <h3>No Users Found</h3><p>Try adjusting the search or filters.</p></div></td></tr>`;
+      return;
+    }
+
+    const isSuperAdmin = Auth.getRole() === 'superadmin';
+    tbody.innerHTML = users.map(u => {
+      const name     = u.profile?.full_name || u.email.split('@')[0];
+      const initials = name[0].toUpperCase();
+      const roleMap  = { superadmin:'badge-danger', admin:'badge-warning', staff:'badge-info', student:'badge-primary' };
+      const idVal    = u.profile?.matric_no || u.profile?.staff_id || '—';
+      const deptFac  = [u.profile?.department, u.profile?.faculty].filter(Boolean).join(' / ') || '—';
+      return `<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--clr-primary-dark),var(--clr-accent-dark));
+              display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0">${initials}</div>
+            <div>
+              <div style="font-weight:600;font-size:.9rem">${esc(name)}</div>
+              <div style="font-size:.75rem;color:var(--txt-muted)">${esc(u.email)}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge ${roleMap[u.role]||'badge-neutral'}">${u.role}</span></td>
+        <td><code style="font-size:.78rem;color:var(--txt-400)">${esc(idVal)}</code></td>
+        <td style="font-size:.82rem;color:var(--txt-400);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(deptFac)}">${esc(deptFac)}</td>
+        <td>
+          ${u.is_active
+            ? '<span class="badge badge-success"><span class="badge-dot"></span>Active</span>'
+            : '<span class="badge badge-danger"><span class="badge-dot"></span>Inactive</span>'}
+          ${u.is_verified?'<span class="badge badge-info" style="margin-left:4px"><i class="fas fa-check-circle"></i></span>':''}
+          ${u.force_password_change?'<span class="badge badge-warning" style="margin-left:4px" title="Force change pw">🔑</span>':''}
+        </td>
+        <td style="font-size:.78rem;color:var(--txt-muted);white-space:nowrap">${formatDateShort(u.created_at)}</td>
+        <td>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+            <button class="btn btn-sm btn-secondary" onclick="toggleActive(${u.id},${u.is_active?0:1},'${esc(name)}')" title="${u.is_active?'Deactivate':'Activate'}">
+              <i class="fas fa-${u.is_active?'ban':'check'}"></i>
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="openForcePw(${u.id},'${esc(name)}')" title="Force password change">
+              <i class="fas fa-key"></i>
+            </button>
+            ${isSuperAdmin && u.role!=='superadmin' ? `
+            <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id},'${esc(name)}')" title="Delete user">
+              <i class="fas fa-trash"></i>
+            </button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    renderPagination(total, userPage, document.getElementById('users-pagination'));
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clr-danger);padding:2rem">${err.message}</td></tr>`;
+  }
+}
+
+function renderPagination(total, page, container) {
+  const pages = Math.ceil(total / 15);
+  if (pages <= 1) { container.innerHTML=''; return; }
+  let html = '';
+  for (let i=1;i<=Math.min(pages,8);i++) {
+    html += `<button class="btn btn-sm ${i===page?'btn-primary':'btn-secondary'}" onclick="goUserPage(${i})">${i}</button>`;
+  }
+  container.innerHTML = html;
+}
+function goUserPage(p) { userPage=p; loadUsers(); }
+
+async function toggleActive(id, active, name) {
+  if (!confirm(`${active?'Activate':'Deactivate'} account for ${name}?`)) return;
+  try {
+    await API.toggleActive(id, active);
+    Toast.success(`Account ${active?'activated':'deactivated'}`);
+    loadUsers();
+  } catch(err){ Toast.error(err.message); }
+}
+
+function openForcePw(id, name) {
+  forcePwUserId = id;
+  document.getElementById('force-user-name').textContent = name;
+  showModal('modal-force-pw');
+}
+async function confirmForcePw() {
+  if (!forcePwUserId) return;
+  const btn = document.getElementById('btn-confirm-force');
+  btn.classList.add('btn-loading'); btn.disabled=true;
+  try {
+    await API.forceChangePw(forcePwUserId);
+    Toast.success('Force password change flag set');
+    hideModal('modal-force-pw');
+    loadUsers();
+  } catch(err){ Toast.error(err.message); }
+  finally { btn.classList.remove('btn-loading'); btn.disabled=false; }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`PERMANENTLY delete account for "${name}"? This cannot be undone.`)) return;
+  try {
+    await API.deleteUser(id);
+    Toast.success('User deleted');
+    loadUsers();
+  } catch(err){ Toast.error(err.message); }
+}
+
+async function addAdmin() {
+  const btn = document.getElementById('btn-add-admin');
+  const data = {
+    full_name:  document.getElementById('aa-name').value.trim(),
+    email:      document.getElementById('aa-email').value.trim(),
+    password:   document.getElementById('aa-password').value,
+    staff_id:   document.getElementById('aa-staffid').value.trim(),
+    role:       document.getElementById('aa-role').value,
+    department: document.getElementById('aa-dept').value.trim() || undefined,
+  };
+  if (!data.full_name||!data.email||!data.password||!data.staff_id) {
+    Toast.warning('Please fill in all required fields'); return;
+  }
+  btn.classList.add('btn-loading'); btn.disabled=true;
+  try {
+    await API.registerAdmin(data);
+    Toast.success('Admin account created successfully');
+    hideModal('modal-add-admin');
+    ['aa-name','aa-email','aa-password','aa-staffid','aa-dept'].forEach(id => { document.getElementById(id).value=''; });
+    loadUsers();
+  } catch(err){
+    if (err.data?.errors) err.data.errors.forEach(e => Toast.warning(e.msg));
+    else Toast.error(err.message);
+  }
+  finally { btn.classList.remove('btn-loading'); btn.disabled=false; }
+}
+
+function togglePw(id,el){const i=document.getElementById(id),ic=el.querySelector('i');i.type=i.type==='password'?'text':'password';ic.className=i.type==='text'?'fas fa-eye-slash':'fas fa-eye';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>

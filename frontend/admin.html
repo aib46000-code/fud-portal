@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="FUD Portal Admin Control Panel – manage students, admins, tests, and system settings.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/admin.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/admin.html">
+  <meta property="og:title"       content="Admin Dashboard – FUD Portal">
+  <meta property="og:description" content="FUD Portal administration panel – manage students, staff, exams, and system settings.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Admin Dashboard – FUD Portal">
+  <meta name="twitter:description" content="FUD Portal administration panel – manage students, staff, exams, and system settings.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<!-- ════════════════════ LAYOUT ════════════════════ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div>
+        <div class="sidebar-title">FUD Portal</div>
+        <div class="sidebar-subtitle">Admin Control Panel</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="#" class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
+        <i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span>
+      </a>
+
+      <div class="nav-section-label">Management</div>
+      <a href="#" class="nav-item" data-tab="students" onclick="switchTab('students',this)">
+        <i class="fas fa-user-graduate nav-item-icon"></i><span class="nav-item-text">Students</span>
+        <span class="nav-badge hidden" id="badge-students"></span>
+      </a>
+      <a href="#" class="nav-item" data-tab="admins" onclick="switchTab('admins',this)" id="nav-admins">
+        <i class="fas fa-user-shield nav-item-icon"></i><span class="nav-item-text">Admins</span>
+      </a>
+
+      <div class="nav-section-label">System</div>
+      <a href="#" class="nav-item" data-tab="activity" onclick="switchTab('activity',this)">
+        <i class="fas fa-list-alt nav-item-icon"></i><span class="nav-item-text">Activity Logs</span>
+      </a>
+      <a href="#" class="nav-item" data-tab="permissions" onclick="switchTab('permissions',this)" id="nav-perms">
+        <i class="fas fa-shield-alt nav-item-icon"></i><span class="nav-item-text">Permissions</span>
+      </a>
+
+      <div class="nav-section-label">Quick Links</div>
+      <a href="dashboard.html"     class="nav-item"><i class="fas fa-home nav-item-icon"></i><span class="nav-item-text">Portal Home</span></a>
+      <a href="tests.html"         class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span></a>
+      <a href="media.html"         class="nav-item"><i class="fas fa-folder-open nav-item-icon"></i><span class="nav-item-text">Media</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin</div>
+          <div class="user-role" id="sidebar-user-role">superadmin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout"
+        style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="topbar-title" id="topbar-title">Admin Dashboard</div>
+        <div class="topbar-subtitle" id="topbar-subtitle">Overview &amp; Statistics</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary" id="btn-backup" onclick="downloadBackup()" title="Download DB Backup">
+          <i class="fas fa-database"></i> <span class="hide-mobile">Backup</span>
+        </button>
+        <a href="profile.html" class="btn btn-sm btn-secondary" title="Profile">
+          <i class="fas fa-user-cog"></i>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ══════════════════ TAB: DASHBOARD ══════════════════ -->
+      <section class="tab-panel active" id="tab-dashboard">
+
+        <!-- Stat Cards -->
+        <div class="stats-grid mb-xl" id="stat-cards">
+          <div class="stat-card"><div class="stat-icon teal"><i class="fas fa-users"></i></div>
+            <div><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Users</div></div></div>
+          <div class="stat-card"><div class="stat-icon indigo"><i class="fas fa-graduation-cap"></i></div>
+            <div><div class="stat-value" id="s-students">—</div><div class="stat-label">Students</div></div></div>
+          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-user-shield"></i></div>
+            <div><div class="stat-value" id="s-admins">—</div><div class="stat-label">Admins / Staff</div></div></div>
+          <div class="stat-card"><div class="stat-icon emerald"><i class="fas fa-check-circle"></i></div>
+            <div><div class="stat-value" id="s-active">—</div><div class="stat-label">Active Accounts</div></div></div>
+          <div class="stat-card"><div class="stat-icon rose"><i class="fas fa-ban"></i></div>
+            <div><div class="stat-value" id="s-blocked">—</div><div class="stat-label">Blocked Accounts</div></div></div>
+          <div class="stat-card"><div class="stat-icon teal"><i class="fas fa-file-alt"></i></div>
+            <div><div class="stat-value" id="s-tests">—</div><div class="stat-label">Published Tests</div></div></div>
+          <div class="stat-card"><div class="stat-icon emerald"><i class="fas fa-chart-bar"></i></div>
+            <div><div class="stat-value" id="s-passrate">—</div><div class="stat-label">Pass Rate</div></div></div>
+          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-user-plus"></i></div>
+            <div><div class="stat-value" id="s-today">—</div><div class="stat-label">New Today</div></div></div>
+        </div>
+
+        <div class="grid-2 mb-xl">
+          <!-- Registration Trend -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title"><i class="fas fa-chart-line" style="color:var(--clr-primary)"></i> Registration Trend</div>
+              <div class="card-subtitle">Last 6 months</div></div>
+            </div>
+            <div id="reg-chart" style="height:160px;position:relative;display:flex;align-items:flex-end;gap:10px;padding-top:10px"></div>
+          </div>
+
+          <!-- Top Departments -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title"><i class="fas fa-building" style="color:var(--clr-accent)"></i> Top Departments</div>
+              <div class="card-subtitle">Students per department</div></div>
+            </div>
+            <div id="dept-chart" style="display:flex;flex-direction:column;gap:.5rem;padding-top:.5rem"></div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title"><i class="fas fa-history" style="color:var(--clr-primary)"></i> Recent Activity</div>
+            <div class="card-subtitle">Last 20 system events</div></div>
+            <button class="btn btn-sm btn-secondary" onclick="switchTab('activity', document.querySelector('[data-tab=activity]'))">
+              View All <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Action</th><th>User</th><th>Description</th><th>IP</th><th>Time</th></tr></thead>
+              <tbody id="recent-activity-body">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════ TAB: STUDENTS ══════════════════ -->
+      <section class="tab-panel" id="tab-students">
+        <!-- Toolbar -->
+        <div class="admin-toolbar">
+          <div class="toolbar-left">
+            <div class="search-box" style="width:260px">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="st-search" placeholder="Search name, email, matric…" oninput="debounce(loadStudents,400)()">
+            </div>
+            <select class="form-select" id="st-dept" style="width:150px" onchange="loadStudents()">
+              <option value="">All Departments</option>
+            </select>
+            <select class="form-select" id="st-active" style="width:130px" onchange="loadStudents()">
+              <option value="">All Status</option>
+              <option value="1">Active</option>
+              <option value="0">Blocked</option>
+            </select>
+            <select class="form-select" id="st-verified" style="width:140px" onchange="loadStudents()">
+              <option value="">Any Verified</option>
+              <option value="1">Verified</option>
+              <option value="0">Unverified</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-sm btn-secondary" onclick="exportCSV('students')" title="Export CSV">
+              <i class="fas fa-file-csv"></i> Export CSV
+            </button>
+            <button class="btn btn-sm btn-primary" onclick="openStudentModal()">
+              <i class="fas fa-user-plus"></i> Add Student
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title"><i class="fas fa-graduation-cap" style="color:var(--clr-primary)"></i> Student Registry</div>
+            <div class="card-subtitle" id="st-count">Loading…</div></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th><th>Matric No</th><th>Department</th>
+                  <th>Level</th><th>Tests</th><th>Avg</th><th>Status</th><th>Joined</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="students-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="st-pagination"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════ TAB: ADMINS ══════════════════ -->
+      <section class="tab-panel" id="tab-admins">
+        <div class="admin-toolbar">
+          <div class="toolbar-left">
+            <div class="search-box" style="width:240px">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="ad-search" placeholder="Search name, email, ID…" oninput="debounce(loadAdmins,400)()">
+            </div>
+            <select class="form-select" id="ad-role" style="width:130px" onchange="loadAdmins()">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-sm btn-secondary" onclick="exportCSV('admins')" title="Export CSV">
+              <i class="fas fa-file-csv"></i> Export CSV
+            </button>
+            <button class="btn btn-sm btn-primary" id="btn-add-admin-open" onclick="openAdminModal()">
+              <i class="fas fa-user-plus"></i> Add Admin
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title"><i class="fas fa-user-shield" style="color:var(--clr-accent)"></i> Admin &amp; Staff Registry</div>
+            <div class="card-subtitle" id="ad-count">Loading…</div></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Admin</th><th>Role</th><th>Staff ID</th><th>Department</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="admins-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="ad-pagination"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════ TAB: ACTIVITY LOGS ══════════════════ -->
+      <section class="tab-panel" id="tab-activity">
+        <div class="admin-toolbar">
+          <div class="toolbar-left">
+            <div class="search-box" style="width:240px">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="ac-search" placeholder="Search action, user, IP…" oninput="debounce(loadActivity,400)()">
+            </div>
+            <select class="form-select" id="ac-action" style="width:180px" onchange="loadActivity()">
+              <option value="">All Actions</option>
+            </select>
+            <input type="date" class="form-input" id="ac-from" style="width:140px;padding:8px 12px" onchange="loadActivity()" title="From date">
+            <input type="date" class="form-input" id="ac-to"   style="width:140px;padding:8px 12px" onchange="loadActivity()" title="To date">
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-sm btn-secondary" onclick="exportCSV('activity')" title="Export CSV">
+              <i class="fas fa-file-csv"></i> Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title"><i class="fas fa-history" style="color:var(--clr-primary)"></i> Activity Logs</div>
+            <div class="card-subtitle" id="ac-count">Loading…</div></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Action</th><th>User</th><th>Role</th><th>Description</th><th>IP Address</th><th>Timestamp</th></tr>
+              </thead>
+              <tbody id="activity-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="ac-pagination"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════ TAB: PERMISSIONS ══════════════════ -->
+      <section class="tab-panel" id="tab-permissions">
+        <div class="card mb-lg">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-shield-alt" style="color:var(--clr-accent)"></i> Role-Based Access Control</div>
+              <div class="card-subtitle">Configure what each role can access in the system</div>
+            </div>
+            <button class="btn btn-sm btn-primary" id="btn-save-perms" onclick="savePermissions()">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+
+          <div class="perm-legend">
+            <span class="badge badge-danger">superadmin</span> Full access (all permissions, cannot be restricted)
+            &nbsp;|&nbsp;
+            <span class="badge badge-warning">admin</span> Management access
+            &nbsp;|&nbsp;
+            <span class="badge badge-info">staff</span> Limited staff access
+            &nbsp;|&nbsp;
+            <span class="badge badge-primary">student</span> Student-only access
+          </div>
+
+          <div id="permissions-grid" style="margin-top:1.5rem">
+            <div style="text-align:center;padding:3rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /page-content -->
+  </main>
+</div><!-- /app-layout -->
+
+<!-- ════════════════════ MODALS ════════════════════ -->
+
+<!-- Student Modal (Create/Edit) -->
+<div class="modal-overlay hidden" id="modal-student">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div class="modal-title" id="student-modal-title"><i class="fas fa-user-graduate"></i> Add Student</div>
+      <span class="modal-close" onclick="hideModal('modal-student')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="st-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-user input-icon"></i>
+            <input type="text" id="st-name" class="form-input" placeholder="Student Full Name"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="st-email" class="form-input" placeholder="student@fud.edu.ng"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Matric Number <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-id-card input-icon"></i>
+            <input type="text" id="st-matric" class="form-input" placeholder="FUD/CSC/2024/001"></div>
+        </div>
+        <div class="form-group" id="st-pw-group">
+          <label class="form-label">Password <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-lock input-icon"></i>
+            <input type="password" id="st-password" class="form-input" placeholder="Minimum 8 characters">
+            <span class="input-suffix" onclick="togglePw('st-password',this)"><i class="fas fa-eye"></i></span></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <div class="input-wrap"><i class="fas fa-building input-icon"></i>
+            <input type="text" id="st-dept-input" class="form-input" placeholder="Computer Science"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Faculty</label>
+          <div class="input-wrap"><i class="fas fa-university input-icon"></i>
+            <input type="text" id="st-faculty" class="form-input" placeholder="Faculty of Computing"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Level</label>
+          <select id="st-level" class="form-select">
+            <option value="">Select Level</option>
+            <option>100</option><option>200</option><option>300</option>
+            <option>400</option><option>500</option><option>Postgraduate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select id="st-gender" class="form-select">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <div class="input-wrap"><i class="fas fa-phone input-icon"></i>
+            <input type="tel" id="st-phone" class="form-input" placeholder="08012345678"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-student')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-student" onclick="saveStudent()" style="width:auto">
+        <span class="btn-text"><i class="fas fa-save"></i> Save Student</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal (Create/Edit) -->
+<div class="modal-overlay hidden" id="modal-admin">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title" id="admin-modal-title"><i class="fas fa-user-shield"></i> Add Admin</div>
+      <span class="modal-close" onclick="hideModal('modal-admin')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ad-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-user input-icon"></i>
+            <input type="text" id="ad-name" class="form-input" placeholder="Admin Full Name"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="ad-email" class="form-input" placeholder="admin@fud.edu.ng"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Staff ID <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-id-badge input-icon"></i>
+            <input type="text" id="ad-staff-id" class="form-input" placeholder="FUD/STAFF/001"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role <span>*</span></label>
+          <select id="ad-role-select" class="form-select">
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <div class="input-wrap"><i class="fas fa-building input-icon"></i>
+            <input type="text" id="ad-dept-input" class="form-input" placeholder="ICT Department"></div>
+        </div>
+        <div class="form-group" id="ad-pw-group">
+          <label class="form-label">Password <span>*</span></label>
+          <div class="input-wrap"><i class="fas fa-lock input-icon"></i>
+            <input type="password" id="ad-password" class="form-input" placeholder="Min 8 characters">
+            <span class="input-suffix" onclick="togglePw('ad-password',this)"><i class="fas fa-eye"></i></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-admin')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-admin" onclick="saveAdmin()" style="width:auto">
+        <span class="btn-text"><i class="fas fa-save"></i> Save Admin</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay hidden" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title" id="confirm-title">⚠️ Confirm Action</div>
+      <span class="modal-close" onclick="hideModal('modal-confirm')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--txt-300)" id="confirm-message">Are you sure?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="btn-confirm-ok" style="background:var(--clr-danger-dark);color:#fff;border:none">
+        <i class="fas fa-trash"></i> Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

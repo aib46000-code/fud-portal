@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="Manage your FUD Portal profile, security settings and sessions.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/profile.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/profile.html">
+  <meta property="og:title"       content="My Profile – FUD Portal">
+  <meta property="og:description" content="View and update your FUD Portal account profile and settings.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="My Profile – FUD Portal">
+  <meta name="twitter:description" content="View and update your FUD Portal account profile and settings.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div>
+        <div class="sidebar-title">FUD Portal</div>
+        <div class="sidebar-subtitle">Ahmaditech School</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <a href="results.html"   class="nav-item student-only"><i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">My Results</span></a>
+      <div class="nav-section-label admin-only">Administration</div>
+      <a href="users.html"     class="nav-item admin-only"><i class="fas fa-users nav-item-icon"></i><span class="nav-item-text">Users</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-folder-open nav-item-icon"></i><span class="nav-item-text">Media</span></a>
+      <a href="profile.html"   class="nav-item active"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading…</div>
+          <div class="user-role" id="sidebar-user-role">student</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout"
+        style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ───────────────────────────────────────────── -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="topbar-title">My Profile</div>
+        <div class="topbar-subtitle">Manage your account and security</div>
+      </div>
+      <div class="topbar-right">
+        <button class="notif-btn" onclick="location.href='notifications.html'">
+          <i class="fas fa-bell"></i>
+          <span class="notif-dot hidden" id="notif-dot"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Force PW Banner -->
+      <div class="force-pw-banner hidden" id="force-pw-banner">
+        <div class="force-pw-banner-icon">⚠️</div>
+        <div class="force-pw-banner-text">
+          <strong>Password Change Required</strong>
+          Please change your password before accessing the portal.
+        </div>
+      </div>
+
+      <!-- Profile Header Card -->
+      <div class="card mb-xl" id="profile-header-card">
+        <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+          <!-- Large Avatar -->
+          <div id="profile-avatar-lg" style="width:90px;height:90px;border-radius:50%;
+            background:linear-gradient(135deg,var(--clr-primary-dark),var(--clr-accent-dark));
+            display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:800;
+            color:#fff;border:3px solid var(--border-medium);flex-shrink:0;position:relative">
+            ?
+            <div style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;background:var(--clr-success);
+              border-radius:50%;border:2px solid var(--bg-700)" title="Active"></div>
+          </div>
+
+          <!-- Info -->
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.4rem">
+              <h1 style="font-size:1.4rem;font-weight:800" id="profile-fullname">Loading…</h1>
+              <span id="profile-role-badge" class="badge badge-primary">student</span>
+              <span id="profile-verified-badge" class="badge badge-success hidden">
+                <i class="fas fa-check-circle"></i> Verified
+              </span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:.85rem;color:var(--txt-300)">
+              <span><i class="fas fa-envelope" style="color:var(--clr-primary)"></i> <span id="profile-email">—</span></span>
+              <span><i class="fas fa-id-card"  style="color:var(--clr-accent)"></i> <span id="profile-id-label">—</span></span>
+              <span><i class="fas fa-calendar" style="color:var(--clr-gold)"></i> Joined <span id="profile-joined">—</span></span>
+            </div>
+          </div>
+
+          <!-- Stat pills -->
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <div style="text-align:center;padding:.75rem 1.25rem;background:rgba(45,212,191,.08);
+              border:1px solid var(--border-medium);border-radius:12px">
+              <div style="font-size:1.4rem;font-weight:800;color:var(--clr-primary)" id="profile-tests-taken">—</div>
+              <div style="font-size:.72rem;color:var(--txt-400)">Tests Taken</div>
+            </div>
+            <div style="text-align:center;padding:.75rem 1.25rem;background:rgba(129,140,248,.08);
+              border:1px solid rgba(129,140,248,.2);border-radius:12px">
+              <div style="font-size:1.4rem;font-weight:800;color:var(--clr-accent)" id="profile-best-score">—</div>
+              <div style="font-size:.72rem;color:var(--txt-400)">Best Score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-column grid -->
+      <div class="grid-2 mb-xl">
+
+        <!-- Personal Info Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="fas fa-user" style="color:var(--clr-primary)"></i> Personal Information</div>
+              <div class="card-subtitle">Update your profile details</div>
+            </div>
+            <button class="btn btn-sm btn-secondary" id="btn-edit-profile" onclick="toggleEditProfile()">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+          </div>
+          <form id="profile-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="pf-fullname">Full Name <span>*</span></label>
+              <div class="input-wrap">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="pf-fullname" class="form-input" placeholder="Your full name" disabled>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="pf-email">Email</label>
+                <div class="input-wrap">
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" id="pf-email" class="form-input" disabled style="color:var(--txt-400)">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pf-phone">Phone</label>
+                <div class="input-wrap">
+                  <i class="fas fa-phone input-icon"></i>
+                  <input type="tel" id="pf-phone" class="form-input" placeholder="+234…" disabled>
+                </div>
+              </div>
+            </div>
+            <!-- Student-only fields -->
+            <div id="student-fields">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Matric Number</label>
+                  <div class="input-wrap">
+                    <i class="fas fa-id-badge input-icon"></i>
+                    <input type="text" id="pf-matric" class="form-input" disabled style="color:var(--txt-400)">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pf-level">Level</label>
+                  <select id="pf-level" class="form-select" disabled>
+                    <option value="100">100</option><option value="200">200</option>
+                    <option value="300">300</option><option value="400">400</option>
+                    <option value="500">500</option><option value="600">600</option>
+                    <option value="PG">PG</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="pf-dept">Department</label>
+                  <div class="input-wrap">
+                    <i class="fas fa-building input-icon"></i>
+                    <input type="text" id="pf-dept" class="form-input" placeholder="e.g. Computer Science" disabled>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pf-faculty">Faculty</label>
+                  <div class="input-wrap">
+                    <i class="fas fa-university input-icon"></i>
+                    <input type="text" id="pf-faculty" class="form-input" placeholder="e.g. Computing" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pf-gender">Gender</label>
+                <select id="pf-gender" class="form-select" disabled>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <!-- Admin-only fields -->
+            <div id="admin-fields" class="hidden">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Staff ID</label>
+                  <div class="input-wrap">
+                    <i class="fas fa-id-badge input-icon"></i>
+                    <input type="text" id="pf-staffid" class="form-input" disabled style="color:var(--txt-400)">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pf-admin-dept">Department</label>
+                  <div class="input-wrap">
+                    <i class="fas fa-building input-icon"></i>
+                    <input type="text" id="pf-admin-dept" class="form-input" placeholder="e.g. ICT" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save button (hidden when not editing) -->
+            <div id="profile-save-row" class="hidden" style="margin-top:.5rem">
+              <button type="submit" class="btn btn-primary" id="btn-save-profile">
+                <span class="btn-text"><i class="fas fa-save"></i> Save Changes</span>
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="cancelEditProfile()" style="margin-top:.5rem">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Security Card -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-lg)">
+
+          <!-- Change Password -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title"><i class="fas fa-lock" style="color:var(--clr-accent)"></i> Change Password</div>
+                <div class="card-subtitle">Keep your account secure</div>
+              </div>
+            </div>
+            <form id="change-pw-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="curr-pw">Current Password <span>*</span></label>
+                <div class="input-wrap">
+                  <i class="fas fa-key input-icon"></i>
+                  <input type="password" id="curr-pw" class="form-input" placeholder="Your current password">
+                  <span class="input-suffix" onclick="togglePw('curr-pw',this)"><i class="fas fa-eye"></i></span>
+                </div>
+                <span class="form-error" id="curr-pw-error"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-pw">New Password <span>*</span></label>
+                <div class="input-wrap">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" id="new-pw" class="form-input" placeholder="Min 8 chars, uppercase, number, symbol">
+                  <span class="input-suffix" onclick="togglePw('new-pw',this)"><i class="fas fa-eye"></i></span>
+                </div>
+                <div class="pw-strength" id="new-pw-strength">
+                  <div class="pw-strength-bar">
+                    <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+                    <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+                    <div class="pw-strength-seg"></div>
+                  </div>
+                  <div class="pw-strength-label"></div>
+                </div>
+                <span class="form-error" id="new-pw-error"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirm-pw">Confirm New Password <span>*</span></label>
+                <div class="input-wrap">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" id="confirm-pw" class="form-input" placeholder="Repeat new password">
+                  <span class="input-suffix" onclick="togglePw('confirm-pw',this)"><i class="fas fa-eye"></i></span>
+                </div>
+                <span class="form-error" id="confirm-pw-error"></span>
+              </div>
+              <button type="submit" class="btn btn-primary" id="btn-change-pw">
+                <span class="btn-text"><i class="fas fa-shield-alt"></i> Update Password</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Sessions Card -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title"><i class="fas fa-desktop" style="color:var(--clr-gold)"></i> Active Sessions</div>
+                <div class="card-subtitle">Manage all logged-in devices</div>
+              </div>
+            </div>
+            <p style="font-size:.85rem;color:var(--txt-300);margin-bottom:1rem">
+              Logging out all devices will revoke all active tokens and require re-login everywhere.
+            </p>
+            <button class="btn btn-danger w-full" id="btn-logout-all" onclick="logoutAllDevices()">
+              <i class="fas fa-sign-out-alt"></i> Logout All Devices
+            </button>
+            <div style="margin-top:.75rem;padding:.75rem;background:rgba(6,11,20,.4);border-radius:10px;
+                        border:1px solid var(--border-subtle);font-size:.8rem;color:var(--txt-400);text-align:center"
+                 id="session-info">
+              <i class="fas fa-circle" style="color:var(--clr-success);font-size:.5rem;vertical-align:middle"></i>
+              Current session active
+            </div>
+          </div>
+
+        </div><!-- /security column -->
+      </div>
+
+      <!-- Activity Log -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="fas fa-history" style="color:var(--clr-info)"></i> Recent Activity</div>
+            <div class="card-subtitle">Your last account actions</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>IP Address</th>
+                <th>Device</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="activity-body">
+              <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--txt-muted)">
+                <i class="fas fa-spinner fa-spin"></i> Loading activity…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+// ── State ───────────────────────────────────────────────────────────
+let isEditing   = false;
+let profileData = null;
+
+// ── Init ────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  initSidebar();
+  renderSidebarUser();
+  checkForcePwChange();
+  await updateUnreadBadge();
+
+  const user    = Auth.getUser();
+  const isAdmin = ['admin','superadmin','staff'].includes(user?.role);
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
+  document.querySelectorAll('.student-only').forEach(el => el.classList.toggle('hidden', isAdmin));
+
+  // Toggle fields based on role
+  document.getElementById('student-fields').classList.toggle('hidden', isAdmin);
+  document.getElementById('admin-fields').classList.toggle('hidden', !isAdmin);
+
+  // Init password strength + forms
+  initPasswordStrength('new-pw', 'new-pw-strength');
+  document.getElementById('profile-form').addEventListener('submit', saveProfile);
+  document.getElementById('change-pw-form').addEventListener('submit', submitChangePw);
+
+  // Logout
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    try { await API.logout(Auth.getRefresh()); } catch {}
+    Auth.clear(); window.location.href = 'index.html';
+  });
+
+  await loadProfile();
+  await loadActivity();
+});
+
+// ── Load Profile ────────────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const res = await API.getMe();
+    profileData = res.data;
+    renderProfile(profileData);
+  } catch (err) {
+    Toast.error('Failed to load profile: ' + err.message);
+  }
+}
+
+function renderProfile(p) {
+  const name     = p.profile?.full_name || p.email.split('@')[0];
+  const initials = name[0].toUpperCase();
+
+  // Header card
+  document.getElementById('profile-avatar-lg').textContent   = initials;
+  document.getElementById('profile-fullname').textContent     = name;
+  document.getElementById('profile-email').textContent        = p.email;
+  document.getElementById('profile-joined').textContent       = formatDateShort(p.created_at);
+  document.getElementById('profile-id-label').textContent     =
+    p.profile?.matric_no || p.profile?.staff_id || p.role;
+
+  // Role badge
+  const roleBadgeEl = document.getElementById('profile-role-badge');
+  const roleColors  = { superadmin:'badge-danger', admin:'badge-warning', staff:'badge-info', student:'badge-primary' };
+  roleBadgeEl.className = `badge ${roleColors[p.role]||'badge-primary'}`;
+  roleBadgeEl.textContent = p.role;
+
+  // Verified badge
+  if (p.is_verified) document.getElementById('profile-verified-badge').classList.remove('hidden');
+
+  // Sidebar avatar sync
+  document.getElementById('sidebar-avatar').textContent = initials;
+
+  // Scores (student only)
+  if (p.role === 'student') {
+    API.getMyResults().then(res => {
+      const results = res?.data?.rows || [];
+      document.getElementById('profile-tests-taken').textContent = results.length || '0';
+      if (results.length) {
+        const best = Math.max(...results.map(r => r.percentage||0));
+        document.getElementById('profile-best-score').textContent = best.toFixed(1) + '%';
+      } else {
+        document.getElementById('profile-best-score').textContent = 'N/A';
+      }
+    }).catch(() => {});
+  } else {
+    document.getElementById('profile-tests-taken').textContent = '—';
+    document.getElementById('profile-best-score').textContent  = '—';
+  }
+
+  // Form fields
+  setVal('pf-fullname', p.profile?.full_name);
+  setVal('pf-email',    p.email);
+  setVal('pf-phone',    p.profile?.phone);
+  setVal('pf-matric',   p.profile?.matric_no);
+  setVal('pf-level',    p.profile?.level, true);
+  setVal('pf-dept',     p.profile?.department);
+  setVal('pf-faculty',  p.profile?.faculty);
+  setVal('pf-gender',   p.profile?.gender, true);
+  setVal('pf-staffid',  p.profile?.staff_id);
+  setVal('pf-admin-dept',p.profile?.department);
+}
+
+function setVal(id, val, isSelect=false) {
+  const el = document.getElementById(id);
+  if (!el || val === undefined || val === null) return;
+  if (isSelect) el.value = val;
+  else el.value = val;
+}
+
+// ── Edit Profile ────────────────────────────────────────────────────
+function toggleEditProfile() {
+  isEditing = !isEditing;
+  const inputs  = document.querySelectorAll('#profile-form input:not([readonly]), #profile-form select');
+  const saveRow = document.getElementById('profile-save-row');
+  const btnEdit = document.getElementById('btn-edit-profile');
+
+  // Never enable readonly fields
+  const readonly = ['pf-email','pf-matric','pf-staffid'];
+  inputs.forEach(el => {
+    if (!readonly.includes(el.id)) el.disabled = !isEditing;
+  });
+  saveRow.classList.toggle('hidden', !isEditing);
+  btnEdit.innerHTML = isEditing ? '<i class="fas fa-times"></i> Cancel' : '<i class="fas fa-edit"></i> Edit';
+  if (!isEditing && profileData) renderProfile(profileData); // reset
+}
+
+function cancelEditProfile() {
+  isEditing = false;
+  const inputs = document.querySelectorAll('#profile-form input, #profile-form select');
+  inputs.forEach(el => { el.disabled = true; });
+  document.getElementById('profile-save-row').classList.add('hidden');
+  document.getElementById('btn-edit-profile').innerHTML = '<i class="fas fa-edit"></i> Edit';
+  if (profileData) renderProfile(profileData);
+}
+
+async function saveProfile(e) {
+  e.preventDefault();
+  const btn   = document.getElementById('btn-save-profile');
+  const isAdmin = ['admin','superadmin','staff'].includes(Auth.getRole());
+  const data  = {
+    full_name:  document.getElementById('pf-fullname').value.trim(),
+    phone:      document.getElementById('pf-phone').value.trim() || undefined,
+    department: document.getElementById(isAdmin ? 'pf-admin-dept' : 'pf-dept').value.trim() || undefined,
+  };
+  if (!isAdmin) {
+    data.faculty = document.getElementById('pf-faculty').value.trim() || undefined;
+    data.level   = document.getElementById('pf-level').value || undefined;
+    data.gender  = document.getElementById('pf-gender').value || undefined;
+  }
+
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  try {
+    await API.updateUser(profileData.id, data);
+    Toast.success('Profile updated successfully!');
+    // Refresh
+    const res = await API.getMe();
+    profileData = res.data;
+    Auth.setTokens({ user: profileData });
+    renderProfile(profileData);
+    renderSidebarUser();
+    cancelEditProfile();
+  } catch (err) {
+    if (err.data?.errors) handleApiErrors(err.data.errors);
+    else Toast.error(err.message || 'Failed to update profile');
+  } finally {
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+  }
+}
+
+// ── Change Password ─────────────────────────────────────────────────
+async function submitChangePw(e) {
+  e.preventDefault();
+  const btn  = document.getElementById('btn-change-pw');
+  const curr = document.getElementById('curr-pw').value;
+  const nw   = document.getElementById('new-pw').value;
+  const conf = document.getElementById('confirm-pw').value;
+
+  clearFieldError('curr-pw'); clearFieldError('new-pw'); clearFieldError('confirm-pw');
+
+  if (!curr) { showFieldError('curr-pw', 'Current password is required'); return; }
+  if (nw.length < 8) { showFieldError('new-pw', 'Minimum 8 characters required'); return; }
+  if (nw !== conf)   { showFieldError('confirm-pw', 'Passwords do not match'); return; }
+
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  try {
+    await API.changePassword(curr, nw);
+    Toast.success('Password changed successfully!');
+    document.getElementById('change-pw-form').reset();
+    // Clear strength meter
+    document.querySelectorAll('#new-pw-strength .pw-strength-seg').forEach(s => s.className = 'pw-strength-seg');
+    document.querySelector('#new-pw-strength .pw-strength-label').textContent = '';
+  } catch (err) {
+    if (err.data?.errors) handleApiErrors(err.data.errors, { current_password:'curr-pw', new_password:'new-pw' });
+    else if (err.message?.match(/current|incorrect/i)) showFieldError('curr-pw', err.message);
+    else Toast.error(err.message || 'Failed to change password');
+  } finally {
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+  }
+}
+
+// ── Logout All Devices ──────────────────────────────────────────────
+async function logoutAllDevices() {
+  if (!confirm('This will log you out of all devices including this one. Continue?')) return;
+  const btn = document.getElementById('btn-logout-all');
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  try {
+    await API.logoutAll();
+    Toast.success('All sessions revoked. Redirecting to login…');
+    setTimeout(() => { Auth.clear(); window.location.href = 'index.html'; }, 1500);
+  } catch (err) {
+    Toast.error(err.message || 'Failed to logout all sessions');
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+  }
+}
+
+// ── Activity Log ────────────────────────────────────────────────────
+async function loadActivity() {
+  const tbody = document.getElementById('activity-body');
+  try {
+    const res = await API.get('/users/activity?limit=10');
+    const logs = res?.data?.rows || res?.data || [];
+    if (!logs.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--txt-muted)">
+        No recent activity found.</td></tr>`;
+      return;
+    }
+    const actionIcon = { login:'🔑', logout:'🚪', register:'✅', password_change:'🔐', password_reset:'🔄', admin_action:'⚙️' };
+    tbody.innerHTML = logs.map(l => `
+      <tr>
+        <td>
+          <span style="margin-right:.4rem">${actionIcon[l.action]||'📋'}</span>
+          <span style="font-weight:500">${esc(l.action?.replace(/_/g,' '))}</span>
+        </td>
+        <td><code style="font-family:var(--font-mono);font-size:.8rem;color:var(--txt-400)">${esc(l.ip_address||'—')}</code></td>
+        <td style="font-size:.8rem;color:var(--txt-400);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.user_agent?.split(' ')[0]||'—')}</td>
+        <td style="font-size:.8rem;color:var(--txt-muted);white-space:nowrap">${timeAgo(l.created_at)}</td>
+      </tr>`).join('');
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--txt-muted)">
+      Activity log not available.</td></tr>`;
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function togglePw(id, el) {
+  const input = document.getElementById(id);
+  const icon  = el.querySelector('i');
+  if (input.type === 'password') { input.type = 'text';     icon.className = 'fas fa-eye-slash'; }
+  else                           { input.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

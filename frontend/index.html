@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – FUD Portal | Ahmaditech School</title>
+  <meta name="description" content="Sign in to FUD Portal – Federal University Dutse's official student and admin portal by Ahmaditech School.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/">
+  <meta property="og:title"       content="Login – FUD Portal | Ahmaditech School">
+  <meta property="og:description" content="Sign in to FUD Portal – Federal University Dutse's official student and admin portal.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Login – FUD Portal | Ahmaditech School">
+  <meta name="twitter:description" content="Sign in to FUD Portal – Federal University Dutse's official student and admin portal.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="auth-page">
+
+  <!-- ── Left Brand Panel ─────────────────────────────────────────── -->
+  <section class="auth-brand">
+    <div class="auth-brand-logo">F</div>
+    <div class="auth-brand-title">FUD Portal</div>
+    <p class="auth-brand-subtitle">Federal University Dutse's official digital learning and examination platform.</p>
+    <div class="auth-brand-features">
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">📚</div>
+        <div class="auth-feature-text">CBT Tests &amp; Examinations</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">📊</div>
+        <div class="auth-feature-text">Real-time Results &amp; Analytics</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">🔔</div>
+        <div class="auth-feature-text">Instant Notifications</div>
+      </div>
+      <div class="auth-feature-item">
+        <div class="auth-feature-icon">🔐</div>
+        <div class="auth-feature-text">Secure JWT Authentication</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Right Form Panel ─────────────────────────────────────────── -->
+  <section class="auth-form-panel">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <div class="auth-card-logo">F</div>
+        <h1 class="auth-card-title">Welcome Back</h1>
+        <p class="auth-card-subtitle">Sign in to continue to FUD Portal</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-student" onclick="switchTab('student')">
+          <i class="fas fa-graduation-cap"></i> Student
+        </button>
+        <button class="auth-tab" id="tab-admin" onclick="switchTab('admin')">
+          <i class="fas fa-user-shield"></i> Admin
+        </button>
+      </div>
+
+      <!-- Alert box -->
+      <div id="login-alert" class="alert alert-danger hidden">
+        <span class="alert-icon"><i class="fas fa-exclamation-circle"></i></span>
+        <span id="login-alert-msg"></span>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address <span>*</span></label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="email" class="form-input" placeholder="you@fud.edu.ng" autocomplete="email" required>
+          </div>
+          <span class="form-error" id="email-error"></span>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <label class="form-label" for="password">Password <span>*</span></label>
+            <a href="#" class="text-sm text-primary" id="forgot-pw-link" onclick="showModal('modal-forgot-pw');return false">Forgot Password?</a>
+          </div>
+          <div class="input-wrap">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="password" class="form-input" placeholder="Enter your password" autocomplete="current-password" required>
+            <span class="input-suffix" id="toggle-pw" onclick="togglePw('password','toggle-pw')">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+          <span class="form-error" id="password-error"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem">
+          <input type="checkbox" id="remember" style="accent-color:var(--clr-primary);width:16px;height:16px">
+          <label for="remember" class="text-sm" style="cursor:pointer;color:var(--txt-300)">Remember me</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-login">
+          <span class="btn-text"><i class="fas fa-sign-in-alt"></i> Sign In</span>
+        </button>
+      </form>
+
+      <div class="divider">or</div>
+      <p class="text-center text-sm" style="color:var(--txt-400)">
+        Don't have an account?
+        <a href="register.html" class="text-primary fw-600">Register as Student</a>
+      </p>
+    </div>
+
+    <p class="text-center text-sm" style="color:var(--txt-muted);margin-top:1.5rem">
+      FUD Portal &copy; 2024 &ndash; Ahmaditech School
+    </p>
+  </section>
+</div>
+
+<!-- ── Modal: Forgot Password ───────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modal-forgot-pw">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title"><i class="fas fa-key"></i> Forgot Password</div>
+        <div style="font-size:.8rem;color:var(--txt-400)">We'll generate a reset token for you</div>
+      </div>
+      <span class="modal-close" onclick="hideModal('modal-forgot-pw')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div id="forgot-alert" class="alert alert-success hidden">
+        <span class="alert-icon">✅</span>
+        <span id="forgot-alert-msg"></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="forgot-email">Your Email Address <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="forgot-email" class="form-input" placeholder="you@fud.edu.ng">
+        </div>
+      </div>
+      <div id="reset-token-box" class="hidden" style="margin-top:1rem;padding:1rem;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);border-radius:12px">
+        <p style="font-size:.8rem;color:var(--txt-400);margin-bottom:.5rem">Reset Token (copy this):</p>
+        <code id="reset-token-val" style="font-family:var(--font-mono);font-size:.82rem;color:var(--clr-primary);word-break:break-all"></code>
+        <button class="btn btn-sm btn-secondary" style="margin-top:.75rem;width:100%" onclick="showModal('modal-reset-pw');hideModal('modal-forgot-pw')">
+          <i class="fas fa-lock"></i> Use This Token to Reset Password
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-forgot-pw')">Cancel</button>
+      <button class="btn btn-primary" id="btn-forgot" onclick="submitForgotPw()">
+        <span class="btn-text"><i class="fas fa-paper-plane"></i> Send Reset Token</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Reset Password ────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modal-reset-pw">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-unlock-alt"></i> Reset Password</div>
+      <span class="modal-close" onclick="hideModal('modal-reset-pw')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="reset-token-input">Reset Token <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-ticket-alt input-icon"></i>
+          <input type="text" id="reset-token-input" class="form-input" placeholder="Paste your reset token">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="reset-new-pw">New Password <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="reset-new-pw" class="form-input" placeholder="Min 8 chars, uppercase, number, symbol">
+          <span class="input-suffix" onclick="togglePw('reset-new-pw',this)"><i class="fas fa-eye"></i></span>
+        </div>
+        <div class="pw-strength" id="reset-pw-strength">
+          <div class="pw-strength-bar">
+            <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+            <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+            <div class="pw-strength-seg"></div>
+          </div>
+          <div class="pw-strength-label"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-reset-pw')">Cancel</button>
+      <button class="btn btn-primary" id="btn-reset" onclick="submitResetPw()">
+        <span class="btn-text"><i class="fas fa-check"></i> Reset Password</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Force Change Password ─────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modal-force-change-pw">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚠️ Password Change Required</div>
+        <div style="font-size:.8rem;color:var(--clr-warning)">An administrator requires you to set a new password</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-warning" style="margin-bottom:1.5rem">
+        <span class="alert-icon">⚠️</span>
+        You must change your password before you can access the portal.
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="force-curr-pw">Current Password <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="force-curr-pw" class="form-input" placeholder="Your current password">
+          <span class="input-suffix" onclick="togglePw('force-curr-pw',this)"><i class="fas fa-eye"></i></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="force-new-pw">New Password <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="force-new-pw" class="form-input" placeholder="Min 8 chars, uppercase, number, symbol">
+          <span class="input-suffix" onclick="togglePw('force-new-pw',this)"><i class="fas fa-eye"></i></span>
+        </div>
+        <div class="pw-strength" id="force-pw-strength">
+          <div class="pw-strength-bar">
+            <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+            <div class="pw-strength-seg"></div><div class="pw-strength-seg"></div>
+            <div class="pw-strength-seg"></div>
+          </div>
+          <div class="pw-strength-label"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="force-confirm-pw">Confirm New Password <span>*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="force-confirm-pw" class="form-input" placeholder="Repeat new password">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary w-full" id="btn-force-change" onclick="submitForceChange()">
+        <span class="btn-text"><i class="fas fa-shield-alt"></i> Update Password &amp; Continue</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  // ── State ────────────────────────────────────────────────────────
+  let activeTab = 'student';
+  let loginData = null; // store successful login response here
+
+  // ── Init ─────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.requireGuest();
+    initPasswordStrength('force-new-pw', 'force-pw-strength');
+    initPasswordStrength('reset-new-pw', 'reset-pw-strength');
+    document.getElementById('login-form').addEventListener('submit', submitLogin);
+  });
+
+  // ── Tab Switch ───────────────────────────────────────────────────
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-student').classList.toggle('active', tab === 'student');
+    document.getElementById('tab-admin').classList.toggle('active', tab === 'admin');
+    clearAllErrors('login-form');
+    document.getElementById('login-alert').classList.add('hidden');
+  }
+
+  // ── Toggle PW Visibility ─────────────────────────────────────────
+  function togglePw(inputId, el) {
+    const input = document.getElementById(inputId);
+    const icon  = (el instanceof HTMLElement ? el : document.getElementById(el)).querySelector('i');
+    if (input.type === 'password') { input.type = 'text';     icon.className = 'fas fa-eye-slash'; }
+    else                           { input.type = 'password'; icon.className = 'fas fa-eye'; }
+  }
+
+  // ── Show alert ───────────────────────────────────────────────────
+  function showLoginAlert(msg) {
+    const el = document.getElementById('login-alert');
+    document.getElementById('login-alert-msg').textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  // ── Login Submit ─────────────────────────────────────────────────
+  async function submitLogin(e) {
+    e.preventDefault();
+    const btn   = document.getElementById('btn-login');
+    const email = document.getElementById('email').value.trim();
+    const pw    = document.getElementById('password').value;
+
+    clearAllErrors('login-form');
+    document.getElementById('login-alert').classList.add('hidden');
+
+    if (!email) { showFieldError('email', 'Email is required'); return; }
+    if (!pw)    { showFieldError('password', 'Password is required'); return; }
+
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    try {
+      const fn  = activeTab === 'admin' ? API.adminLogin : API.login;
+      const res = await fn(email, pw);
+      loginData = res.data;
+      Auth.setTokens(loginData);
+
+      if (loginData.force_password_change) {
+        Toast.warning('You must change your password before continuing.');
+        showModal('modal-force-change-pw');
+      } else {
+        Toast.success('Login successful! Redirecting…');
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+      }
+    } catch (err) {
+      if (err.data?.errors) handleApiErrors(err.data.errors, { email:'email', password:'password' });
+      else showLoginAlert(err.message || 'Login failed. Please try again.');
+    } finally {
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+    }
+  }
+
+  // ── Forgot Password ──────────────────────────────────────────────
+  async function submitForgotPw() {
+    const btn   = document.getElementById('btn-forgot');
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) { Toast.warning('Please enter your email address'); return; }
+
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    try {
+      const res = await API.forgotPassword(email);
+      document.getElementById('forgot-alert').classList.remove('hidden');
+      document.getElementById('forgot-alert-msg').textContent = res.message;
+      if (res.data?.reset_token) {
+        document.getElementById('reset-token-val').textContent = res.data.reset_token;
+        document.getElementById('reset-token-box').classList.remove('hidden');
+        document.getElementById('reset-token-input').value = res.data.reset_token;
+      }
+    } catch (err) {
+      Toast.error(err.message || 'Failed to send reset token');
+    } finally {
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+    }
+  }
+
+  // ── Reset Password ───────────────────────────────────────────────
+  async function submitResetPw() {
+    const btn   = document.getElementById('btn-reset');
+    const token = document.getElementById('reset-token-input').value.trim();
+    const newPw = document.getElementById('reset-new-pw').value;
+    if (!token) { Toast.warning('Please enter the reset token'); return; }
+    if (!newPw || newPw.length < 8) { Toast.warning('New password must be at least 8 characters'); return; }
+
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    try {
+      await API.resetPassword(token, newPw);
+      Toast.success('Password reset successfully! You can now log in.');
+      hideModal('modal-reset-pw');
+    } catch (err) {
+      Toast.error(err.message || 'Reset failed. Token may be expired.');
+    } finally {
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+    }
+  }
+
+  // ── Force Change Password ────────────────────────────────────────
+  async function submitForceChange() {
+    const btn  = document.getElementById('btn-force-change');
+    const curr = document.getElementById('force-curr-pw').value;
+    const nw   = document.getElementById('force-new-pw').value;
+    const conf = document.getElementById('force-confirm-pw').value;
+
+    if (!curr) { Toast.warning('Enter your current password'); return; }
+    if (nw.length < 8) { Toast.warning('New password must be at least 8 characters'); return; }
+    if (nw !== conf)   { Toast.warning('Passwords do not match'); return; }
+
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    try {
+      await API.changePassword(curr, nw);
+      Toast.success('Password changed! Redirecting to dashboard…');
+      hideModal('modal-force-change-pw');
+      setTimeout(() => window.location.href = 'dashboard.html', 1000);
+    } catch (err) {
+      Toast.error(err.message || 'Failed to change password');
+    } finally {
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Results – FUD Portal | Ahmaditech School</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="canonical" href="https://your-domain.com/results.html">
+  <!-- Open Graph / Social -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://your-domain.com/results.html">
+  <meta property="og:title"       content="Results – FUD Portal">
+  <meta property="og:description" content="View your CBT exam results and performance analytics on FUD Portal.">
+  <meta property="og:image"       content="https://your-domain.com/og-image.png">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="Results – FUD Portal">
+  <meta name="twitter:description" content="View your CBT exam results and performance analytics on FUD Portal.">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-dot-grid"></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">F</div>
+      <div><div class="sidebar-title">FUD Portal</div><div class="sidebar-subtitle">Ahmaditech School</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <a href="results.html"   class="nav-item active student-only"><i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">My Results</span></a>
+      <div class="nav-section-label admin-only">Administration</div>
+      <a href="users.html"     class="nav-item admin-only"><i class="fas fa-users nav-item-icon"></i><span class="nav-item-text">Users</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-folder-open nav-item-icon"></i><span class="nav-item-text">Media</span></a>
+      <a href="profile.html"   class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info"><div class="user-name" id="sidebar-user-name">Loading…</div><div class="user-role" id="sidebar-user-role">student</div></div>
+      </div>
+      <button class="btn btn-ghost w-full" id="btn-logout" style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+      <div><div class="topbar-title">My Results</div><div class="topbar-subtitle">Your test history and scores</div></div>
+      <div class="topbar-right">
+        <button class="notif-btn" onclick="location.href='notifications.html'"><i class="fas fa-bell"></i><span class="notif-dot hidden" id="notif-dot"></span></button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Summary Stats -->
+      <div class="stats-grid mb-xl" id="result-stats">
+        <div class="stat-card"><div class="stat-icon teal"><i class="fas fa-tasks"></i></div>
+          <div><div class="stat-value" id="rs-total">—</div><div class="stat-label">Tests Taken</div></div></div>
+        <div class="stat-card"><div class="stat-icon emerald"><i class="fas fa-check-circle"></i></div>
+          <div><div class="stat-value" id="rs-passed">—</div><div class="stat-label">Tests Passed</div></div></div>
+        <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-star"></i></div>
+          <div><div class="stat-value" id="rs-best">—</div><div class="stat-label">Best Score</div></div></div>
+        <div class="stat-card"><div class="stat-icon indigo"><i class="fas fa-calculator"></i></div>
+          <div><div class="stat-value" id="rs-avg">—</div><div class="stat-label">Average Score</div></div></div>
+      </div>
+
+      <!-- Results Table -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title"><i class="fas fa-list-alt" style="color:var(--clr-primary)"></i> All Results</div>
+          <div class="card-subtitle" id="results-subtitle">Loading…</div></div>
+          <div class="search-box" style="width:220px">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="results-search" placeholder="Search tests…" oninput="filterResults(this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Test</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Percentage</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--txt-muted)">
+                <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading your results…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let allResults = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  initSidebar(); renderSidebarUser();
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    try { await API.logout(Auth.getRefresh()); } catch {}
+    Auth.clear(); window.location.href = 'index.html';
+  });
+  await updateUnreadBadge();
+  await loadResults();
+});
+
+async function loadResults() {
+  const tbody = document.getElementById('results-body');
+  try {
+    const res = await API.getMyResults();
+    allResults = res?.data?.rows || [];
+    const total  = allResults.length;
+    const passed = allResults.filter(r => r.is_passed).length;
+    const best   = total ? Math.max(...allResults.map(r=>r.percentage||0)) : 0;
+    const avg    = total ? allResults.reduce((s,r)=>s+(r.percentage||0),0)/total : 0;
+
+    document.getElementById('rs-total').textContent  = total;
+    document.getElementById('rs-passed').textContent = passed;
+    document.getElementById('rs-best').textContent   = best.toFixed(1)+'%';
+    document.getElementById('rs-avg').textContent    = avg.toFixed(1)+'%';
+    document.getElementById('results-subtitle').textContent = `${total} result${total!==1?'s':''} found`;
+
+    renderRows(allResults);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clr-danger);padding:2rem">${err.message}</td></tr>`;
+  }
+}
+
+function renderRows(rows) {
+  const tbody = document.getElementById('results-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <div class="empty-state-icon">📊</div><h3>No Results Yet</h3>
+      <p>Take a test to see your results here.</p>
+      <a href="tests.html" class="btn btn-primary" style="margin-top:1rem;display:inline-flex"><i class="fas fa-play"></i> Go to Tests</a>
+    </div></td></tr>`; return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const pct = (r.percentage||0).toFixed(1);
+    const barColor = r.is_passed ? 'var(--clr-success)' : pct>=40 ? 'var(--clr-warning)' : 'var(--clr-danger)';
+    const duration = r.time_taken_mins ? `${r.time_taken_mins}m` : '—';
+    return `<tr>
+      <td><span style="font-weight:600">${esc(r.test_title||'Unknown Test')}</span></td>
+      <td style="color:var(--txt-400);font-size:.85rem">${esc(r.subject||'—')}</td>
+      <td><span class="badge badge-neutral">${r.score||0} / ${r.total_marks||0}</span></td>
+      <td style="min-width:120px">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <div style="flex:1;height:6px;background:var(--bg-600);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
+          </div>
+          <span style="font-size:.82rem;font-weight:600;color:${barColor};white-space:nowrap">${pct}%</span>
+        </div>
+      </td>
+      <td>${r.is_passed
+        ? '<span class="badge badge-success"><span class="badge-dot"></span>Passed</span>'
+        : '<span class="badge badge-danger"><span class="badge-dot"></span>Failed</span>'}</td>
+      <td style="color:var(--txt-400);font-size:.82rem">${duration}</td>
+      <td style="color:var(--txt-muted);font-size:.78rem;white-space:nowrap">${formatDateShort(r.submitted_at||r.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterResults(q) {
+  const filtered = q ? allResults.filter(r =>
+    (r.test_title||'').toLowerCase().includes(q.toLowerCase()) ||
+    (r.subject||'').toLowerCase().includes(q.toLowerCase())
+  ) : allResults;
+  renderRows(filtered);
+  document.getElementById('results-subtitle').textContent = `${filtered.length} result${filtered.length!==1?'s':''} found`;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
