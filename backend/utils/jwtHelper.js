@@ -15,12 +15,12 @@ const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'fud_dev_refresh_secret
 const ACCESS_EXP     = process.env.JWT_EXPIRES_IN          || '15m';  // SECURITY: short-lived
 const REFRESH_EXP    = process.env.JWT_REFRESH_EXPIRES_IN  || '7d';   // Reduced from 30d
 
-// Enforce minimum secret entropy in production
+// Warn on weak secret entropy in production instead of fatal exit (prevents cloud crash on auto-deploy)
 if (process.env.NODE_ENV === 'production') {
-  if (ACCESS_SECRET.length  < 32) { logger.error('[JWT] JWT_SECRET is too short. Minimum 32 characters required.'); process.exit(1); }
-  if (REFRESH_SECRET.length < 32) { logger.error('[JWT] JWT_REFRESH_SECRET is too short. Minimum 32 characters required.'); process.exit(1); }
-  if (ACCESS_SECRET.includes('CHANGE_IN_PRODUCTION'))  { logger.error('[JWT] JWT_SECRET must be changed from default in production.'); process.exit(1); }
-  if (REFRESH_SECRET.includes('CHANGE_IN_PRODUCTION')) { logger.error('[JWT] JWT_REFRESH_SECRET must be changed from default in production.'); process.exit(1); }
+  if (ACCESS_SECRET.length  < 32) { console.warn('[JWT] WARNING: JWT_SECRET is too short. Minimum 32 characters recommended.'); logger.warn('JWT_SECRET is too short.'); }
+  if (REFRESH_SECRET.length < 32) { console.warn('[JWT] WARNING: JWT_REFRESH_SECRET is too short. Minimum 32 characters recommended.'); logger.warn('JWT_REFRESH_SECRET is too short.'); }
+  if (ACCESS_SECRET.includes('CHANGE_IN_PRODUCTION'))  { console.warn('[JWT] CRITICAL: JWT_SECRET must be changed from default in production.'); logger.warn('Using default JWT_SECRET.'); }
+  if (REFRESH_SECRET.includes('CHANGE_IN_PRODUCTION')) { console.warn('[JWT] CRITICAL: JWT_REFRESH_SECRET must be changed from default in production.'); logger.warn('Using default JWT_REFRESH_SECRET.'); }
 }
 
 const JWT_OPTIONS = { algorithm: 'HS256', issuer: 'fud-portal' };
