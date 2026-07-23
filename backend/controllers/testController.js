@@ -242,39 +242,87 @@ exports.startTest = async (req, res, next) => {
     if (!test.is_published)   return R.error(res, 'This test is not available', 403);
     if (!test.is_active)      return R.error(res, 'This test is currently inactive', 403);
 
-    // Check time window
+    // Phase 5: Check early access and late entry windows
     const now = new Date();
-    if (test.starts_at && new Date(test.starts_at) > now)
-      return R.error(res, `Test starts at ${test.starts_at}`, 403);
-    if (test.ends_at && new Date(test.ends_at) < now)
+    if (test.starts_at) {
+       const startsAt = new Date(test.starts_at);
+       const earlyAccessStart = new Date(startsAt.getTime() - (test.early_access_mins || 0) * 60000);
+       if (now < earlyAccessStart) {
+         return R.error(res, `Test is not yet open. Early access starts at ${earlyAccessStart.toLocaleString()}`, 403);
+       }
+       if (test.late_entry_mins > 0) {
+         const lateEntryEnd = new Date(startsAt.getTime() + test.late_entry_mins * 60000);
+         if (now > lateEntryEnd) {
+           return R.error(res, `Late entry window has closed. The test started at ${startsAt.toLocaleString()}`, 403);
+         }
+       }
+    }
+    if (test.ends_at && new Date(test.ends_at) < now) {
       return R.error(res, 'This test has ended', 403);
+    }
 
     const student = await StudentModel.findByUserId(req.user.id);
     if (!student) return R.error(res, 'Student profile not found', 404);
 
-    // Check if already has a submitted attempt (if retakes disabled)
-    const lastResult = await ResultModel.findByTestAndStudent(testId, student.id);
-    if (lastResult && lastResult.submitted_at) {
-      // Return existing completed result
-      return R.error(res, 'You have already completed this test', 409);
-    }
+    const { get, run } = require('../database/db');
+
+    // Phase 5: Max Attempts
+    const maxAttempts = test.max_attempts || 1;
+    const pastAttempts = await get(`SELECT COUNT(*) as c FROM exam_attempts WHERE test_id = ? AND student_id = ?`, [testId, student.id]);
+    
+    let questions = [];
+    const dbAll = require('../database/db').all;
+    const dbRun = require('../database/db').run;
 
     // Check for existing active session (resume)
     let session = await ResultModel.findActiveSession(testId, student.id);
     let isResume = false;
 
     if (session) {
+      // Load assigned questions for resume
+      if (session.assigned_questions) {
+         try {
+            const assignedIds = JSON.parse(session.assigned_questions);
+            if (assignedIds && assignedIds.length > 0) {
+              const placeholders = assignedIds.map(() => '?').join(',');
+              questions = await dbAll(`SELECT * FROM questions WHERE id IN (${placeholders})`, assignedIds);
+            }
+         } catch(e) {}
+      }
+      if (!questions.length) {
+         questions = await dbAll(`SELECT * FROM questions WHERE test_id = ?`, [testId]);
+      }
       isResume = true;
-      // Check if session expired (time ran out)
+      // Check if session expired
       const elapsed = Math.floor((now - new Date(session.started_at)) / 1000);
       if (elapsed >= test.duration_mins * 60) {
-        // Auto-submit expired session
         await autoSubmitSession(session, test, student);
         return R.error(res, 'Your test session has expired and was auto-submitted', 410);
       }
     } else {
+      if (pastAttempts.c >= maxAttempts) {
+        return R.error(res, `You have reached the maximum allowed attempts (${maxAttempts}) for this test`, 403);
+      }
+
+      // Phase 5: Token Validation
+      let usedToken = null;
+      if (test.token_required) {
+        const providedToken = req.body.token;
+        if (!providedToken) return R.error(res, 'An exam token is required to start this test', 403);
+        const tokenRec = await get(`SELECT * FROM test_tokens WHERE token = ? AND test_id = ? AND is_active = 1`, [providedToken, testId]);
+        if (!tokenRec) return R.error(res, 'Invalid or inactive exam token', 403);
+        if (tokenRec.expires_at && new Date(tokenRec.expires_at) < now) return R.error(res, 'Exam token has expired', 403);
+        if (tokenRec.used_attempts >= tokenRec.max_attempts) return R.error(res, 'Exam token usage limit exceeded', 403);
+        
+        await run(`UPDATE test_tokens SET used_attempts = used_attempts + 1 WHERE id = ?`, [tokenRec.id]);
+        usedToken = providedToken;
+      }
+
+      // Phase 5: Register in exam_sessions tracker
+      await run(`INSERT INTO exam_sessions (test_id, student_id, token_used, status) VALUES (?, ?, ?, 'active')`, [testId, student.id, usedToken]);
+
       // Create new session
-      const attempt_number = lastResult ? lastResult.attempt_number + 1 : 1;
+      const attempt_number = pastAttempts.c + 1;
       const sessionId = await ResultModel.create({
         test_id: testId, student_id: student.id,
         score: 0, total_marks: test.total_marks,
@@ -283,11 +331,62 @@ exports.startTest = async (req, res, next) => {
         attempt_number, ip_address: req.ip,
         started_at: now.toISOString(),
       });
-      session = await ResultModel.findById(sessionId) || { id: sessionId, started_at: now.toISOString(), answers: '{}' };
+      session = await ResultModel.findById(sessionId) || { id: sessionId, started_at: now.toISOString(), answers: '{}', assigned_questions: null };
+      
+      // Phase 5: Randomization & Pools
+      
+      if (session.assigned_questions) {
+         try {
+            const assignedIds = JSON.parse(session.assigned_questions);
+            if (assignedIds && assignedIds.length > 0) {
+              const placeholders = assignedIds.map(() => '?').join(',');
+              questions = await dbAll(`SELECT * FROM questions WHERE id IN (${placeholders})`, assignedIds);
+            }
+         } catch(e) {}
+      }
+
+      if (!questions.length) {
+        // If pools are enabled, pick one pool
+        const pools = await dbAll(`SELECT DISTINCT pool_name FROM questions WHERE test_id = ? AND pool_name IS NOT NULL AND pool_name != ''`, [testId]);
+        let poolClause = '';
+        let queryParams = [testId];
+        if (pools.length > 0) {
+          const selectedPool = pools[Math.floor(Math.random() * pools.length)].pool_name;
+          poolClause = ' AND pool_name = ? ';
+          queryParams.push(selectedPool);
+        }
+
+        let limitClause = test.display_limit > 0 ? `LIMIT ${test.display_limit}` : '';
+        let orderClause = test.randomize_questions ? 'ORDER BY RANDOM()' : 'ORDER BY id ASC';
+        
+        questions = await dbAll(`SELECT * FROM questions WHERE test_id = ? ${poolClause} ${orderClause} ${limitClause}`, queryParams);
+        
+        if (questions.length > 0) {
+           const assignedIds = questions.map(q => q.id);
+           await dbRun(`UPDATE results SET assigned_questions = ? WHERE id = ?`, [JSON.stringify(assignedIds), session.id]);
+        }
+      }
     }
 
-    // Get questions (randomized)
-    const questions = await QuestionModel.findForExam(testId, { randomize: true });
+    // Phase 5: Randomize Options if enabled
+    if (test.randomize_options) {
+      questions = questions.map(q => {
+         if (q.question_type !== 'mcq' && q.question_type !== 'true_false') return q;
+         const options = [
+           { key: 'A', text: q.option_a },
+           { key: 'B', text: q.option_b },
+           { key: 'C', text: q.option_c },
+           { key: 'D', text: q.option_d }
+         ].filter(o => o.text != null && o.text.trim() !== '');
+         
+         for (let i = options.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [options[i], options[j]] = [options[j], options[i]];
+         }
+         q.shuffled_options = options;
+         return q;
+      });
+    }
 
     // Parse saved answers
     let savedAnswers = {};
@@ -323,7 +422,7 @@ exports.startTest = async (req, res, next) => {
  */
 exports.saveProgress = async (req, res, next) => {
   try {
-    const { session_id, answers, time_spent_secs } = req.body;
+    const { session_id, answers, time_spent_secs, violations, anti_cheat_logs } = req.body;
     if (!session_id) return R.error(res, 'session_id required', 400);
 
     const session = await ResultModel.findById(session_id);
@@ -339,6 +438,8 @@ exports.saveProgress = async (req, res, next) => {
     await ResultModel.saveProgress(session_id, {
       answers: typeof answers==='string' ? answers : JSON.stringify(answers),
       time_spent_secs: time_spent_secs||0,
+      violations_count: violations || 0,
+      anti_cheat_logs: typeof anti_cheat_logs==='string' ? anti_cheat_logs : JSON.stringify(anti_cheat_logs || [])
     });
 
     return R.success(res, { saved: true }, 'Progress saved');
@@ -384,13 +485,58 @@ exports.submitResult = async (req, res, next) => {
     Object.assign(finalAnswers, answers);
 
     // Score the answers
-    const questions = await QuestionModel.findByTestId(testId);
-    let score = 0;
-    for (const q of questions) {
-      const given   = String(finalAnswers[q.id] || '').trim().toUpperCase();
-      const correct = String(q.correct_answer).trim().toUpperCase();
-      if (given === correct) score += q.marks;
+    let questions = [];
+    if (session.assigned_questions) {
+      try {
+        const assignedIds = JSON.parse(session.assigned_questions);
+        if (assignedIds && assignedIds.length > 0) {
+          const { all: dbAll } = require('../database/db');
+          const placeholders = assignedIds.map(() => '?').join(',');
+          questions = await dbAll(`SELECT id, correct_answer FROM question_bank WHERE id IN (${placeholders})`, assignedIds);
+          // For question_bank, we assume 1 mark per question by default if not specified
+          questions = questions.map(q => ({ ...q, marks: 1 }));
+        }
+      } catch(e) {}
+    } 
+    if (!questions.length) {
+      questions = await QuestionModel.findByTestId(testId);
     }
+    
+    let score = 0;
+    const { run } = require('../database/db');
+    
+    for (const q of questions) {
+      const given = String(finalAnswers[q.id] || '').trim();
+      
+      if (q.question_type === 'essay' || q.question_type === 'practical') {
+         // Handle essay and practical in Phase 5
+         if (given) {
+           if (q.question_type === 'essay') {
+              const wordCount = given.split(/\s+/).filter(w => w.length > 0).length;
+              await run(`INSERT INTO essay_answers (result_id, question_id, answer_text, word_count, char_count) VALUES (?, ?, ?, ?, ?)`, [session.id, q.id, given, wordCount, given.length]);
+           } else {
+              await run(`INSERT INTO practical_submissions (result_id, question_id, file_url, file_type) VALUES (?, ?, ?, 'application/octet-stream')`, [session.id, q.id, given]);
+           }
+         }
+         // Score handled manually later for essay/practical
+         await run(`UPDATE questions SET times_used = times_used + 1 WHERE id = ?`, [q.id]);
+         continue;
+      }
+
+      // Objective marking
+      const givenMCQ = given.toUpperCase();
+      const correctMCQ = String(q.correct_answer).trim().toUpperCase();
+      if (givenMCQ === correctMCQ) {
+        score += q.marks || 1;
+        await run(`UPDATE questions SET times_used = times_used + 1, times_correct = times_correct + 1 WHERE id = ?`, [q.id]);
+      } else {
+        if (givenMCQ && test.negative_marking > 0) {
+          score -= test.negative_marking;
+        }
+        await run(`UPDATE questions SET times_used = times_used + 1, times_wrong = times_wrong + 1 WHERE id = ?`, [q.id]);
+      }
+    }
+    score = Math.max(0, score); // Prevent negative total score
 
     const percentage = test.total_marks > 0 ? (score / test.total_marks) * 100 : 0;
     const passed     = percentage >= test.pass_mark;
@@ -400,6 +546,13 @@ exports.submitResult = async (req, res, next) => {
       score, percentage: +percentage.toFixed(2), grade, passed,
       answers: JSON.stringify(finalAnswers), time_spent_secs,
     });
+    
+    // Phase 5 additions:
+    await run(`INSERT INTO exam_attempts (test_id, student_id, attempt_number, score, percentage, passed, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [testId, student.id, session.attempt_number || 1, score, +percentage.toFixed(2), passed, new Date().toISOString()]);
+      
+    await run(`UPDATE exam_sessions SET status = 'completed', last_active_at = ? WHERE test_id = ? AND student_id = ? AND status != 'completed'`, [new Date().toISOString(), testId, student.id]);
+    
 
     // Notify student
     await NotifModel.create({
@@ -557,3 +710,164 @@ async function autoSubmitSession(session, test, student) {
     answers: session.answers, time_spent_secs: test.duration_mins * 60,
   });
 }
+
+// ══════════════════════════════════════════════════════════════════
+// PHASE 4 & 5: EXTENDED ENDPOINTS
+// ══════════════════════════════════════════════════════════════════
+
+exports.getDashboardAnalytics = async (req, res, next) => {
+  try {
+    const { get, all } = require('../database/db');
+    
+    // Aggregate cards
+    const totalSubjects = await get(`SELECT COUNT(*) as c FROM tests`);
+    const totalQuestions = await get(`SELECT COUNT(*) as c FROM questions`);
+    const totalExams = await get(`SELECT COUNT(*) as c FROM results WHERE submitted_at IS NOT NULL`);
+    const totalStudents = await get(`SELECT COUNT(DISTINCT student_id) as c FROM results`);
+    const avgScore = await get(`SELECT AVG(score) as c FROM results WHERE submitted_at IS NOT NULL`);
+    const maxScore = await get(`SELECT MAX(score) as c FROM results WHERE submitted_at IS NOT NULL`);
+    const minScore = await get(`SELECT MIN(score) as c FROM results WHERE submitted_at IS NOT NULL`);
+    const passed = await get(`SELECT COUNT(*) as c FROM results WHERE passed = 1`);
+    const failed = await get(`SELECT COUNT(*) as c FROM results WHERE passed = 0 AND submitted_at IS NOT NULL`);
+
+    // Aggregate charts (Monthly exams, Pass/Fail, Subject Performance)
+    const monthlyExams = await all(`
+      SELECT strftime('%Y-%m', submitted_at) as month, COUNT(*) as count 
+      FROM results WHERE submitted_at IS NOT NULL GROUP BY month ORDER BY month
+    `);
+    
+    const subjectPerformance = await all(`
+      SELECT t.title as subject, AVG(r.percentage) as avg_score 
+      FROM results r JOIN tests t ON r.test_id = t.id 
+      WHERE r.submitted_at IS NOT NULL GROUP BY t.id
+    `);
+    
+    const worstQuestions = await all(`
+      SELECT id, question_text, times_used, times_correct, times_wrong 
+      FROM questions 
+      WHERE times_used > 0 
+      ORDER BY (CAST(times_wrong AS FLOAT)/times_used) DESC LIMIT 10
+    `);
+
+    return R.success(res, {
+      cards: {
+        totalSubjects: totalSubjects.c,
+        totalQuestions: totalQuestions.c,
+        totalExams: totalExams.c,
+        totalStudents: totalStudents.c,
+        avgScore: avgScore.c || 0,
+        maxScore: maxScore.c || 0,
+        minScore: minScore.c || 0,
+        passRate: totalExams.c > 0 ? (passed.c / totalExams.c) * 100 : 0,
+        failRate: totalExams.c > 0 ? (failed.c / totalExams.c) * 100 : 0
+      },
+      charts: {
+        monthlyExams,
+        subjectPerformance,
+        worstQuestions
+      }
+    });
+  } catch (err) { next(err); }
+};
+
+exports.getLiveMonitor = async (req, res, next) => {
+  try {
+    const { all } = require('../database/db');
+    const testId = +req.params.id;
+    // Get active sessions
+    const sessions = await all(`
+      SELECT s.id as session_id, st.full_name, st.matric_no, s.current_question_index, 
+             s.last_active_at, s.status
+      FROM exam_sessions s 
+      JOIN students st ON s.student_id = st.id
+      WHERE s.test_id = ? AND s.status != 'completed'
+    `, [testId]);
+    return R.success(res, sessions);
+  } catch (err) { next(err); }
+};
+
+exports.exportResultPDF = async (req, res, next) => {
+  try {
+    const puppeteer = require('puppeteer');
+    const QRCode = require('qrcode');
+    const result = await ResultModel.findById(+req.params.resultId);
+    if (!result) return R.notFound(res, 'Result not found');
+    const test = await TestModel.findById(result.test_id);
+    const student = await StudentModel.findById(result.student_id);
+
+    // Generate QR
+    const verificationUrl = `http://\${req.get('host')}/api/tests/results/\${result.id}`;
+    const qrImage = await QRCode.toDataURL(verificationUrl);
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; margin: 40px; }
+          .header { text-align: center; border-bottom: 3px solid #0d9488; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { margin: 0; color: #0d9488; font-size: 28px; }
+          .header p { margin: 5px 0 0 0; font-size: 14px; color: #666; }
+          .details, .scores { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .details th, .details td, .scores th, .scores td { padding: 12px; text-align: left; border: 1px solid #e5e7eb; }
+          .details th, .scores th { background-color: #f3f4f6; font-weight: bold; width: 35%; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #9ca3af; }
+          .signature { margin-top: 60px; display: flex; justify-content: space-between; }
+          .signature div { border-top: 1px solid #333; padding-top: 10px; width: 200px; text-align: center; }
+          .qr-code { text-align: center; margin-top: 30px; }
+          .qr-code img { width: 120px; height: 120px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Federal University Dutse</h1>
+          <p>Official Examination Result</p>
+        </div>
+        
+        <table class="details">
+          <tr><th>Student Name</th><td>\${student.full_name}</td></tr>
+          <tr><th>Registration Number</th><td>\${student.matric_no}</td></tr>
+          <tr><th>Department</th><td>\${student.department}</td></tr>
+          <tr><th>Faculty</th><td>\${student.faculty}</td></tr>
+          <tr><th>Subject / Course</th><td>\${test.title} (\${test.course_code})</td></tr>
+          <tr><th>Examination Date</th><td>\${new Date(result.started_at).toLocaleDateString()}</td></tr>
+        </table>
+        
+        <table class="scores">
+          <tr><th>Final Score</th><td>\${result.score} / \${test.total_marks}</td></tr>
+          <tr><th>Percentage</th><td>\${result.percentage}%</td></tr>
+          <tr><th>Grade</th><td>\${result.grade}</td></tr>
+          <tr><th>Status</th><td><strong style="color: \${result.passed ? 'green' : 'red'}">\${result.passed ? 'PASSED' : 'FAILED'}</strong></td></tr>
+        </table>
+
+        <div class="qr-code">
+          <img src="\${qrImage}" alt="Verification QR Code">
+          <p style="font-size: 10px; color: #666;">Scan to Verify Result Authenticity</p>
+        </div>
+        
+        <div class="signature">
+          <div>Student Signature</div>
+          <div>Examiner Signature</div>
+        </div>
+        
+        <div class="footer">
+          Generated automatically by FUD Portal CBT System on \${new Date().toLocaleString()}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': pdf.length,
+      'Content-Disposition': `attachment; filename="Result_\${student.matric_no}_\${test.course_code}.pdf"`
+    });
+    res.send(pdf);
+  } catch (err) { next(err); }
+};

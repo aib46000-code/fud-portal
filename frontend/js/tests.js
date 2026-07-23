@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── View Switcher ─────────────────────────────────────────────────
 const VIEW_META = {
   tests:         { title:'CBT Tests',            subtitle:'Manage all tests' },
+  subjects:      { title:'Subjects & Bank',      subtitle:'Manage subjects and question banks' },
   available:     { title:'Available Tests',       subtitle:'Tests you can take' },
   'my-results':  { title:'My Results',            subtitle:'Your CBT performance' },
   'results-admin':{ title:'Results Overview',     subtitle:'All student results' },
@@ -91,9 +92,12 @@ window.switchView = function(view, el) {
   State.currentView = view;
 
   if (view === 'tests')         { State.tests.page    = 1; loadTests(); }
+  if (view === 'subjects')      loadSubjects();
   if (view === 'available')     loadAvailableTests();
   if (view === 'my-results')    { State.myResults.page = 1; loadMyResults(); }
   if (view === 'results-admin') loadResultsOverview();
+  if (view === 'analytics') loadAnalytics();
+  if (view === 'live-monitor') loadLiveMonitor();
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -282,6 +286,9 @@ async function loadMyResults() {
             <button class="btn btn-xs btn-secondary" onclick="openReview(${r.id})" title="Review answers">
               <i class="fas fa-eye"></i> Review
             </button>
+            <a class="btn btn-xs btn-primary" href="/api/tests/${r.test_id}/results/${r.id}/pdf" target="_blank" title="Download Result PDF">
+              <i class="fas fa-file-pdf"></i> PDF
+            </a>
           </div>
         </td>
       </tr>`).join('');
@@ -399,6 +406,9 @@ window.openTestModal = async function(id = null) {
   document.getElementById('t-level').value = '';
   document.getElementById('t-starts').value = '';
   document.getElementById('t-ends').value = '';
+  if(document.getElementById('t-bank-subject')) document.getElementById('t-bank-subject').value = '';
+  if(document.getElementById('t-limit')) document.getElementById('t-limit').value = '';
+  if(document.getElementById('t-randomize')) document.getElementById('t-randomize').value = '1';
 
   if (isEdit) {
     try {
@@ -417,6 +427,9 @@ window.openTestModal = async function(id = null) {
         document.getElementById('t-instructions').value = t.instructions||'';
         if (t.starts_at) document.getElementById('t-starts').value = t.starts_at.slice(0,16);
         if (t.ends_at)   document.getElementById('t-ends').value   = t.ends_at.slice(0,16);
+        if(document.getElementById('t-bank-subject')) document.getElementById('t-bank-subject').value = t.bank_subject_id || '';
+        if(document.getElementById('t-limit')) document.getElementById('t-limit').value = t.display_limit || '';
+        if(document.getElementById('t-randomize')) document.getElementById('t-randomize').value = t.randomize !== undefined ? t.randomize : 1;
       }
     } catch (err) { Toast.error('Failed to load test: '+err.message); return; }
   }
@@ -441,6 +454,9 @@ window.saveTest = async function() {
     instructions:         document.getElementById('t-instructions').value.trim()||undefined,
     starts_at:            document.getElementById('t-starts').value||undefined,
     ends_at:              document.getElementById('t-ends').value||undefined,
+    bank_subject_id:      document.getElementById('t-bank-subject')?.value || undefined,
+    display_limit:        +document.getElementById('t-limit')?.value || 0,
+    randomize:            +document.getElementById('t-randomize')?.value || 0,
   };
 
   btn.classList.add('btn-loading'); btn.disabled = true;
@@ -824,3 +840,273 @@ function renderPagination(cid, total, cur, limit, onPage) {
 
 const _d = {};
 window.debounce = (fn, delay) => (...args) => { clearTimeout(_d[fn]); _d[fn] = setTimeout(()=>fn(...args), delay); };
+
+// ══════════════════════════════════════════════════════════════════
+// SUBJECTS & QUESTION BANK
+// ══════════════════════════════════════════════════════════════════
+window.openSubjectModal = function() {
+  document.getElementById('s-code').value = '';
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-desc').value = '';
+  showModal('modal-subject');
+};
+
+window.saveSubject = async function() {
+  const code = document.getElementById('s-code').value.trim();
+  const name = document.getElementById('s-name').value.trim();
+  const desc = document.getElementById('s-desc').value.trim();
+  if (!code || !name) return Toast.error('Code and Name are required');
+  try {
+    await API.post('/subjects', { code, name, description: desc });
+    Toast.success('Subject created');
+    hideModal('modal-subject');
+    loadSubjects();
+  } catch(e) { Toast.error(e.response?.data?.message || 'Error saving subject'); }
+};
+
+window.loadSubjects = async function() {
+  const tbody = document.getElementById('subjects-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+  try {
+    const res = await API.get('/subjects');
+    const subjects = res?.data || [];
+    populateSubjectSelect(subjects);
+    if (!subjects.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No subjects found. Create one to start.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = subjects.map(s => `
+      <tr>
+        <td>${s.id}</td>
+        <td><strong>${s.code}</strong></td>
+        <td>${s.name}</td>
+        <td class="text-muted" style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.description || ''}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="loadQuestionBank(${s.id}, '${s.name}')">View Bank</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSubject(${s.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { Toast.error('Failed to load subjects'); }
+};
+
+window.deleteSubject = function(id) {
+  confirmAction('Delete Subject', 'Are you sure? This deletes the subject but NOT its question bank.', async () => {
+    try {
+      await API.delete(`/subjects/${id}`);
+      Toast.success('Subject deleted');
+      loadSubjects();
+    } catch(e) { Toast.error('Failed to delete subject'); }
+  });
+};
+
+window.populateSubjectSelect = function(subjects) {
+  const select = document.getElementById('t-bank-subject');
+  if(!select) return;
+  const currentVal = select.value;
+  select.innerHTML = '<option value="">-- No Bank (Manual Questions) --</option>' + subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  select.value = currentVal;
+};
+
+// Question Bank
+window.loadQuestionBank = async function(subjectId, subjectName) {
+  State.currentBankSubject = subjectId;
+  document.getElementById('question-bank-container').style.display = 'block';
+  document.getElementById('bank-subtitle').textContent = subjectName;
+  const tbody = document.getElementById('bank-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+  try {
+    const res = await API.get(`/subjects/${subjectId}/questions`);
+    const qs = res?.data || [];
+    if (!qs.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Question bank is empty. Import some questions!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = qs.map(q => `
+      <tr>
+        <td>${q.id}</td>
+        <td><span class="result-pill pass">${q.question_type.toUpperCase()}</span></td>
+        <td><strong>${q.question_text.length > 50 ? q.question_text.substring(0,50)+'...' : q.question_text}</strong></td>
+        <td class="text-muted text-sm">
+          A: ${q.option_a}<br>B: ${q.option_b}<br>C: ${q.option_c}<br>D: ${q.option_d}
+        </td>
+        <td class="text-success font-bold">${q.correct_answer}</td>
+        <td>
+          <button class="btn btn-sm btn-danger" onclick="deleteBankQuestion(${q.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { Toast.error('Failed to load question bank'); }
+};
+
+window.deleteBankQuestion = function(qid) {
+  confirmAction('Delete Question', 'Delete this question from the bank?', async () => {
+    try {
+      await API.delete(`/subjects/questions/${qid}`);
+      Toast.success('Question deleted');
+      loadQuestionBank(State.currentBankSubject, document.getElementById('bank-subtitle').textContent);
+    } catch(e) { Toast.error('Failed to delete question'); }
+  });
+};
+
+// Import CSV/Excel
+window.openImportModal = function() {
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-report').style.display = 'none';
+  document.getElementById('import-report').innerHTML = '';
+  showModal('modal-import');
+};
+
+window.runCsvImport = async function() {
+  const fileInput = document.getElementById('import-file');
+  if (!fileInput.files.length) return Toast.error('Please select a file');
+  
+  let subjectId = State.currentBankSubject;
+  if (!subjectId) return Toast.error('Please select a subject bank first');
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  const btn = document.getElementById('btn-run-import');
+  btn.classList.add('btn-loading');
+  try {
+    const res = await API.post(`/subjects/${subjectId}/import`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    Toast.success('Import completed');
+    
+    // Render detailed report
+    const d = res.data.data;
+    const reportEl = document.getElementById('import-report');
+    reportEl.style.display = 'block';
+    reportEl.innerHTML = `
+      <strong>Import Report:</strong><br>
+      Total Rows: ${d.total_rows}<br>
+      <span class="text-success">Imported: ${d.imported_rows}</span><br>
+      <span class="text-danger">Skipped: ${d.skipped_rows} (Duplicates: ${d.duplicate_rows}, Invalid: ${d.invalid_rows})</span><br>
+      ${d.error_messages.length > 0 ? `<div style="margin-top:0.5rem;max-height:100px;overflow-y:auto;background:#222;padding:5px;border-radius:4px;">${d.error_messages.join('<br>')}</div>` : ''}
+    `;
+    
+    loadQuestionBank(subjectId, document.getElementById('bank-subtitle').textContent);
+  } catch(e) {
+    Toast.error(e.response?.data?.message || 'Import failed');
+  } finally {
+    btn.classList.remove('btn-loading');
+  }
+};
+
+
+// ══════════════════════════════════════════════════════════════════
+// PHASE 5: ENTERPRISE ANALYTICS & LIVE MONITOR
+// ══════════════════════════════════════════════════════════════════
+window.loadAnalytics = async function() {
+  try {
+    const res = await API.get('/tests/stats/dashboard');
+    const data = res.data;
+    
+    const cardsHtml = `\
+      <div class="tests-stat"><div class="tests-stat-val">${data.cards.totalStudents}</div><div class="tests-stat-lab">Total Students</div></div>\
+      <div class="tests-stat"><div class="tests-stat-val">${data.cards.totalExams}</div><div class="tests-stat-lab">Total Exams Taken</div></div>\
+      <div class="tests-stat"><div class="tests-stat-val" style="color:var(--clr-success)">${data.cards.passRate.toFixed(1)}%</div><div class="tests-stat-lab">Global Pass Rate</div></div>\
+      <div class="tests-stat"><div class="tests-stat-val" style="color:var(--clr-danger)">${data.cards.failRate.toFixed(1)}%</div><div class="tests-stat-lab">Global Fail Rate</div></div>\
+    `;
+    document.getElementById('analytics-cards').innerHTML = cardsHtml;
+    
+    document.getElementById('analytics-worst-q').innerHTML = data.charts.worstQuestions.map(q => `\
+      <tr>\
+        <td>${q.id}</td>\
+        <td style="max-width:200px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">${q.question_text}</td>\
+        <td>${q.times_used}</td>\
+        <td>${q.times_correct}</td>\
+        <td>${q.times_wrong}</td>\
+        <td style="color:var(--clr-danger)">${((q.times_wrong / q.times_used) * 100).toFixed(1)}%</td>\
+      </tr>\
+    `).join('');
+
+    if (window.Chart) {
+      if (window.monthlyChart) window.monthlyChart.destroy();
+      if (window.perfChart) window.perfChart.destroy();
+      
+      const ctx1 = document.getElementById('chart-monthly').getContext('2d');
+      window.monthlyChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: data.charts.monthlyExams.map(i => i.month),
+          datasets: [{ label: 'Exams Taken', data: data.charts.monthlyExams.map(i => i.count), backgroundColor: '#0d9488' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      
+      const ctx2 = document.getElementById('chart-performance').getContext('2d');
+      window.perfChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: data.charts.subjectPerformance.map(i => i.subject),
+          datasets: [{ label: 'Avg Score (%)', data: data.charts.subjectPerformance.map(i => i.avg_score), borderColor: '#f59e0b', tension: 0.3 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+  } catch(e) { console.error(e); }
+};
+
+window.monitorInterval = null;
+window.currentMonitorTestId = null;
+
+window.loadLiveMonitor = async function() {
+  try {
+    const res = await API.get('/tests?limit=100');
+    const select = document.getElementById('monitor-test-select');
+    select.innerHTML = '<option value="">Select an active test...</option>' + 
+      res.data.rows.map(t => `<option value="${t.id}">${t.title} (${t.course_code || 'N/A'})</option>`).join('');
+  } catch(e) {}
+};
+
+window.startMonitor = function(testId) {
+  if (!testId) {
+    clearInterval(window.monitorInterval);
+    document.getElementById('monitor-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">Select a test to monitor</td></tr>';
+    return;
+  }
+  window.currentMonitorTestId = testId;
+  refreshMonitor();
+  if (window.monitorInterval) clearInterval(window.monitorInterval);
+  window.monitorInterval = setInterval(() => {
+    if (!document.hidden) refreshMonitor();
+  }, 5000);
+};
+
+window.refreshMonitor = async function() {
+  if (!window.currentMonitorTestId) return;
+  try {
+    const res = await API.get(`/tests/${window.currentMonitorTestId}/live-monitor`);
+    const tbody = document.getElementById('monitor-tbody');
+    if (!res.data || res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No active sessions currently.</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = res.data.map(s => `\
+      <tr>\
+        <td>${s.full_name}</td>\
+        <td>${s.matric_no}</td>\
+        <td><span class="result-pill ${s.status === 'active' ? 'pass' : 'fail'}">${s.status.toUpperCase()}</span></td>\
+        <td>Q${s.current_question_index + 1}</td>\
+        <td>${new Date(s.last_active_at).toLocaleTimeString()}</td>\
+        <td><button class="btn btn-sm btn-danger" onclick="terminateSession(${s.session_id})">Terminate</button></td>\
+      </tr>\
+    `).join('');
+  } catch(e) {}
+};
+
+window.terminateSession = async function(sessionId) {
+  if (!confirm('Are you sure you want to terminate this session? The student will be forcefully submitted.')) return;
+  try {
+    await API.post(`/tests/${window.currentMonitorTestId}/submit`, { session_id: sessionId });
+    refreshMonitor();
+    Toast.show('Session terminated successfully');
+  } catch(e) {
+    Toast.show(e.message, 'error');
+  }
+};

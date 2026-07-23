@@ -4,23 +4,23 @@
   "description": "FUD Portal – Ahmaditech School Management System",
   "main": "backend/server.js",
   "scripts": {
-    "start":          "node backend/server.js",
-    "dev":            "nodemon backend/server.js",
-    "prod":           "NODE_ENV=production node backend/server.js",
-    "pm2:start":      "pm2 start ecosystem.config.js --env production",
-    "pm2:stop":       "pm2 stop fud-portal",
-    "pm2:restart":    "pm2 restart fud-portal",
-    "pm2:logs":       "pm2 logs fud-portal",
-    "pm2:status":     "pm2 status",
-    "test":           "node full_audit_test.js",
-    "test:e2e":       "node e2e_tests.js",
-    "test:security":  "node security_audit.js",
-    "migrate":        "node backend/database/migrate.js",
-    "seed":           "node backend/database/seed.js",
-    "setup":          "npm run migrate && npm run seed",
-    "backup":         "bash scripts/backup.sh",
-    "audit-deps":     "npm audit --omit=dev",
-    "health":         "node -e \"require('http').get('http://localhost:5000/api/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>console.log(JSON.parse(d)))})\""
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "prod": "NODE_ENV=production node backend/server.js",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop fud-portal",
+    "pm2:restart": "pm2 restart fud-portal",
+    "pm2:logs": "pm2 logs fud-portal",
+    "pm2:status": "pm2 status",
+    "test": "node full_audit_test.js",
+    "test:e2e": "node e2e_tests.js",
+    "test:security": "node security_audit.js",
+    "migrate": "node backend/database/migrate.js",
+    "seed": "node backend/database/seed.js",
+    "setup": "npm run migrate && npm run seed",
+    "backup": "bash scripts/backup.sh",
+    "audit-deps": "npm audit --omit=dev",
+    "health": "node -e \"require('http').get('http://localhost:5000/api/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>console.log(JSON.parse(d)))})\""
   },
   "keywords": [
     "fud",
@@ -35,25 +35,29 @@
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0",
-    "npm":  ">=10.0.0"
+    "npm": ">=10.0.0"
   },
-
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
+    "csv-parser": "^3.2.1",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
     "express-rate-limit": "^7.2.0",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "katex": "^0.18.1",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "nodemailer": "^9.0.3",
+    "puppeteer": "^25.3.0",
+    "qrcode": "^1.5.4",
     "sqlite3": "^5.1.7",
     "uuid": "^11.1.0",
-    "winston": "^3.13.0"
+    "winston": "^3.13.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

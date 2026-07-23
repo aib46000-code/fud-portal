@@ -10,6 +10,10 @@
   <meta name="description" content="FUD Portal Computer Based Test – Online Examination System">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- KaTeX Local Assets -->
+  <link rel="stylesheet" href="libs/katex/katex.min.css">
+  <script defer src="libs/katex/katex.min.js"></script>
+  <script defer src="libs/katex/contrib/auto-render.min.js"></script>
   <style>
     /* ── CBT layout ────────────────────────────────────────── */
     :root {
@@ -213,6 +217,29 @@
   </button>
 </div>
 
+<!-- Token Modal -->
+<div class="modal-overlay hidden" id="modal-token" style="z-index:9999;">
+  <div class="modal" style="max-width:400px; background:var(--card-bg);">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-key"></i> Enter Access Token</div>
+      <span class="modal-close" onclick="document.getElementById('modal-token').classList.add('hidden')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem; color:var(--txt-300); margin-bottom:1rem;">This exam requires a secure access token to start. Please enter the token provided by your invigilator.</p>
+      <div class="form-group">
+        <label class="form-label">Access Token</label>
+        <div class="input-wrap"><i class="fas fa-lock input-icon"></i>
+          <input type="text" id="exam-token-input" class="form-input" placeholder="e.g. A1B2C3D4" style="text-transform:uppercase;">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-token').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTokenAndStart()"><i class="fas fa-play"></i> Verify & Start</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ LOBBY ═══════════════════ -->
 <div class="cbt-screen active" id="screen-lobby">
   <div class="lobby-card">
@@ -285,10 +312,22 @@
 <div class="cbt-screen" id="screen-exam">
   <!-- Header -->
   <div class="exam-header">
-    <div class="exam-test-name" id="exam-test-name">Loading…</div>
+    <div class="exam-test-name" id="exam-test-name">
+      <div id="head-subject" style="font-size:1rem; font-weight:800; color:var(--clr-primary);">Subject Loading...</div>
+      <div style="font-size:0.75rem; color:var(--txt-300); margin-top:2px;">
+        <i class="fas fa-user-graduate"></i> <span id="head-student-name">...</span> 
+        &bull; <i class="fas fa-id-card"></i> <span id="head-matric">...</span>
+        &bull; Question <span id="head-q-current">1</span> of <span id="head-q-total">...</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-right:1rem;">
+      <button class="btn btn-sm btn-ghost" id="btn-font-dec" onclick="changeFontSize(-1)" title="Decrease Font Size"><i class="fas fa-font"></i>-</button>
+      <button class="btn btn-sm btn-ghost" id="btn-font-inc" onclick="changeFontSize(1)" title="Increase Font Size"><i class="fas fa-font"></i>+</button>
+      <button class="btn btn-sm btn-ghost" id="btn-high-contrast" onclick="toggleHighContrast()" title="Toggle High Contrast"><i class="fas fa-adjust"></i></button>
+    </div>
     <div class="exam-timer" id="exam-timer"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></div>
     <button class="btn btn-xs" id="btn-flag" onclick="toggleFlag()" title="Flag question"
-      style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--clr-warning);border-radius:var(--radius-pill);padding:.3rem .75rem;font-size:.8rem">
+      style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--clr-warning);border-radius:var(--radius-pill);padding:.3rem .75rem;font-size:.8rem; margin-right: 0.5rem;">
       <i class="fas fa-flag"></i> Flag
     </button>
     <button class="btn btn-danger" id="btn-submit-header" onclick="confirmSubmit()"
@@ -304,6 +343,13 @@
     <div class="exam-main" id="exam-main">
       <div class="q-panel" id="q-panel">
         <div style="text-align:center;padding:3rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+      </div>
+      <div id="q-controls" style="display:none; max-width:720px; margin: 1.5rem auto 0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="clearAnswer()" style="width:auto;"><i class="fas fa-eraser"></i> Clear Answer</button>
+        <div style="display:flex; gap: 0.75rem;">
+           <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()" style="width:auto;"><i class="fas fa-chevron-left"></i> Previous</button>
+           <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" style="width:auto;">Next <i class="fas fa-chevron-right"></i></button>
+        </div>
       </div>
     </div>
 
@@ -357,7 +403,7 @@
   </div>
 </div>
 
-<script src="js/api.js"></script>
-<script src="js/cbt.js"></script>
+<script src="js/api.js" defer></script>
+<script src="js/cbt.js" defer></script>
 </body>
 </html>

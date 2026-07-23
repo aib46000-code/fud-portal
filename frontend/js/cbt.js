@@ -74,7 +74,11 @@ async function loadLobby() {
       test.instructions || 'Answer all questions carefully. Once started, the timer cannot be paused.';
 
     const user = Auth.getUser();
-    document.getElementById('lobby-student').textContent  = user?.email || '';
+    document.getElementById('lobby-student').textContent = `${test.student_name} (${test.matric_no})`;
+    
+    // Store in global CBT state for header injection
+    CBT.studentName = test.student_name;
+    CBT.matricNo = test.matric_no;
 
     // Time window check
     if (test.starts_at && new Date(test.starts_at) > new Date()) {
@@ -93,11 +97,13 @@ async function loadLobby() {
 // ═══════════════════════════════════════════════════════════════════
 // START / RESUME
 // ═══════════════════════════════════════════════════════════════════
-window.startExam = async function() {
+window.startExamOld = async function() {
   const btn = document.getElementById('btn-start');
   btn.classList.add('btn-loading'); btn.disabled = true;
   try {
-    const res = await API.post(`/tests/${CBT.testId}/start`, {});
+    const token = sessionStorage.getItem('cbt_token_' + CBT.testId);
+    const headers = token ? { 'X-Exam-Token': token } : {};
+    const res = await API.post(`/tests/${CBT.testId}/start`, {}, { headers });
     const data = res?.data;
 
     if (!data) throw new Error('Invalid server response');
@@ -136,11 +142,22 @@ window.startExam = async function() {
 // EXAM INIT
 // ═══════════════════════════════════════════════════════════════════
 function initExam() {
-  document.getElementById('exam-test-name').textContent =
-    document.getElementById('lobby-title').textContent;
+  document.getElementById('head-subject').textContent = document.getElementById('lobby-title').textContent;
+  document.getElementById('head-student-name').textContent = CBT.studentName || 'Student';
+  document.getElementById('head-matric').textContent = CBT.matricNo || 'N/A';
 
   buildNavGrid();
-  renderQuestion(0);
+  
+  // Find first unanswered question
+  let startIndex = 0;
+  for(let i=0; i<CBT.questions.length; i++) {
+     if(!CBT.answers[CBT.questions[i].id]) {
+        startIndex = i;
+        break;
+     }
+  }
+  renderQuestion(startIndex);
+  
   startTimer();
   startAutoSave();
   initAntiCheat();
@@ -184,31 +201,69 @@ function renderQuestion(index) {
 
   const userAns = CBT.answers[q.id];
 
+  document.getElementById('head-q-current').textContent = index + 1;
+  document.getElementById('head-q-total').textContent = total;
+
+  let mediaHtml = '';
+  if (q.image_url) {
+    mediaHtml = `<div style="margin-bottom:1rem; text-align:center;"><img src="${q.image_url}" alt="Question Image" style="max-width:100%; border-radius:8px;"></div>`;
+  }
+
   document.getElementById('q-panel').innerHTML = `
     <div class="q-number-badge">
       <i class="fas fa-question-circle"></i>
       Question ${index+1} of ${total}
       ${CBT.flagged.has(q.id) ? '<span style="color:var(--clr-warning)">· 🚩 Flagged</span>' : ''}
     </div>
-    <div class="q-text">${escHtml(q.question_text)}</div>
-    ${opts.map(o => `
-      <button class="option-btn ${userAns===o.key?'selected':''}"
-        onclick="selectAnswer(${q.id},'${o.key}')" id="opt-${q.id}-${o.key}">
-        <span class="option-key">${o.key}</span>
-        <span>${escHtml(o.text)}</span>
-      </button>`).join('')}
-    <div class="exam-nav">
-      <button class="btn btn-secondary" id="btn-prev"
-        ${index===0?'disabled':''} onclick="goTo(${index-1})">
-        <i class="fas fa-chevron-left"></i> Previous
-      </button>
-      <div class="q-status-chip">
-        ${answered}/${total} answered
-      </div>
-      <button class="btn ${index===total-1?'btn-danger':'btn-primary'}" onclick="${index===total-1?'confirmSubmit()':'goTo('+(index+1)+')'}" id="btn-next">
-        ${index===total-1?'<i class="fas fa-paper-plane"></i> Submit':'Next <i class="fas fa-chevron-right"></i>'}
-      </button>
-    </div>`;
+    ${mediaHtml}
+    <div class="q-text katex-render">${escHtml(q.question_text)}</div>
+    ${(() => {
+      if (q.question_type === 'essay') {
+         return `<textarea class="form-input" rows="6" placeholder="Type your answer here..." oninput="selectAnswer(${q.id}, this.value)">${escHtml(userAns || '')}</textarea>`;
+      } else if (q.question_type === 'practical') {
+         return `<div style="padding:1rem; border:1px dashed var(--border-subtle); border-radius:8px; text-align:center;">
+            <input type="file" id="prac-upload-${q.id}" onchange="uploadPractical(${q.id}, this.files[0])" style="display:none">
+            <button class="btn btn-secondary" onclick="document.getElementById('prac-upload-${q.id}').click()"><i class="fas fa-upload"></i> Upload Submission File</button>
+            <div style="margin-top:0.5rem; font-size:0.85rem; color:var(--clr-success)" id="prac-status-${q.id}">${userAns ? 'File uploaded: ' + userAns : ''}</div>
+         </div>`;
+      } else {
+         const finalOpts = q.shuffled_options ? q.shuffled_options : opts;
+         return finalOpts.map(o => `
+            <button class="option-btn katex-render ${userAns===o.key?'selected':''}"
+              onclick="selectAnswer(${q.id},'${o.key}')" id="opt-${q.id}-${o.key}">
+              <span class="option-key">${o.key}</span>
+              <span>${escHtml(o.text)}</span>
+            </button>`).join('');
+      }
+    })()}
+  `;
+
+  // Render Math with KaTeX
+  if (window.renderMathInElement) {
+    renderMathInElement(document.getElementById('q-panel'), {
+      delimiters: [
+        {left: "$$", right: "$$", display: true},
+        {left: "$", right: "$", display: false},
+        {left: "\\(", right: "\\)", display: false},
+        {left: "\\[", right: "\\]", display: true}
+      ],
+      throwOnError: false
+    });
+  }
+
+  // Update controls display
+  document.getElementById('q-controls').style.display = 'flex';
+  document.getElementById('btn-prev').disabled = (index === 0);
+  
+  if (index === total - 1) {
+    document.getElementById('btn-next').innerHTML = '<i class="fas fa-paper-plane"></i> Submit';
+    document.getElementById('btn-next').className = 'btn btn-danger';
+    document.getElementById('btn-next').onclick = confirmSubmit;
+  } else {
+    document.getElementById('btn-next').innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+    document.getElementById('btn-next').className = 'btn btn-primary';
+    document.getElementById('btn-next').onclick = nextQuestion;
+  }
 
   // Scroll to top of panel
   document.getElementById('exam-main').scrollTo({ top:0, behavior:'smooth' });
@@ -221,11 +276,31 @@ window.goTo = function(i) {
   renderQuestion(i);
 };
 
+window.nextQuestion = function() {
+  goTo(CBT.currentIndex + 1);
+};
+
+window.prevQuestion = function() {
+  goTo(CBT.currentIndex - 1);
+};
+
+window.clearAnswer = function() {
+  const q = CBT.questions[CBT.currentIndex];
+  if (!q) return;
+  if (CBT.answers[q.id]) {
+    delete CBT.answers[q.id];
+    renderQuestion(CBT.currentIndex);
+    updateNavGrid(CBT.currentIndex);
+    forceSaveProgress();
+  }
+};
+
 window.selectAnswer = function(qId, key) {
   CBT.answers[qId] = key;
   // Instantly re-render to show selected state
   renderQuestion(CBT.currentIndex);
   updateNavGrid(CBT.currentIndex);
+  forceSaveProgress();
 };
 
 window.toggleFlag = function() {
@@ -288,7 +363,11 @@ function updateTimerDisplay() {
 // AUTO-SAVE
 // ═══════════════════════════════════════════════════════════════════
 function startAutoSave() {
-  CBT.autoSaveHandle = setInterval(saveProgress, 30_000);
+  CBT.autoSaveHandle = setInterval(saveProgress, 10_000); // 10s auto-save
+}
+
+async function forceSaveProgress() {
+  await saveProgress();
 }
 
 async function saveProgress() {
@@ -296,9 +375,11 @@ async function saveProgress() {
   try {
     const elapsed = Math.floor((Date.now() - CBT.startedAt.getTime()) / 1000);
     await API.post(`/tests/${CBT.testId}/save-progress`, {
-      session_id:     CBT.sessionId,
-      answers:        CBT.answers,
+      session_id:      CBT.sessionId,
+      answers:         CBT.answers,
       time_spent_secs: elapsed,
+      violations:      CBT.violations,
+      anti_cheat_logs: CBT.antiCheatLogs || []
     });
   } catch {}
 }
@@ -403,23 +484,37 @@ window.goToReview = function() {
 // ANTI-CHEAT
 // ═══════════════════════════════════════════════════════════════════
 function initAntiCheat() {
+  CBT.violations = 0;
+  CBT.antiCheatLogs = [];
+  CBT.violationCounts = { tab_switch: 0, window_blur: 0 };
+  CBT.thresholds = { tab_switch: 3, window_blur: 2 }; // from requirements
+
   // Tab/window visibility change
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && !CBT.submitted) recordViolation('tab_switch');
+    if (document.hidden && !CBT.submitted) recordViolation('tab_switch', 'You switched away from the exam tab.');
   });
 
   // Window blur
   window.addEventListener('blur', () => {
-    if (!CBT.submitted) recordViolation('window_blur');
+    if (!CBT.submitted) recordViolation('window_blur', 'You exited full-screen or minimized the window.');
   });
 
   // Right-click disable
-  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => {
+     e.preventDefault();
+     recordViolation('context_menu', 'Right-click is disabled.', true);
+  });
 
   // Copy/paste disable
-  document.addEventListener('copy',  e => { e.preventDefault(); Toast.warning('Copying is not allowed during exam.'); });
+  document.addEventListener('copy',  e => { 
+     e.preventDefault(); 
+     recordViolation('copy_paste', 'Copying is not allowed during the exam.', true); 
+  });
   document.addEventListener('cut',   e => e.preventDefault());
-  document.addEventListener('paste', e => e.preventDefault());
+  document.addEventListener('paste', e => {
+     e.preventDefault();
+     recordViolation('copy_paste', 'Pasting is not allowed during the exam.', true);
+  });
 
   // Keyboard shortcuts
   document.addEventListener('keydown', e => {
@@ -429,40 +524,44 @@ function initAntiCheat() {
     // F12, DevTools
     if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
       e.preventDefault();
+      recordViolation('developer_tools', 'Developer tools are strictly prohibited.', true);
     }
   });
 
   // Print Screen / screenshot warning
   document.addEventListener('keyup', e => {
     if (e.key === 'PrintScreen') {
-      Toast.warning('Screenshots are not allowed during the exam.');
-      recordViolation('screenshot');
+      recordViolation('screenshot', 'Screenshots are not allowed.', true);
     }
   });
 }
 
-function recordViolation(type) {
+function recordViolation(type, message, forceShow = false) {
   if (CBT.submitted) return;
+  
   CBT.violations++;
-  showOverlay(CBT.violations);
+  CBT.antiCheatLogs.push({ type, timestamp: new Date().toISOString() });
+  
+  if (CBT.violationCounts[type] !== undefined) CBT.violationCounts[type]++;
+  
+  let shouldWarn = forceShow;
+  if (!forceShow && CBT.violationCounts[type] !== undefined && CBT.violationCounts[type] >= CBT.thresholds[type]) {
+     shouldWarn = true;
+  }
+
+  if (shouldWarn) {
+     showOverlay(message);
+  } else {
+     Toast.warning('Warning: ' + message);
+  }
 
   // Log to server (fire & forget)
-  API.post(`/tests/${CBT.testId}/save-progress`, {
-    session_id: CBT.sessionId,
-    answers: CBT.answers,
-    time_spent_secs: Math.floor((Date.now() - CBT.startedAt.getTime()) / 1000),
-  }).catch(() => {});
-
-  if (CBT.violations >= CBT.maxViolations) {
-    Toast.error('Multiple violations detected. Auto-submitting…');
-    setTimeout(() => { hideOverlay(); autoSubmit(); }, 2500);
-  }
+  forceSaveProgress();
 }
 
-function showOverlay(count) {
+function showOverlay(message) {
   const overlay = document.getElementById('blur-overlay');
-  document.getElementById('blur-warnings').textContent =
-    `Warning ${count} of ${CBT.maxViolations}. ${CBT.maxViolations - count} warning${CBT.maxViolations-count!==1?'s':''} remaining before auto-submit.`;
+  document.getElementById('blur-warnings').textContent = message;
   overlay.classList.add('active');
 }
 
@@ -511,3 +610,71 @@ function formatTime(secs) {
   const s = secs%60;
   return h>0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ACCESSIBILITY
+// ═══════════════════════════════════════════════════════════════════
+window.currentFontSize = 16;
+window.changeFontSize = function(dir) {
+  window.currentFontSize += (dir * 2);
+  if (window.currentFontSize < 12) window.currentFontSize = 12;
+  if (window.currentFontSize > 24) window.currentFontSize = 24;
+  document.getElementById('q-panel').style.fontSize = window.currentFontSize + 'px';
+};
+
+window.isHighContrast = false;
+window.toggleHighContrast = function() {
+  window.isHighContrast = !window.isHighContrast;
+  if (window.isHighContrast) {
+    document.body.style.filter = 'contrast(150%) saturate(150%)';
+  } else {
+    document.body.style.filter = '';
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// TOKEN LOGIC
+// ═══════════════════════════════════════════════════════════════════
+window.submitTokenAndStart = async function() {
+  const token = document.getElementById('exam-token-input').value.trim();
+  if (!token) return Toast.show('Please enter a token');
+  
+  // Save token for API calls
+  sessionStorage.setItem('cbt_token_' + CBT.testId, token);
+  document.getElementById('modal-token').classList.add('hidden');
+  startExamReal();
+};
+
+window.startExam = function() {
+  // Check if test needs token
+  API.get('/tests/' + CBT.testId).then(res => {
+     if (res.data.token_required && !sessionStorage.getItem('cbt_token_' + CBT.testId)) {
+       document.getElementById('modal-token').classList.remove('hidden');
+     } else {
+       startExamReal();
+     }
+  }).catch(() => startExamReal());
+};
+
+window.startExamReal = async function() {
+
+window.uploadPractical = async function(qId, file) {
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  document.getElementById('prac-status-'+qId).textContent = 'Uploading...';
+  try {
+    const token = Auth.getAccess();
+    const res = await fetch('/api/media/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    selectAnswer(qId, data.data.url);
+    document.getElementById('prac-status-'+qId).textContent = 'File uploaded successfully';
+  } catch(e) {
+    document.getElementById('prac-status-'+qId).textContent = 'Upload failed: ' + e.message;
+  }
+};

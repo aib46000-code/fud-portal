@@ -30,9 +30,6 @@ services:
       - key:   NODE_ENV
         value: production
 
-      - key:   PORT
-        value: "5000"
-
       # DB stored on Render Disk (persistent)
       - key:   DB_PATH
         value: /var/data/fud_portal.db

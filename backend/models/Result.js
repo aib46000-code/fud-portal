@@ -51,10 +51,10 @@ const ResultModel = {
   },
 
   /** Save progress without submitting (auto-save) */
-  async saveProgress(id, { answers, time_spent_secs }) {
+  async saveProgress(id, { answers, time_spent_secs, violations_count, anti_cheat_logs }) {
     return run(`
-      UPDATE results SET answers=?, time_spent_secs=? WHERE id=?`,
-      [typeof answers==='string'?answers:JSON.stringify(answers), time_spent_secs, id]);
+      UPDATE results SET answers=?, time_spent_secs=?, violations_count=?, anti_cheat_logs=? WHERE id=?`,
+      [typeof answers==='string'?answers:JSON.stringify(answers), time_spent_secs, violations_count, anti_cheat_logs, id]);
   },
 
   /** Final submit */

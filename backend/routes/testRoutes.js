@@ -33,28 +33,37 @@
  */
 const router  = require('express').Router();
 const ctrl    = require('../controllers/testController');
+const tokenCtrl = require('../controllers/tokenController');
 const protect = require('../middleware/authMiddleware');
 const role    = require('../middleware/roleMiddleware');
 const { validateTest } = require('../utils/validators');
 
 router.use(protect);
 
-// ── Tests ─────────────────────────────────────────────────────────
+// ─── Tests ───────────────────────────────────────────────────────────────────
 router.get ('/',                                             ctrl.listTests);
 router.post('/', role('admin','superadmin','staff'),         validateTest, ctrl.createTest);
 router.get ('/stats', role('admin','superadmin','staff'),    ctrl.testStats);
+router.get ('/stats/dashboard', role('admin','superadmin'),  ctrl.getDashboardAnalytics);
 router.get ('/my-results',                                   ctrl.myResults);
 
-// ── Result detail BEFORE /:id routes to avoid conflict ────────────
+// ─── Result detail BEFORE /:id routes to avoid conflict ──────────────────────
 router.get ('/results/:resultId',                            ctrl.getResult);
 router.get ('/results/:resultId/review',                     ctrl.reviewResult);
+router.get ('/results/:resultId/pdf',                        ctrl.exportResultPDF);
 
-// ── Single test ───────────────────────────────────────────────────
+// ─── Single test ──────────────────────────────────────────────────────────────
 router.get ('/:id',                                          ctrl.getTest);
 router.put ('/:id', role('admin','superadmin','staff'),      ctrl.updateTest);
 router.delete('/:id', role('admin','superadmin'),            ctrl.deleteTest);
 router.patch('/:id/publish',  role('admin','superadmin'),    ctrl.publishTest);
 router.patch('/:id/unpublish',role('admin','superadmin'),    ctrl.unpublishTest);
+router.get ('/:id/live-monitor', role('admin','superadmin'), ctrl.getLiveMonitor);
+
+// ─── Tokens ───────────────────────────────────────────────────────────────────
+router.get ('/:id/tokens', role('admin','superadmin'),       tokenCtrl.listTokens);
+router.post('/:id/tokens', role('admin','superadmin'),       tokenCtrl.generateToken);
+router.patch('/tokens/:tokenId/toggle', role('admin','superadmin'), tokenCtrl.toggleToken);
 
 // ── Questions ─────────────────────────────────────────────────────
 router.get ('/:id/questions',                                ctrl.listQuestions);

@@ -32,6 +32,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const mediaRoutes        = require('./routes/mediaRoutes');
 const adminRoutes        = require('./routes/adminRoutes');
 const emailRoutes        = require('./routes/emailRoutes');
+const subjectRoutes      = require('./routes/subjectRoutes');
 
 // ─── Upload & Log Dirs ────────────────────────────────────────────────────────
 const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || './uploads');
@@ -171,6 +172,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/media',         mediaRoutes);         // requirePasswordChange already applied globally
 app.use('/api/admin',         adminRoutes);
 app.use('/api/email',         emailRoutes);
+app.use('/api/subjects',      subjectRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -225,7 +227,7 @@ async function startServer() {
   try {
     await initialize();
 
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       logger.info(`╔══════════════════════════════════════════════╗`);
       logger.info(`║   FUD Portal – Ahmaditech School             ║`);
       logger.info(`║   Server running on http://localhost:${PORT}    ║`);

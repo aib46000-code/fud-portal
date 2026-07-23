@@ -484,4 +484,4 @@ process.on('exit',    close);
 process.on('SIGINT',  () => { close(); process.exit(0); });
 process.on('SIGTERM', () => { close(); process.exit(0); });
 
-module.exports = { db, run, get, all, exec, initialize, runMigration, logActivity, purgeExpiredTokens };
+module.exports = { db, run, get, all, exec, initialize, logActivity, purgeExpiredTokens };

@@ -35,7 +35,8 @@ module.exports = {
 
   signRefresh(payload) {
     const { id, email, role } = payload;
-    return jwt.sign({ id, email, role }, REFRESH_SECRET, { ...JWT_OPTIONS, expiresIn: REFRESH_EXP });
+    // Add jti (JWT ID) to ensure uniqueness if generated in the same second
+    return jwt.sign({ id, email, role, jti: require('crypto').randomUUID() }, REFRESH_SECRET, { ...JWT_OPTIONS, expiresIn: REFRESH_EXP });
   },
 
   verifyAccess(token) {

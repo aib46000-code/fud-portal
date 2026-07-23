@@ -110,8 +110,19 @@
       <a href="#" class="nav-item active" data-tab="tests" onclick="switchView('tests',this)">
         <i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">All Tests</span>
       </a>
+      <a href="#" class="nav-item admin-only" data-tab="subjects" onclick="switchView('subjects',this)">
+        <i class="fas fa-book nav-item-icon"></i><span class="nav-item-text">Subjects & Bank</span>
+      </a>
       <a href="#" class="nav-item admin-only" data-tab="results-admin" onclick="switchView('results-admin',this)">
         <i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">Results Overview</span>
+      </a>
+
+      <div class="nav-section-label admin-only" id="enterprise-label">Enterprise CBT</div>
+      <a href="#" class="nav-item admin-only" data-tab="analytics" onclick="switchView('analytics',this)">
+        <i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Analytics</span>
+      </a>
+      <a href="#" class="nav-item admin-only" data-tab="live-monitor" onclick="switchView('live-monitor',this)">
+        <i class="fas fa-desktop nav-item-icon"></i><span class="nav-item-text">Live Monitor</span>
       </a>
 
       <div class="nav-section-label">Student</div>
@@ -194,10 +205,98 @@
         <div class="pagination-bar" id="test-pagination"></div>
       </section>
 
+      <!-- ═══════════ VIEW: SUBJECTS & BANK (Admin) ═══════════ -->
+      <section class="tab-panel admin-only" id="view-subjects">
+        <div class="card mb-lg">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="card-title"><i class="fas fa-book" style="color:var(--clr-primary)"></i> Subjects</div>
+            <button class="btn btn-sm btn-primary" onclick="openSubjectModal()"><i class="fas fa-plus"></i> New Subject</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+              <tbody id="subjects-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="card mb-lg" id="question-bank-container" style="display:none;">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+               <div class="card-title"><i class="fas fa-database" style="color:var(--clr-accent)"></i> Question Bank</div>
+               <div class="card-subtitle" id="bank-subtitle">Loading...</div>
+            </div>
+            <div>
+               <button class="btn btn-sm btn-secondary" onclick="openImportModal()"><i class="fas fa-upload"></i> Import CSV/Excel</button>
+               <button class="btn btn-sm btn-primary" onclick="addBankQuestionModal()"><i class="fas fa-plus"></i> Add Question</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Type</th><th>Question</th><th>Options</th><th>Correct</th><th>Actions</th></tr></thead>
+              <tbody id="bank-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ═══════════ VIEW: AVAILABLE TESTS (Student) ═══════════ -->
       <section class="tab-panel" id="view-available">
         <div id="avail-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem">
           <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--txt-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        </div>
+      </section>
+
+      
+      <!-- ═══════════ VIEW: ANALYTICS (Admin) ═══════════ -->
+      <section class="tab-panel admin-only" id="view-analytics">
+        <div class="mb-lg" style="display:flex;align-items:center;gap:1rem">
+          <div class="topbar-title">Enterprise Analytics Dashboard</div>
+        </div>
+        <div class="tests-stats-bar" id="analytics-cards" style="margin-bottom:2rem;">
+          <!-- Cards will be populated here -->
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+           <div class="card">
+              <div class="card-header"><div class="card-title">Monthly Exams</div></div>
+              <div style="height:250px;"><canvas id="chart-monthly"></canvas></div>
+           </div>
+           <div class="card">
+              <div class="card-header"><div class="card-title">Subject Performance</div></div>
+              <div style="height:250px;"><canvas id="chart-performance"></canvas></div>
+           </div>
+        </div>
+        <div class="card mt-lg">
+           <div class="card-header"><div class="card-title">Top 10 Most Failed Questions</div></div>
+           <div class="table-wrap">
+             <table class="data-table">
+                <thead><tr><th>ID</th><th>Question</th><th>Times Used</th><th>Times Correct</th><th>Times Wrong</th><th>Fail Rate</th></tr></thead>
+                <tbody id="analytics-worst-q"></tbody>
+             </table>
+           </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ VIEW: LIVE MONITOR (Admin) ═══════════ -->
+      <section class="tab-panel admin-only" id="view-live-monitor">
+        <div class="mb-lg" style="display:flex;align-items:center;justify-content:space-between">
+          <div class="topbar-title">Real-time Exam Monitor</div>
+          <div style="display:flex;gap:1rem">
+             <select id="monitor-test-select" class="form-select" onchange="startMonitor(this.value)">
+                <option value="">Select an active test...</option>
+             </select>
+             <button class="btn btn-primary" onclick="refreshMonitor()"><i class="fas fa-sync"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+             <table class="data-table">
+                <thead><tr><th>Student</th><th>Matric No</th><th>Status</th><th>Current Question</th><th>Last Active</th><th>Action</th></tr></thead>
+                <tbody id="monitor-tbody">
+                   <tr><td colspan="6" style="text-align:center;padding:2rem;">Select a test to monitor</td></tr>
+                </tbody>
+             </table>
+          </div>
         </div>
       </section>
 
@@ -236,7 +335,6 @@
             <div class="card-subtitle" id="builder-test-meta"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:.6rem">
-            <button class="btn btn-sm btn-secondary" onclick="openImportModal()"><i class="fas fa-upload"></i> Bulk Import</button>
             <button class="btn btn-sm btn-primary" onclick="addQuestionCard()"><i class="fas fa-plus"></i> Add Question</button>
           </div>
         </div>
@@ -302,14 +400,34 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Subject</label>
-          <div class="input-wrap"><i class="fas fa-book input-icon"></i>
-            <input type="text" id="t-subject" class="form-input" placeholder="Computer Science"></div>
-        </div>
-        <div class="form-group">
           <label class="form-label">Course Code</label>
           <div class="input-wrap"><i class="fas fa-code input-icon"></i>
-            <input type="text" id="t-code" class="form-input" placeholder="CSC 101"></div>
+            <input type="text" id="t-code" class="form-input" placeholder="e.g. CSC 101"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subject Bank (Optional)</label>
+          <div class="input-wrap"><i class="fas fa-book input-icon"></i>
+            <select id="t-bank-subject" class="form-select" onchange="document.getElementById('t-subject').value = this.options[this.selectedIndex].text;">
+              <option value="">-- No Bank (Manual Questions) --</option>
+            </select>
+          </div>
+          <input type="hidden" id="t-subject" value="">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Questions to Display (Limit)</label>
+          <div class="input-wrap"><i class="fas fa-list-ol input-icon"></i>
+            <input type="number" id="t-limit" class="form-input" placeholder="e.g. 50 (leave 0 for all)" min="0"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Randomize / Shuffle?</label>
+          <div class="input-wrap"><i class="fas fa-random input-icon"></i>
+            <select id="t-randomize" class="form-select">
+              <option value="1">Yes (Shuffle questions)</option>
+              <option value="0">No (Ordered)</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-row">
@@ -358,6 +476,56 @@
           <input type="datetime-local" id="t-ends" class="form-input" style="padding:9px 12px">
         </div>
       </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Early Access (mins)</label>
+          <div class="input-wrap"><i class="fas fa-fast-forward input-icon"></i>
+            <input type="number" id="t-early-access" class="form-input" value="0" min="0"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Late Entry Window (mins)</label>
+          <div class="input-wrap"><i class="fas fa-hourglass-half input-icon"></i>
+            <input type="number" id="t-late-entry" class="form-input" value="0" min="0"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Max Attempts</label>
+          <div class="input-wrap"><i class="fas fa-redo input-icon"></i>
+            <input type="number" id="t-max-attempts" class="form-input" value="1" min="1"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Require Access Token?</label>
+          <div class="input-wrap"><i class="fas fa-key input-icon"></i>
+            <select id="t-token-required" class="form-select">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Randomize Options?</label>
+          <div class="input-wrap"><i class="fas fa-random input-icon"></i>
+            <select id="t-randomize-options" class="form-select">
+              <option value="0">No</option>
+              <option value="1">Yes (Shuffle options per student)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Randomize Sections?</label>
+          <div class="input-wrap"><i class="fas fa-layer-group input-icon"></i>
+            <select id="t-randomize-sections" class="form-select">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Instructions</label>
         <textarea id="t-instructions" class="form-input" rows="3" style="resize:vertical"
@@ -377,30 +545,51 @@
 <div class="modal-overlay hidden" id="modal-import">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <div class="modal-title"><i class="fas fa-file-upload"></i> Bulk Import Questions</div>
+      <div class="modal-title"><i class="fas fa-file-excel"></i> Import CSV/Excel</div>
       <span class="modal-close" onclick="hideModal('modal-import')">&times;</span>
     </div>
     <div class="modal-body">
       <p style="color:var(--txt-400);font-size:.85rem;margin-bottom:1rem">
-        Paste JSON array of questions. Each question must have: <code>question_text</code>, <code>option_a</code>–<code>option_d</code>, <code>correct_answer</code> (A/B/C/D).
+        Upload a CSV or Excel file to import questions. Columns required: <code>question_text</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code>, <code>correct_answer</code>. Optional: <code>image_url</code>, <code>explanation</code>.
       </p>
-      <textarea id="import-json" class="form-input" rows="12" style="font-family:monospace;font-size:.82rem;resize:vertical"
-        placeholder='[
-  {
-    "question_text": "What is 2+2?",
-    "option_a": "3",
-    "option_b": "4",
-    "option_c": "5",
-    "option_d": "6",
-    "correct_answer": "B",
-    "explanation": "Basic arithmetic",
-    "marks": 1
-  }
-]'></textarea>
+      <div class="form-group">
+        <label class="form-label">Select File (.csv, .xlsx)</label>
+        <input type="file" id="import-file" class="form-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+      </div>
+      <div id="import-report" style="display:none; margin-top:1rem; padding:1rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); font-size:0.85rem;">
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="hideModal('modal-import')">Cancel</button>
-      <button class="btn btn-primary" onclick="importQuestions()" style="width:auto"><i class="fas fa-upload"></i> Import</button>
+      <button class="btn btn-secondary" onclick="hideModal('modal-import')">Close</button>
+      <button class="btn btn-primary" id="btn-run-import" onclick="runCsvImport()" style="width:auto"><i class="fas fa-upload"></i> Upload & Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Subject Modal -->
+<div class="modal-overlay hidden" id="modal-subject">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-book"></i> Add New Subject</div>
+      <span class="modal-close" onclick="hideModal('modal-subject')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Subject Code <span class="text-danger">*</span></label>
+        <input type="text" id="s-code" class="form-input" placeholder="e.g. MTH101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject Name <span class="text-danger">*</span></label>
+        <input type="text" id="s-name" class="form-input" placeholder="e.g. Advanced Calculus">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="s-desc" class="form-input" rows="2" placeholder="Optional description"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('modal-subject')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubject()" style="width:auto"><i class="fas fa-save"></i> Save Subject</button>
     </div>
   </div>
 </div>
@@ -420,7 +609,8 @@
   </div>
 </div>
 
-<script src="js/api.js"></script>
-<script src="js/tests.js"></script>
+<script src="libs/chartjs/chart.min.js" defer></script>
+<script src="js/api.js" defer></script>
+<script src="js/tests.js" defer></script>
 </body>
 </html>
