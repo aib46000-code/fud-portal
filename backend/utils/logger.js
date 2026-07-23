@@ -6,8 +6,12 @@ const path    = require('path');
 const winston = require('winston');
 const fs      = require('fs');
 
-const LOG_DIR = path.resolve(process.cwd(), process.env.LOG_DIR || './logs');
-if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+const LOG_DIR = path.resolve(process.cwd(), process.env.LOG_DIR || process.env.LOG_PATH || './logs');
+try {
+  if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+} catch (err) {
+  console.error('[Diagnostics] Failed to create log directory:', err.message);
+}
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 

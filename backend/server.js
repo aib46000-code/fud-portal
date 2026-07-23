@@ -35,9 +35,15 @@ const emailRoutes        = require('./routes/emailRoutes');
 const subjectRoutes      = require('./routes/subjectRoutes');
 
 // ─── Upload & Log Dirs ────────────────────────────────────────────────────────
-const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || './uploads');
-const LOG_DIR    = path.resolve(process.cwd(), process.env.LOG_DIR    || './logs');
-[UPLOAD_DIR, LOG_DIR].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
+const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || process.env.UPLOAD_PATH || './uploads');
+const LOG_DIR    = path.resolve(process.cwd(), process.env.LOG_DIR    || process.env.LOG_PATH    || './logs');
+[UPLOAD_DIR, LOG_DIR].forEach(d => { 
+  try {
+    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); 
+  } catch (err) {
+    console.error(`[Diagnostics] Failed to create directory ${d}:`, err.message);
+  }
+});
 
 // ─── Express App ──────────────────────────────────────────────────────────────
 const app  = express();

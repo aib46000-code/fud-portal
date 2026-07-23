@@ -30,15 +30,15 @@ services:
       - key:   NODE_ENV
         value: production
 
-      # DB stored on Render Disk (persistent)
+      # Use local paths for Free tier (ephemeral storage)
       - key:   DB_PATH
-        value: /var/data/fud_portal.db
+        value: ./backend/database/fud_portal.db
 
       - key:   UPLOAD_DIR
-        value: /var/data/uploads
+        value: ./uploads
 
       - key:   LOG_DIR
-        value: /var/data/logs
+        value: ./logs
 
       - key:   LOG_LEVEL
         value: warn
@@ -65,13 +65,7 @@ services:
       - key:   FRONTEND_URL
         sync:  false           # e.g. https://fud-portal.onrender.com
 
-    # Persistent disk (required for SQLite + uploads)
-    disk:
-      name:       fud-portal-data
-      mountPath:  /var/data
-      sizeGB:     5             # increase as needed
 
-    # Build environment
     buildFilter:
       paths:
         - backend/**

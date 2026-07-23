@@ -18,11 +18,15 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 // ─── Resolve DB Path ──────────────────────────────────────────────────────────
 const DB_PATH = path.resolve(
   process.cwd(),
-  process.env.DB_PATH || './backend/database/fud_portal.db'
+  process.env.DB_PATH || process.env.DATABASE_PATH || './backend/database/fud_portal.db'
 );
 
 const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+try {
+  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+} catch (err) {
+  console.error('[Diagnostics] Failed to create DB directory:', err.message);
+}
 
 // ─── Open Connection ──────────────────────────────────────────────────────────
 const db = new sqlite3.Database(DB_PATH, (err) => {
