@@ -27,9 +27,11 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 // ─── Open Connection ──────────────────────────────────────────────────────────
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
+    console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
     logger.error('[DB] Failed to open database: ' + err.message);
     process.exit(1);
   }
+  console.log(`[Diagnostics] Connected to SQLite at: ${DB_PATH}`);
   logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
 });
 
@@ -444,10 +446,27 @@ async function seedDefaultAdmin() {
 
 // ─── Auto Initialize ──────────────────────────────────────────────────────────
 async function initialize() {
-  await applyPragmas();
-  await runMigration();
-  await seedDefaultAdmin();
-  logger.info('[DB] Database fully ready');
+  try {
+    console.log('[Diagnostics] db.initialize() started...');
+    
+    console.log('[Diagnostics] Calling applyPragmas()...');
+    await applyPragmas();
+    console.log('[Diagnostics] applyPragmas() completed.');
+    
+    console.log('[Diagnostics] Calling runMigration()...');
+    await runMigration();
+    console.log('[Diagnostics] runMigration() completed.');
+    
+    console.log('[Diagnostics] Calling seedDefaultAdmin()...');
+    await seedDefaultAdmin();
+    console.log('[Diagnostics] seedDefaultAdmin() completed.');
+    
+    console.log('[Diagnostics] Database fully ready.');
+    logger.info('[DB] Database fully ready');
+  } catch(err) {
+    console.error('[Diagnostics] FATAL DB INITIALIZATION ERROR:', err.stack || err);
+    throw err;
+  }
 }
 
 // ─── Activity Logger ──────────────────────────────────────────────────────────

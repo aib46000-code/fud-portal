@@ -224,10 +224,15 @@ app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 async function startServer() {
+  console.log('[Diagnostics] Starting server initialization...');
   try {
+    console.log('[Diagnostics] Calling db.initialize()...');
     await initialize();
+    console.log('[Diagnostics] db.initialize() complete.');
 
+    console.log(`[Diagnostics] Attempting to listen on port ${PORT}...`);
     const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[Diagnostics] Successfully bound to port ${PORT} on 0.0.0.0`);
       logger.info(`╔══════════════════════════════════════════════╗`);
       logger.info(`║   FUD Portal – Ahmaditech School             ║`);
       logger.info(`║   Server running on http://localhost:${PORT}    ║`);
@@ -235,8 +240,14 @@ async function startServer() {
       logger.info(`╚══════════════════════════════════════════════╝`);
     });
 
+    server.on('error', (err) => {
+      console.error('[Diagnostics] Server listen error:', err);
+      process.exit(1);
+    });
+
     // Graceful shutdown
     function shutdown(signal) {
+      console.log(`[Diagnostics] ${signal} received – shutting down gracefully`);
       logger.info(`[Server] ${signal} received – shutting down gracefully`);
       server.close(() => {
         logger.info('[Server] HTTP server closed');
@@ -255,24 +266,37 @@ async function startServer() {
           logger.info(`[Purge] Removed ${purged.tokens} expired tokens, ${purged.passwordResets} reset tokens`);
         }
       } catch (err) {
+        console.error('[Diagnostics] Token purge failed:', err);
         logger.error('Token purge failed:', err.message);
       }
     }, 6 * 60 * 60 * 1000);
 
     // Start email queue worker (polls every 30 seconds)
-    const emailService = require('./services/emailService');
-    emailService.startWorker(30000);
+    console.log('[Diagnostics] Initializing email worker...');
+    try {
+      const emailService = require('./services/emailService');
+      emailService.startWorker(30000);
+      console.log('[Diagnostics] Email worker initialized.');
+    } catch(err) {
+      console.error('[Diagnostics] Non-fatal: Email worker failed to start:', err);
+    }
 
     // Purge old sent emails daily
+    console.log('[Diagnostics] Setting up email purge interval...');
     setInterval(async () => {
       try {
         const EmailQueue = require('./models/EmailQueue');
         const purged = await EmailQueue.purgeSent(30);
         if (purged > 0) logger.info(`[EmailPurge] Removed ${purged} old sent email records`);
-      } catch (err) { logger.error('Email purge failed:', err.message); }
+      } catch (err) { 
+        console.error('[Diagnostics] Email purge failed:', err);
+        logger.error('Email purge failed:', err.message); 
+      }
     }, 24 * 60 * 60 * 1000);
+    console.log('[Diagnostics] Server startup sequence completed successfully.');
 
   } catch (err) {
+    console.error('[Diagnostics] FATAL STARTUP ERROR:', err.stack || err);
     logger.error('Failed to start server:', err);
     process.exit(1);
   }
@@ -280,12 +304,14 @@ async function startServer() {
 
 // ─── Handle Uncaught Errors ───────────────────────────────────────────────────
 process.on('uncaughtException', (err) => {
+  console.error('[Diagnostics] Uncaught Exception:', err.stack || err);
   logger.error('Uncaught Exception:', err);
   // In production exit; in development just log (avoids crashing dev server on typos)
   if (process.env.NODE_ENV === 'production') process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
+  console.error('[Diagnostics] Unhandled Rejection:', reason.stack || reason);
   logger.error('Unhandled Rejection:', reason);
   if (process.env.NODE_ENV === 'production') process.exit(1);
 });
