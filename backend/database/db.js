@@ -33,7 +33,8 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
     logger.error('[DB] Failed to open database: ' + err.message);
-    process.exit(1);
+    setTimeout(() => process.exit(1), 500); // Delay to flush logs on Linux pipes
+    return;
   }
   console.log(`[Diagnostics] Connected to SQLite at: ${DB_PATH}`);
   logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
