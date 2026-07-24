@@ -11,7 +11,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node backend/server.js",
+    "startCommand": "NODE_ENV=production node backend/server.js",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",

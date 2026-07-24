@@ -125,6 +125,9 @@ app.use((req, _res, next) => {
 
 // ─── HTTP Request Logger (Morgan → Winston) ───────────────────────────────────
 const accessLogStream = fs.createWriteStream(path.join(LOG_DIR, 'access.log'), { flags: 'a' });
+accessLogStream.on('error', err => {
+  console.error('[Diagnostics] Failed to write to access.log stream:', err.message);
+});
 app.use(morgan('combined', { stream: accessLogStream }));
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
@@ -248,7 +251,7 @@ async function startServer() {
 
     server.on('error', (err) => {
       console.error('[Diagnostics] Server listen error:', err);
-      process.exit(1);
+      setTimeout(() => process.exit(1), 500);
     });
 
     // Graceful shutdown
@@ -304,7 +307,7 @@ async function startServer() {
   } catch (err) {
     console.error('[Diagnostics] FATAL STARTUP ERROR:', err.stack || err);
     logger.error('Failed to start server:', err);
-    process.exit(1);
+    setTimeout(() => process.exit(1), 500);
   }
 }
 
@@ -312,14 +315,13 @@ async function startServer() {
 process.on('uncaughtException', (err) => {
   console.error('[Diagnostics] Uncaught Exception:', err.stack || err);
   logger.error('Uncaught Exception:', err);
-  // In production exit; in development just log (avoids crashing dev server on typos)
-  if (process.env.NODE_ENV === 'production') process.exit(1);
+  if (process.env.NODE_ENV === 'production') setTimeout(() => process.exit(1), 500);
 });
 
 process.on('unhandledRejection', (reason) => {
   console.error('[Diagnostics] Unhandled Rejection:', reason.stack || reason);
   logger.error('Unhandled Rejection:', reason);
-  if (process.env.NODE_ENV === 'production') process.exit(1);
+  if (process.env.NODE_ENV === 'production') setTimeout(() => process.exit(1), 500);
 });
 
 startServer();

@@ -33,10 +33,11 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
     logger.error('[DB] Failed to open database: ' + err.message);
-    process.exit(1);
+    setTimeout(() => process.exit(1), 500);
+  } else {
+    console.log(`[Diagnostics] Connected to SQLite at: ${DB_PATH}`);
+    logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
   }
-  console.log(`[Diagnostics] Connected to SQLite at: ${DB_PATH}`);
-  logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
 });
 
 // ─── Promise Wrappers ─────────────────────────────────────────────────────────
@@ -418,7 +419,13 @@ async function runMigration() {
 // ─── Seed Default Admin ───────────────────────────────────────────────────────
 async function seedDefaultAdmin() {
   const bcrypt = require('bcryptjs');
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@fudportal.edu.ng';
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    logger.warn('[Seeder] ADMIN_EMAIL or ADMIN_PASSWORD not configured. Skipping default admin creation.');
+    return;
+  }
 
   const existing = await get('SELECT id FROM users WHERE email = ? LIMIT 1', [adminEmail]);
   if (existing) {
@@ -427,7 +434,7 @@ async function seedDefaultAdmin() {
   }
 
   const rounds = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
-  const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@FUD2024', rounds);
+  const passwordHash = await bcrypt.hash(adminPassword, rounds);
 
   const { lastID: userId } = await run(
     `INSERT INTO users (email, password_hash, role, is_active, is_verified) VALUES (?, ?, 'superadmin', 1, 1)`,
