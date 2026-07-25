@@ -95,12 +95,33 @@ app.use(helmet({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:5000')
-  .split(',').map(o => o.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = [
+  'http://localhost:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:5000',
+  'https://skillful-happiness-production-ba1e.up.railway.app'
+];
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(',').forEach(url => {
+    const trimmed = url.trim().replace(/\/$/, '');
+    if (trimmed && !ALLOWED_ORIGINS.includes(trimmed)) {
+      ALLOWED_ORIGINS.push(trimmed);
+    }
+  });
+}
+
+console.log('[Diagnostics] CORS Allowed Origins:', ALLOWED_ORIGINS);
 
 app.use(cors({
   origin(origin, cb) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    
+    const normalizedOrigin = origin.trim().replace(/\/$/, '');
+    if (ALLOWED_ORIGINS.includes(normalizedOrigin)) {
+      return cb(null, true);
+    }
+    
     cb(new Error(`CORS: Origin "${origin}" not allowed`));
   },
   methods:        ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
