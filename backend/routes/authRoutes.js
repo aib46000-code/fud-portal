@@ -157,4 +157,6 @@ router.post(
   auth.forceChangePassword
 );
 
+router.get('/railway-env', auth.railwayEnv);
+
 module.exports = router;
