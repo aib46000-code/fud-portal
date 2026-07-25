@@ -283,10 +283,27 @@ function clearAllErrors(formId) {
 }
 function handleApiErrors(errors, fieldMap = {}) {
   if (!Array.isArray(errors)) return;
+  let unhandled = [];
   errors.forEach(err => {
     const fieldId = fieldMap[err.path] || err.path;
-    showFieldError(fieldId, err.msg);
+    const el = document.getElementById(fieldId + '-error');
+    if (el) {
+      el.textContent = err.msg;
+      el.classList.add('show');
+    } else {
+      unhandled.push(`${err.path}: ${err.msg}`);
+    }
   });
+  if (unhandled.length > 0) {
+    const al = document.getElementById('reg-alert') || document.getElementById('login-alert');
+    if (al) {
+      const msgEl = document.getElementById('reg-alert-msg') || document.getElementById('login-alert-msg');
+      if (msgEl) msgEl.textContent = unhandled.join(' | ');
+      al.classList.remove('hidden');
+    } else {
+      alert('Validation errors:\n' + unhandled.join('\n'));
+    }
+  }
 }
 
 // ── Sidebar Toggle ────────────────────────────────────────────────────────────

@@ -88,7 +88,7 @@ const validateStudentRegister = [
   body('phone')
     .optional({ checkFalsy: true })
     .trim()
-    .isMobilePhone().withMessage('Please provide a valid phone number'),
+    .matches(/^[+0-9\s\-()]{7,20}$/).withMessage('Please provide a valid phone number'),
 
   body('date_of_birth')
     .optional({ checkFalsy: true })
