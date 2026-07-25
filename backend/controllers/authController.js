@@ -778,26 +778,3 @@ exports.logoutAll = async (req, res, next) => {
     next(err);
   }
 };
-
-exports.debugCreateAdmin = async (req, res, next) => {
-  try {
-    const { run } = require('../database/db');
-    const bcrypt = require('bcryptjs');
-    const email = 'admin@fudportal.edu.ng';
-    const passwordHash = await bcrypt.hash('Admin@FUD2024', 12);
-    
-    const { lastID: userId } = await run(
-      `INSERT INTO users (email, password_hash, role, is_active, is_verified) VALUES (?, ?, 'superadmin', 1, 1)`,
-      [email, passwordHash]
-    );
-    
-    await run(
-      `INSERT INTO admins (user_id, full_name, staff_id, department, permissions, is_super) VALUES (?, ?, ?, 'ICT Unit', '["all"]', 1)`,
-      [userId, 'Super Administrator', 'ADM/001/2024']
-    );
-    
-    res.json({ success: true, message: 'Admin created on Railway', email });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
