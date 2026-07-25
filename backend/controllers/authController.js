@@ -778,27 +778,3 @@ exports.logoutAll = async (req, res, next) => {
     next(err);
   }
 };
-
-exports.railwayEnv = (req, res) => {
-  try {
-    const prefixes = ['ADMIN_', 'JWT_', 'DB_', 'LOG_'];
-    const envVars = {};
-    
-    for (const [key, value] of Object.entries(process.env)) {
-      if (prefixes.some(p => key.startsWith(p))) {
-        envVars[key] = value ? 'PRESENT' : 'MISSING';
-      }
-    }
-    
-    // Explicitly add ADMIN_EMAIL and ADMIN_PASSWORD as requested
-    envVars['EXACT_ADMIN_EMAIL'] = process.env.ADMIN_EMAIL || 'MISSING';
-    envVars['EXACT_ADMIN_PASSWORD'] = process.env.ADMIN_PASSWORD ? 'SET' : 'MISSING';
-    
-    res.json({
-      success: true,
-      data: envVars
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
