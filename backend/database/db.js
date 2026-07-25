@@ -450,9 +450,10 @@ async function seedDefaultAdmin() {
     return;
   }
 
-  const existing = await get('SELECT id FROM users WHERE email = ? LIMIT 1', [adminEmail]);
-  if (existing) {
-    logger.info('[DB] Default admin already exists – skipping seed');
+  // Check if ANY admin already exists to prevent duplicate admins
+  const existingAdmin = await get("SELECT id FROM users WHERE role IN ('admin', 'superadmin') LIMIT 1");
+  if (existingAdmin) {
+    logger.info('[DB] An admin user already exists - skipping default seed');
     return;
   }
 
