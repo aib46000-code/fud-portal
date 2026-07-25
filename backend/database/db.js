@@ -29,13 +29,14 @@ try {
 }
 
 // ─── Open Connection ──────────────────────────────────────────────────────────
+console.log('[Diagnostics] Opening SQLite database connection...');
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
     logger.error('[DB] Failed to open database: ' + err.message);
     setTimeout(() => process.exit(1), 500);
   } else {
-    console.log(`[Diagnostics] Connected to SQLite at: ${DB_PATH}`);
+    console.log(`[Diagnostics] Database successfully opened at: ${DB_PATH}`);
     logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
   }
 });
@@ -56,15 +57,25 @@ const exec  = (sql) => new Promise((res, rej) =>
 
 // ─── PRAGMA Setup ──────────────────────────────────────────────────────────────
 async function applyPragmas() {
-  await run('PRAGMA journal_mode    = WAL');          // Write-Ahead Logging
-  await run('PRAGMA foreign_keys   = ON');            // Enforce FK constraints
-  await run('PRAGMA busy_timeout   = 5000');          // 5s wait on locked db
-  await run('PRAGMA synchronous    = NORMAL');        // Safe + fast (WAL mode)
-  await run('PRAGMA cache_size     = -64000');        // 64 MB page cache
-  await run('PRAGMA temp_store     = MEMORY');        // Temp tables in RAM
-  await run('PRAGMA mmap_size      = 268435456');     // 256 MB memory-mapped I/O
-  await run('PRAGMA wal_autocheckpoint = 1000');      // Checkpoint after 1000 pages
-  await run('PRAGMA optimize');                       // Auto-analyze statistics
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA journal_mode = WAL');
+  await run('PRAGMA journal_mode    = WAL');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA foreign_keys = ON');
+  await run('PRAGMA foreign_keys   = ON');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA busy_timeout = 5000');
+  await run('PRAGMA busy_timeout   = 5000');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA synchronous = NORMAL');
+  await run('PRAGMA synchronous    = NORMAL');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA cache_size = -64000');
+  await run('PRAGMA cache_size     = -64000');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA temp_store = MEMORY');
+  await run('PRAGMA temp_store     = MEMORY');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA mmap_size = 268435456');
+  await run('PRAGMA mmap_size      = 268435456');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA wal_autocheckpoint = 1000');
+  await run('PRAGMA wal_autocheckpoint = 1000');
+  console.log('[Diagnostics] applyPragmas: Setting PRAGMA optimize');
+  await run('PRAGMA optimize');
+  console.log('[Diagnostics] applyPragmas: All pragmas applied successfully');
 }
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
@@ -409,10 +420,22 @@ async function runColumnMigrations() {
 
 // ─── Migration ────────────────────────────────────────────────────────────────
 async function runMigration() {
+  console.log('[Diagnostics] runMigration: Creating tables...');
   await exec(SCHEMA_SQL);
+  console.log('[Diagnostics] runMigration: Tables created successfully');
+  
+  console.log('[Diagnostics] runMigration: Creating indexes...');
   await exec(INDEXES_SQL);
+  console.log('[Diagnostics] runMigration: Indexes created successfully');
+  
+  console.log('[Diagnostics] runMigration: Creating triggers...');
   await exec(TRIGGERS_SQL);
+  console.log('[Diagnostics] runMigration: Triggers created successfully');
+  
+  console.log('[Diagnostics] runMigration: Running column migrations...');
   await runColumnMigrations();
+  console.log('[Diagnostics] runMigration: Column migrations completed');
+  
   logger.info('[DB] Schema, indexes & triggers applied');
 }
 
@@ -462,17 +485,15 @@ async function initialize() {
     
     console.log('[Diagnostics] Calling applyPragmas()...');
     await applyPragmas();
-    console.log('[Diagnostics] applyPragmas() completed.');
     
     console.log('[Diagnostics] Calling runMigration()...');
     await runMigration();
-    console.log('[Diagnostics] runMigration() completed.');
     
     console.log('[Diagnostics] Calling seedDefaultAdmin()...');
     await seedDefaultAdmin();
     console.log('[Diagnostics] seedDefaultAdmin() completed.');
     
-    console.log('[Diagnostics] Database fully ready.');
+    console.log('[Diagnostics] Database initialized successfully.');
     logger.info('[DB] Database fully ready');
   } catch(err) {
     console.error('[Diagnostics] FATAL DB INITIALIZATION ERROR:', err.stack || err);
