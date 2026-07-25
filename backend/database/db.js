@@ -145,12 +145,69 @@ const SCHEMA_SQL = `
     size_bytes    INTEGER NOT NULL,
     file_path     TEXT    NOT NULL,
     url           TEXT    NOT NULL,
-    category      TEXT    NOT NULL DEFAULT 'general'
-                          CHECK(category IN ('avatar','document','result','announcement','general')),
+    category      TEXT    NOT NULL DEFAULT 'general',
     uploaded_by   INTEGER NOT NULL,
     is_public     INTEGER NOT NULL DEFAULT 0,
+    visibility    TEXT    NOT NULL DEFAULT 'private' CHECK(visibility IN ('public', 'private', 'faculty', 'department', 'course')),
+    faculty       TEXT,
+    department    TEXT,
+    level         TEXT,
+    semester      TEXT,
+    course_code   TEXT,
+    subject_id    INTEGER,
+    approved_by   INTEGER,
+    approved_at   TEXT,
+    status        TEXT    NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
     created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+  );
+
+  -- ── subjects ─────────────────────────────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS subjects (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    code          TEXT    NOT NULL,
+    description   TEXT    NOT NULL DEFAULT '',
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(name),
+    UNIQUE(code)
+  );
+
+  -- ── question_bank ────────────────────────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS question_bank (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id     INTEGER NOT NULL,
+    question_text  TEXT    NOT NULL,
+    question_type  TEXT    NOT NULL DEFAULT 'mcq'
+                           CHECK(question_type IN ('mcq','true_false','short_answer','multi_select')),
+    option_a       TEXT,
+    option_b       TEXT,
+    option_c       TEXT,
+    option_d       TEXT,
+    correct_answer TEXT    NOT NULL,
+    explanation    TEXT,
+    image_url      TEXT,
+    difficulty     TEXT    NOT NULL DEFAULT 'medium' CHECK(difficulty IN ('easy','medium','hard')),
+    marks          INTEGER NOT NULL DEFAULT 1,
+    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE ON UPDATE CASCADE
+  );
+
+  -- ── learning_progress ────────────────────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS learning_progress (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id     INTEGER NOT NULL,
+    media_id       INTEGER NOT NULL,
+    status         TEXT    NOT NULL DEFAULT 'started' CHECK(status IN ('started','completed')),
+    progress_pct   INTEGER NOT NULL DEFAULT 0,
+    started_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    completed_at   TEXT,
+    updated_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(student_id, media_id),
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE ON UPDATE CASCADE
   );
 
   -- ── tests ───────────────────────────────────────────────────────────────────
@@ -405,6 +462,17 @@ const COLUMN_MIGRATIONS = [
   // Auth: email verification token
   { table: 'users', column: 'verify_token',          sql: `ALTER TABLE users ADD COLUMN verify_token TEXT` },
   { table: 'users', column: 'verify_token_expires',  sql: `ALTER TABLE users ADD COLUMN verify_token_expires TEXT` },
+  // Media: student upload metadata
+  { table: 'media', column: 'visibility',            sql: `ALTER TABLE media ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'` },
+  { table: 'media', column: 'faculty',               sql: `ALTER TABLE media ADD COLUMN faculty TEXT` },
+  { table: 'media', column: 'department',            sql: `ALTER TABLE media ADD COLUMN department TEXT` },
+  { table: 'media', column: 'level',                 sql: `ALTER TABLE media ADD COLUMN level TEXT` },
+  { table: 'media', column: 'semester',              sql: `ALTER TABLE media ADD COLUMN semester TEXT` },
+  { table: 'media', column: 'course_code',           sql: `ALTER TABLE media ADD COLUMN course_code TEXT` },
+  { table: 'media', column: 'subject_id',            sql: `ALTER TABLE media ADD COLUMN subject_id INTEGER` },
+  { table: 'media', column: 'approved_by',           sql: `ALTER TABLE media ADD COLUMN approved_by INTEGER` },
+  { table: 'media', column: 'approved_at',           sql: `ALTER TABLE media ADD COLUMN approved_at TEXT` },
+  { table: 'media', column: 'status',                sql: `ALTER TABLE media ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
 ];
 
 async function runColumnMigrations() {
