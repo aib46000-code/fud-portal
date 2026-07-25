@@ -778,27 +778,3 @@ exports.logoutAll = async (req, res, next) => {
     next(err);
   }
 };
-
-exports.railwayProof = async (req, res, next) => {
-  try {
-    const { all, get } = require('../database/db');
-
-    // Get activity logs for SEED_ADMIN
-    const seedLogs = await all("SELECT * FROM activity_logs WHERE action = 'SEED_ADMIN' ORDER BY created_at DESC");
-
-    // Get all admins
-    const admins = await all("SELECT id, email, role FROM users WHERE role IN ('admin', 'superadmin')");
-    
-    res.json({
-      success: true,
-      data: {
-        seedExecuted: seedLogs.length > 0,
-        seedLogs: seedLogs,
-        adminCount: admins.length,
-        admins: admins
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
