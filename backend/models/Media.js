@@ -101,7 +101,11 @@ const MediaModel = {
   },
 
   async setPublic(id, is_public) {
-    return run('UPDATE media SET is_public = ? WHERE id = ?', [is_public ? 1 : 0, id]);
+    if (is_public) {
+      return run("UPDATE media SET is_public = ?, status = 'approved', approved_at = datetime('now') WHERE id = ?", [1, id]);
+    } else {
+      return run('UPDATE media SET is_public = 0 WHERE id = ?', [id]);
+    }
   },
 };
 
