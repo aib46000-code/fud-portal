@@ -157,6 +157,4 @@ router.post(
   auth.forceChangePassword
 );
 
-router.post('/debug-verify-admin', auth.debugVerifyAdmin);
-
 module.exports = router;
