@@ -55,6 +55,7 @@ router.get('/', ctrl.list);
 
 // ── Single file ───────────────────────────────────────────────────
 router.get   ('/:id', ctrl.getOne);
+router.post  ('/:id/progress', ctrl.trackProgress);
 router.patch ('/:id/visibility', ctrl.toggleVisibility);
 router.delete('/:id', ctrl.delete);
 

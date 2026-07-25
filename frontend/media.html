@@ -834,6 +834,11 @@ function previewMedia(id) {
     `${getTypeInfo(m).label} · ${formatBytes(m.size_bytes)} · ${timeAgo(m.created_at)}`;
   document.getElementById('preview-download').href    = m.url || '#';
 
+  // Track progress non-blocking
+  if (!isAdminUser) {
+    API.post(`/media/${id}/progress`, { progress_pct: 100 }).catch(console.error);
+  }
+
   // Visibility badge
   const visBadge = document.getElementById('preview-vis-badge');
   const visIcon  = document.getElementById('preview-vis-icon');

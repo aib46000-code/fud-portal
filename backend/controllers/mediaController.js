@@ -175,6 +175,42 @@ exports.delete = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// ── POST /api/media/:id/progress ──────────────────────────────────
+exports.trackProgress = async (req, res, next) => {
+  try {
+    const mediaId = +req.params.id;
+    const studentId = req.user.id;
+    const { progress_pct } = req.body;
+    const { run, get } = require('../database/db');
+
+    const media = await MediaModel.findById(mediaId);
+    if (!media) return R.notFound(res, 'File not found');
+
+    const existing = await get('SELECT * FROM learning_progress WHERE student_id = ? AND media_id = ?', [studentId, mediaId]);
+    
+    let status = progress_pct >= 100 ? 'completed' : 'started';
+    let completed_at = progress_pct >= 100 ? new Date().toISOString() : null;
+
+    if (existing) {
+      if (existing.status === 'completed') {
+        status = 'completed';
+        completed_at = existing.completed_at;
+      }
+      await run(
+        'UPDATE learning_progress SET progress_pct = ?, status = ?, completed_at = ?, updated_at = ? WHERE id = ?',
+        [progress_pct, status, completed_at, new Date().toISOString(), existing.id]
+      );
+    } else {
+      await run(
+        'INSERT INTO learning_progress (student_id, media_id, progress_pct, status, completed_at) VALUES (?, ?, ?, ?, ?)',
+        [studentId, mediaId, progress_pct || 10, status, completed_at]
+      );
+    }
+
+    return R.success(res, null, 'Progress tracked');
+  } catch (err) { next(err); }
+};
+
 // ── DELETE /api/media/bulk ────────────────────────────────────────
 exports.bulkDelete = async (req, res, next) => {
   try {
