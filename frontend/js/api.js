@@ -85,7 +85,8 @@ async function apiFetch(endpoint, options = {}, retry = true) {
     if (newToken) {
       return apiFetch(endpoint, options, false);
     }
-    return null;
+    const data = await res.json().catch(() => ({ message: 'Unauthorized or session expired' }));
+    throw Object.assign(new Error(data.message), { status: 401, data });
   }
 
   // Force password change

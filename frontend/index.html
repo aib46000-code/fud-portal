@@ -317,6 +317,9 @@
     try {
       const fn  = activeTab === 'admin' ? API.adminLogin : API.login;
       const res = await fn(email, pw);
+      if (!res || !res.data) {
+        throw new Error('Invalid credentials or server error');
+      }
       loginData = res.data;
       Auth.setTokens(loginData);
 

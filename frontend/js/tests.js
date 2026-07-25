@@ -977,7 +977,7 @@ window.runCsvImport = async function() {
     Toast.success('Import completed');
     
     // Render detailed report
-    const d = res.data.data;
+    const d = res?.data?.data || {};
     const reportEl = document.getElementById('import-report');
     reportEl.style.display = 'block';
     reportEl.innerHTML = `
@@ -1003,7 +1003,7 @@ window.runCsvImport = async function() {
 window.loadAnalytics = async function() {
   try {
     const res = await API.get('/tests/stats/dashboard');
-    const data = res.data;
+    const data = res?.data || {};
     
     const cardsHtml = `\
       <div class="tests-stat"><div class="tests-stat-val">${data.cards.totalStudents}</div><div class="tests-stat-lab">Total Students</div></div>\
@@ -1059,7 +1059,7 @@ window.loadLiveMonitor = async function() {
     const res = await API.get('/tests?limit=100');
     const select = document.getElementById('monitor-test-select');
     select.innerHTML = '<option value="">Select an active test...</option>' + 
-      res.data.rows.map(t => `<option value="${t.id}">${t.title} (${t.course_code || 'N/A'})</option>`).join('');
+      (res?.data?.rows || []).map(t => `<option value="${t.id}">${t.title} (${t.course_code || 'N/A'})</option>`).join('');
   } catch(e) {}
 };
 
@@ -1082,7 +1082,7 @@ window.refreshMonitor = async function() {
   try {
     const res = await API.get(`/tests/${window.currentMonitorTestId}/live-monitor`);
     const tbody = document.getElementById('monitor-tbody');
-    if (!res.data || res.data.length === 0) {
+    if (!res?.data || res.data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No active sessions currently.</td></tr>';
       return;
     }

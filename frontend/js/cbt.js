@@ -648,7 +648,7 @@ window.submitTokenAndStart = async function() {
 window.startExam = function() {
   // Check if test needs token
   API.get('/tests/' + CBT.testId).then(res => {
-     if (res.data.token_required && !sessionStorage.getItem('cbt_token_' + CBT.testId)) {
+     if (res?.data?.token_required && !sessionStorage.getItem('cbt_token_' + CBT.testId)) {
        document.getElementById('modal-token').classList.remove('hidden');
      } else {
        startExamReal();
@@ -671,8 +671,8 @@ window.uploadPractical = async function(qId, file) {
       body: formData
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
-    selectAnswer(qId, data.data.url);
+    if (!res.ok) throw new Error(data?.message || 'Upload failed');
+    selectAnswer(qId, data?.data?.url);
     document.getElementById('prac-status-'+qId).textContent = 'File uploaded successfully';
   } catch(e) {
     document.getElementById('prac-status-'+qId).textContent = 'Upload failed: ' + e.message;
