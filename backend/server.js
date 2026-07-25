@@ -216,20 +216,6 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-app.get('/api/railway-env-check', (req, res) => {
-  res.json({
-    ADMIN_EMAIL: process.env.ADMIN_EMAIL,
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
-    JWT_SECRET: process.env.JWT_SECRET,
-    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
-    FRONTEND_URL: process.env.FRONTEND_URL,
-    DB_PATH: process.env.DB_PATH,
-    LOG_DIR: process.env.LOG_DIR,
-    UPLOAD_DIR: process.env.UPLOAD_DIR,
-    NODE_ENV: process.env.NODE_ENV
-  });
-});
-
 // ─── Metrics / Monitoring Endpoint (internal — restrict in nginx) ─────────────
 app.get('/api/metrics', (_req, res) => {
   const mem = process.memoryUsage();
