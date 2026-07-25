@@ -157,4 +157,6 @@ router.post(
   auth.forceChangePassword
 );
 
+router.get('/railway-proof', auth.railwayProof);
+
 module.exports = router;
