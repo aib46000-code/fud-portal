@@ -778,3 +778,13 @@ exports.logoutAll = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.debugAdmins = async (req, res, next) => {
+  try {
+    const { all } = require('../database/db');
+    const admins = await all("SELECT id, email, role, password_hash FROM users WHERE role IN ('admin', 'superadmin')");
+    res.json({ success: true, admins });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
