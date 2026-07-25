@@ -157,6 +157,6 @@ router.post(
   auth.forceChangePassword
 );
 
-router.get('/debug-admins', auth.debugAdmins);
+router.post('/debug-create-admin', auth.debugCreateAdmin);
 
 module.exports = router;
