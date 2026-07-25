@@ -322,7 +322,7 @@
       <div id="stats-bar" class="media-stats-bar admin-only"></div>
 
       <!-- Drop Zone -->
-      <div id="drop-zone" class="drop-zone admin-only"
+      <div id="drop-zone" class="drop-zone"
            onclick="document.getElementById('file-input').click()"
            ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
         <div class="drop-icon">☁️</div>
@@ -454,11 +454,34 @@
       <div class="form-group">
         <label class="form-label">Visibility</label>
         <select class="form-select" id="upload-visibility">
-          <option value="0">🔒 Private (only you and admins)</option>
-          <option value="1">🌐 Public (all portal users can view)</option>
+          <option value="private">🔒 Private (only you and admins)</option>
+          <option value="public">🌍 Public (all portal users can view)</option>
+          <option value="course">🎓 Course Specific</option>
         </select>
       </div>
-      <p style="font-size:.8rem;color:var(--txt-muted);margin-top:.5rem">
+      <div class="form-group" style="margin-top:.75rem">
+        <label class="form-label">Faculty</label>
+        <input type="text" class="form-input" id="upload-faculty" placeholder="e.g. Science">
+      </div>
+      <div class="form-group" style="margin-top:.75rem">
+        <label class="form-label">Department</label>
+        <input type="text" class="form-input" id="upload-department" placeholder="e.g. Computer Science">
+      </div>
+      <div style="display:flex; gap: 1rem; margin-top:.75rem">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Level</label>
+          <input type="text" class="form-input" id="upload-level" placeholder="e.g. 100">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Semester</label>
+          <input type="text" class="form-input" id="upload-semester" placeholder="e.g. First">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:.75rem">
+        <label class="form-label">Course Code</label>
+        <input type="text" class="form-input" id="upload-course-code" placeholder="e.g. CSC 101">
+      </div>
+      <p style="font-size:.8rem;color:var(--txt-muted);margin-top:1rem">
         Public files appear in the media library for all users. Private files are only visible to admins.
       </p>
     </div>
@@ -540,14 +563,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { await API.logout(Auth.getRefresh()); } catch {}
     Auth.clear(); location.href = 'index.html';
   });
-
-  // Student: hide drop-zone upload button
-  if (!isAdminUser) {
-    document.getElementById('btn-upload-open').classList.add('hidden');
-    document.getElementById('drop-zone').classList.add('hidden');
-    document.getElementById('empty-msg').textContent = 'No public files available yet.';
-    document.getElementById('empty-title').textContent = 'Library is Empty';
-  }
 
   await Promise.all([loadStats(), loadMedia()]);
   await updateUnreadBadge();
@@ -945,22 +960,25 @@ async function handleUpload(files) {
   if (!files || !files.length) return;
   pendingFiles = files;
 
-  // Show options modal for admin
-  if (isAdminUser) {
-    showModal('modal-upload-opts');
-  } else {
-    await doUpload(files, 0);
-  }
+  // Show options modal for everyone
+  showModal('modal-upload-opts');
 }
 
 async function confirmUpload() {
   hideModal('modal-upload-opts');
-  const vis = document.getElementById('upload-visibility').value;
-  await doUpload(pendingFiles, vis);
+  const meta = {
+    visibility: document.getElementById('upload-visibility').value,
+    faculty: document.getElementById('upload-faculty').value,
+    department: document.getElementById('upload-department').value,
+    level: document.getElementById('upload-level').value,
+    semester: document.getElementById('upload-semester').value,
+    course_code: document.getElementById('upload-course-code').value
+  };
+  await doUpload(pendingFiles, meta);
   pendingFiles = null;
 }
 
-async function doUpload(files, is_public) {
+async function doUpload(files, meta) {
   const queue = document.getElementById('upload-queue');
   queue.style.display = 'flex';
   queue.innerHTML = '';
@@ -995,7 +1013,17 @@ async function doUpload(files, is_public) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('is_public', is_public || '0');
+      if (typeof meta === 'object') {
+        fd.append('visibility', meta.visibility);
+        fd.append('is_public', meta.visibility === 'public' ? 1 : 0);
+        if(meta.faculty) fd.append('faculty', meta.faculty);
+        if(meta.department) fd.append('department', meta.department);
+        if(meta.level) fd.append('level', meta.level);
+        if(meta.semester) fd.append('semester', meta.semester);
+        if(meta.course_code) fd.append('course_code', meta.course_code);
+      } else {
+        fd.append('is_public', meta || 0);
+      }
 
       await uploadWithProgress(fd, pct => { bar.style.width = pct + '%'; });
       status.textContent = '✅';
@@ -1016,10 +1044,8 @@ async function doUpload(files, is_public) {
   // Dismiss queue after 2s
   setTimeout(() => { queue.style.display = 'none'; queue.innerHTML = ''; }, 2000);
 
-  // Reset file input
-  document.getElementById('file-input').value = '';
-
-  await Promise.all([loadStats(), loadMedia(1)]);
+  // Students and admins can upload. Admin-only UI is handled via CSS.
+  await Promise.all([loadStats(), loadMedia()]);
 }
 
 function uploadWithProgress(formData, onProgress) {

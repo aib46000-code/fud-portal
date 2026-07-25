@@ -8,14 +8,19 @@ const { run, get, all } = require('../database/db');
 const MediaModel = {
 
   async create({ uuid, original_name, stored_name, mime_type, size_bytes,
-                 file_path, url, category = 'general', uploaded_by, is_public = 0 }) {
+                 file_path, url, category = 'general', uploaded_by, is_public = 0,
+                 visibility = 'private', faculty = null, department = null, level = null, 
+                 semester = null, course_code = null, subject_id = null,
+                 status = 'pending', approved_by = null, approved_at = null }) {
     const r = await run(`
       INSERT INTO media
         (uuid, original_name, stored_name, mime_type, size_bytes, file_path, url,
-         category, uploaded_by, is_public)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         category, uploaded_by, is_public, visibility, faculty, department, level,
+         semester, course_code, subject_id, status, approved_by, approved_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [uuid, original_name, stored_name, mime_type, size_bytes, file_path, url,
-       category, uploaded_by, is_public ? 1 : 0]
+       category, uploaded_by, is_public ? 1 : 0, visibility, faculty, department, level,
+       semester, course_code, subject_id, status, approved_by, approved_at]
     );
     return r.lastID;
   },
@@ -35,7 +40,7 @@ const MediaModel = {
   },
 
   async list({ page = 1, limit = 20, category = null, mime_prefix = null,
-               uploaded_by = null, search = null, is_public = null } = {}) {
+               uploaded_by = null, search = null, is_public = null, status = null, or_uploaded_by = null } = {}) {
     const offset = (page - 1) * limit;
     let where = 'WHERE 1=1';
     const params = [];
@@ -43,15 +48,21 @@ const MediaModel = {
     if (category)    { where += ' AND m.category = ?';          params.push(category); }
     if (mime_prefix) { where += ' AND m.mime_type LIKE ?';       params.push(mime_prefix + '%'); }
     if (uploaded_by) { where += ' AND m.uploaded_by = ?';        params.push(uploaded_by); }
-    if (is_public !== null) { where += ' AND m.is_public = ?';   params.push(is_public); }
+    
+    if (or_uploaded_by && is_public !== null && status) {
+      where += ' AND ((m.is_public = ? AND m.status = ?) OR m.uploaded_by = ?)';
+      params.push(is_public, status, or_uploaded_by);
+    } else {
+      if (is_public !== null) { where += ' AND m.is_public = ?';   params.push(is_public); }
+      if (status) { where += ' AND m.status = ?'; params.push(status); }
+    }
     if (search)      {
       where += ' AND (m.original_name LIKE ? OR m.category LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
     }
 
     const rows = await all(`
-      SELECT m.id, m.uuid, m.original_name, m.stored_name, m.mime_type,
-             m.size_bytes, m.url, m.category, m.is_public, m.created_at,
+      SELECT m.*,
              u.email AS uploader_email,
              COALESCE(p.full_name, u.email) AS uploader_name
       FROM   media m

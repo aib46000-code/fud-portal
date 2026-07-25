@@ -30,6 +30,13 @@ exports.upload = async (req, res, next) => {
     const uuid     = uuidv4();
     const category = MIME_TO_CATEGORY[file.mimetype.toLowerCase()] || req.body.category || 'general';
     const is_public = req.body.is_public === '1' || req.body.is_public === 'true' ? 1 : 0;
+    const { faculty, department, level, semester, course_code, subject_id, visibility } = req.body;
+    const role = req.user.role;
+    
+    // Students automatically go to pending state for uploads, admins to approved
+    const status = role === 'student' ? 'pending' : 'approved';
+    const approved_by = role === 'student' ? null : req.user.id;
+    const approved_at = role === 'student' ? null : new Date().toISOString();
 
     const mediaId = await MediaModel.create({
       uuid,
@@ -42,6 +49,16 @@ exports.upload = async (req, res, next) => {
       category,
       uploaded_by:   req.user.id,
       is_public,
+      visibility:    visibility || (is_public ? 'public' : 'private'),
+      faculty,
+      department,
+      level,
+      semester,
+      course_code,
+      subject_id:    subject_id ? parseInt(subject_id) : null,
+      status,
+      approved_by,
+      approved_at
     });
 
     await logActivity({
@@ -71,8 +88,10 @@ exports.list = async (req, res, next) => {
     };
 
     if (!isAdmin) {
-      // Students: public files only (library view)
+      // Students see their own uploads OR approved public items
       opts.is_public = 1;
+      opts.status = 'approved';
+      opts.or_uploaded_by = req.user.id;
     } else if (is_public !== undefined) {
       opts.is_public = +is_public;
     }
