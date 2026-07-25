@@ -35,8 +35,8 @@ const emailRoutes        = require('./routes/emailRoutes');
 const subjectRoutes      = require('./routes/subjectRoutes');
 
 // ─── Upload & Log Dirs ────────────────────────────────────────────────────────
-const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || process.env.UPLOAD_PATH || './uploads');
-const LOG_DIR    = path.resolve(process.cwd(), process.env.LOG_DIR    || process.env.LOG_PATH    || './logs');
+const LOG_DIR = process.env.LOG_DIR || path.join(process.cwd(), 'logs');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 [UPLOAD_DIR, LOG_DIR].forEach(d => { 
   try {
     if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); 
