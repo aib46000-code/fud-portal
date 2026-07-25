@@ -778,3 +778,37 @@ exports.logoutAll = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.debugVerifyAdmin = async (req, res, next) => {
+  try {
+    const { all, get } = require('../database/db');
+    const bcrypt = require('bcryptjs');
+
+    const admins = await all("SELECT id, email, role FROM users WHERE role IN ('admin', 'superadmin')");
+    
+    let targetExists = false;
+    let match = null;
+    let storedHash = null;
+
+    const targetUser = await get("SELECT password_hash FROM users WHERE email = 'admin@fudportal.edu.ng' LIMIT 1");
+    if (targetUser) {
+      targetExists = true;
+      storedHash = targetUser.password_hash;
+      match = await bcrypt.compare('Admin@FUD2024', storedHash);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        adminCount: admins.length,
+        admins: admins,
+        targetEmail: 'admin@fudportal.edu.ng',
+        targetExists: targetExists,
+        hashExists: !!storedHash,
+        bcryptMatch: match
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
