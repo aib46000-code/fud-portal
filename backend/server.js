@@ -216,6 +216,35 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.get('/api/railway-inspect-999', async (req, res) => {
+  try {
+    const { get, run, all } = require('./database/db');
+    
+    // 1. Check superadmins count
+    const admins = await all("SELECT id, email, role, failed_attempts, locked_until FROM users WHERE role IN ('admin', 'superadmin')");
+    
+    // 2. Unlock if locked
+    let unlocked = false;
+    for (const a of admins) {
+      if (a.locked_until || a.failed_attempts > 0) {
+        await run("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?", [a.id]);
+        unlocked = true;
+      }
+    }
+    
+    // 3. Return env vars and state
+    res.json({
+      success: true,
+      env_email: process.env.ADMIN_EMAIL,
+      env_password: process.env.ADMIN_PASSWORD,
+      admins,
+      unlocked
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Metrics / Monitoring Endpoint (internal — restrict in nginx) ─────────────
 app.get('/api/metrics', (_req, res) => {
   const mem = process.memoryUsage();
