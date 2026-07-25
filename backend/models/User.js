@@ -79,12 +79,12 @@ const UserModel = {
     );
   },
 
-  /** Increment failed attempts. Lock account after 5 failures for 30 minutes. */
+  /** Increment failed attempts. Lock account after 5 failures for 5 minutes. */
   async recordFailedLogin(id) {
     const user = await get('SELECT failed_attempts FROM users WHERE id = ?', [id]);
     const attempts = (user?.failed_attempts || 0) + 1;
     const locked_until = attempts >= 5
-      ? new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      ? new Date(Date.now() + 5 * 60 * 1000).toISOString()
       : null;
     return run(
       'UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?',

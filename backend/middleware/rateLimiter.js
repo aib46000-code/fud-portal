@@ -8,7 +8,7 @@
  */
 const rateLimit = require('express-rate-limit');
 
-const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10); // 15 min
+const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '300000', 10); // 5 min
 
 // Shared key generator: IP + trimmed User-Agent
 function keyGenerator(req) {
@@ -35,7 +35,7 @@ const authLimiter = rateLimit({
   legacyHeaders:   false,
   keyGenerator,
   skipSuccessfulRequests: true,
-  message: { success: false, message: 'Too many login attempts. Please wait 15 minutes.' },
+  message: { success: false, message: 'Too many login attempts. Please wait 5 minutes.' },
 });
 
 // ── Upload Limiter ────────────────────────────────────────────────────────────

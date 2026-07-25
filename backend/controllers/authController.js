@@ -243,6 +243,11 @@ exports.login = async (req, res, next) => {
         `Account temporarily locked due to too many failed attempts. Try again in ${minutesLeft} minute(s).`,
         423
       );
+    } else if (user.locked_until) {
+      // Lock has expired, automatically unlock the account
+      await UserModel.resetFailedAttempts(user.id);
+      user.failed_attempts = 0;
+      user.locked_until = null;
     }
 
     // ── Verify password ─────────────────────────────────────────────────────
@@ -260,7 +265,7 @@ exports.login = async (req, res, next) => {
 
       const msg = attemptsLeft > 0
         ? `Invalid email or password. ${attemptsLeft} attempt(s) remaining before lockout.`
-        : 'Account locked for 30 minutes due to too many failed attempts.';
+        : 'Account locked for 5 minutes due to too many failed attempts.';
       return R.unauthorized(res, msg);
     }
 
@@ -323,17 +328,29 @@ exports.adminLogin = async (req, res, next) => {
       });
       return R.error(res,
         `Account temporarily locked. Try again in ${minutesLeft} minute(s).`, 423);
+    } else if (user.locked_until) {
+      await UserModel.resetFailedAttempts(user.id);
+      user.failed_attempts = 0;
+      user.locked_until = null;
     }
 
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       await UserModel.recordFailedLogin(user.id);
+      const updated = await UserModel.findById(user.id);
+      const attemptsLeft = Math.max(0, 5 - (updated?.failed_attempts || 0));
+
       await logActivity({
         userId: user.id, action: 'ADMIN_LOGIN_FAILED', entityType: 'user',
         entityId: user.id, ipAddress: req.ip, status: 'failure',
+        description: `Wrong admin password. ${attemptsLeft} attempts remaining.`
       });
-      return R.unauthorized(res, 'Invalid credentials');
+
+      const msg = attemptsLeft > 0
+        ? `Invalid credentials. ${attemptsLeft} attempt(s) remaining before lockout.`
+        : 'Account locked for 5 minutes due to too many failed attempts.';
+      return R.unauthorized(res, msg);
     }
 
     const { accessToken, refreshToken } = await issueTokenPair(user, req);
