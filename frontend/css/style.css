@@ -609,6 +609,7 @@ input, textarea, select { font-family: inherit; }
 .modal {
   background: var(--bg-700); border: 1px solid var(--border-medium);
   border-radius: var(--radius-xl); width: 100%; max-width: 480px;
+  max-height: 90vh; display: flex; flex-direction: column;
   box-shadow: var(--shadow-lg); animation: modalIn 0.3s ease;
 }
 @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
@@ -616,15 +617,20 @@ input, textarea, select { font-family: inherit; }
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--space-xl); border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 .modal-title { font-size: 1.1rem; font-weight: 700; }
 .modal-close { cursor: pointer; color: var(--txt-400); font-size: 1.2rem; transition: color var(--t-fast); }
 .modal-close:hover { color: var(--txt-100); }
-.modal-body  { padding: var(--space-xl); }
+.modal-body  { 
+  padding: var(--space-xl); 
+  overflow-y: auto; 
+}
 .modal-footer {
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--border-subtle);
   display: flex; gap: var(--space-md); justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* ── Progress Bar ────────────────────────────────────────────── */
