@@ -660,9 +660,16 @@ exports.downloadBackup = async (req, res, next) => {
       description: 'Downloaded database backup', ipAddress: req.ip });
 
     const archiver = require('archiver');
-    const tempZip = path.join(process.cwd(), 'temp_backup.zip');
+    const os = require('os');
+    const tempZip = path.join(os.tmpdir(), `temp_backup_${Date.now()}.zip`);
     const output = require('fs').createWriteStream(tempZip);
     const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('error', (err) => {
+      if (!res.headersSent) {
+        return res.status(500).json({ success: false, message: 'Temp file write error: ' + err.message });
+      }
+    });
 
     output.on('close', () => {
       res.setHeader('Content-Type', 'application/zip');
