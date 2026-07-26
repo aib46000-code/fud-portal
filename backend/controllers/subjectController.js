@@ -148,9 +148,9 @@ exports.addBankQuestion = async (req, res, next) => {
 
     const { run } = require('../database/db');
     const result = await run(`
-      INSERT INTO questions (subject_id, question_text, question_type, options, correct_answer)
-      VALUES (?, ?, ?, ?, ?)
-    `, [subjectId, question_text, question_type, JSON.stringify(options), correct_answer]);
+      INSERT INTO question_bank (subject_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [subjectId, question_text, question_type, options.A || '', options.B || '', options.C || '', options.D || '', correct_answer]);
     
     return res.status(201).json({ success: true, message: 'Question added', data: { id: result.lastID } });
   } catch (err) { next(err); }

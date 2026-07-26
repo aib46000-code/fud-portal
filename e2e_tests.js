@@ -796,6 +796,75 @@ async function flow11_Logout() {
   }
 }
 
+// ─── FLOW 12: Email Manager ──────────────────────────────────────────────────
+async function flow12_EmailManager() {
+  HDR(12, 'EMAIL MANAGER');
+
+  const r1 = await req('POST', '/api/email/send', {
+    token: state.adminToken,
+    body: {
+      subject: 'E2E Test Email',
+      message_html: '<h1>Hello E2E</h1>',
+      target: 'custom',
+      custom_emails: ['e2e1@example.com', 'e2e2@example.com'],
+      category: 'general'
+    }
+  });
+  r1.status === 201
+    ? PASS('EMAIL-01', 'Custom emails queued successfully')
+    : FAIL('EMAIL-01', 'Failed to queue custom emails', `Got ${r1.status}: ${r1.json && r1.json.message}`);
+
+  const r2 = await req('GET', '/api/email/stats', { token: state.adminToken });
+  r2.status === 200
+    ? PASS('EMAIL-02', 'Email stats accessible by admin')
+    : FAIL('EMAIL-02', 'Failed to fetch email stats', `Got ${r2.status}`);
+
+  const r3 = await req('GET', '/api/email/queue?page=1&limit=5', { token: state.adminToken });
+  r3.status === 200
+    ? PASS('EMAIL-03', 'Email queue/history accessible')
+    : FAIL('EMAIL-03', 'Failed to fetch email queue', `Got ${r3.status}`);
+}
+
+// ─── FLOW 13: Subject & Question Bank ────────────────────────────────────────
+async function flow13_SubjectQuestionBank() {
+  HDR(13, 'SUBJECT & QUESTION BANK');
+
+  // 13a. Create a subject
+  const r1 = await req('POST', '/api/subjects', {
+    token: state.adminToken,
+    body: { name: 'E2E Subject ' + TS, code: 'E2E' + (TS % 1000), description: 'E2E Test' }
+  });
+  if (r1.status === 201 && r1.json && r1.json.data) {
+    state.newSubjectId = r1.json.data.id;
+    PASS('SUBJ-01', 'Subject created: id=' + state.newSubjectId);
+  } else {
+    FAIL('SUBJ-01', 'Failed to create subject', `Got ${r1.status}: ${r1.json && r1.json.message}`);
+  }
+
+  // 13b. List subjects
+  const r2 = await req('GET', '/api/subjects', { token: state.adminToken });
+  r2.status === 200
+    ? PASS('SUBJ-02', 'Subject list fetched')
+    : FAIL('SUBJ-02', 'Failed to list subjects', `Got ${r2.status}`);
+
+  // 13c. Add a question to the subject
+  if (state.newSubjectId) {
+    const r3 = await req('POST', `/api/subjects/${state.newSubjectId}/questions`, {
+      token: state.adminToken,
+      body: {
+        question_text: 'What is E2E testing?',
+        options: { A: 'End', B: 'Two', C: 'End-to-End', D: 'None' },
+        correct_answer: 'C'
+      }
+    });
+    r3.status === 201
+      ? PASS('QB-01', 'Manual question added to bank')
+      : FAIL('QB-01', 'Failed to add question', `Got ${r3.status}: ${JSON.stringify(r3.json)}`);
+  } else {
+    SKIP('QB-01', 'Subject creation failed, skipping question add');
+  }
+}
+
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('\n' + '═'.repeat(60));
@@ -826,6 +895,8 @@ async function main() {
     await flow8_Results();
     await flow9_Notifications();
     await flow10_Backup();
+    await flow12_EmailManager();
+    await flow13_SubjectQuestionBank();
     await flow11_Logout();
   } catch (err) {
     console.error('\n  UNEXPECTED ERROR:', err.message);
@@ -857,6 +928,9 @@ async function main() {
     'RESULT': 'Results',
     'NOTIF':  'Notifications',
     'BACKUP': 'Backup & Export',
+    'EMAIL':  'Email Manager',
+    'SUBJ':   'Subject Bank',
+    'QB':     'Question Bank',
     'LOGOUT': 'Logout',
   };
   console.log('\n  FLOW BREAKDOWN:');
