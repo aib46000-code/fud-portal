@@ -472,6 +472,7 @@
                 <input type="search" class="search-input" id="queue-search" placeholder="Search email/subject…" oninput="debounceSearch()">
               </div>
               <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary superadmin-only" onclick="purgeHistory()"><i class="fas fa-trash"></i> Purge History (30d)</button>
                 <button class="btn btn-secondary" onclick="retryAllFailed()"><i class="fas fa-redo"></i> Retry Failed</button>
                 <button class="btn btn-secondary" onclick="processQueue()"><i class="fas fa-bolt"></i> Flush Queue</button>
                 <button class="btn btn-secondary" onclick="loadQueue()"><i class="fas fa-sync"></i></button>
@@ -582,7 +583,13 @@ async function loadStats() {
     // Detect Ethereal vs real SMTP
     const isReal = !!(document.cookie.includes('smtp_live') || s.smtp_live);
     const banner = document.getElementById('smtp-banner');
-    // Keep ethereal banner by default (we can't detect from client easily)
+    if (banner && isReal) {
+      banner.className = 'smtp-banner live';
+      banner.innerHTML = '<i class="fas fa-shield-alt"></i> Using Live SMTP Server';
+      banner.style.background = 'rgba(16, 185, 129, 0.15)';
+      banner.style.color = '#10b981';
+      banner.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    }
   } catch(e) {}
 }
 
@@ -698,6 +705,15 @@ async function processQueue() {
   } catch(e) { Toast.error('Queue flush failed'); }
 }
 
+async function purgeHistory() {
+  if (!confirm('Are you sure you want to permanently delete all sent emails older than 30 days?')) return;
+  try {
+    const r = await API.delete('/email/purge?days=30');
+    Toast.success(`${r.data.purged} old email(s) removed`);
+    loadQueue(); loadStats();
+  } catch(e) { Toast.error('Purge failed: ' + e.message); }
+}
+
 // ── Compose ────────────────────────────────────────────────────────
 // Target pills
 document.getElementById('target-pills')?.addEventListener('click', e => {
@@ -753,8 +769,7 @@ document.getElementById('compose-form')?.addEventListener('submit', async e => {
       const emails = document.getElementById('custom-emails').value.split(',').map(e => e.trim()).filter(Boolean);
       if (!emails.length) { Toast.warning('Enter at least one email address'); btnSend.disabled = false; progress.classList.remove('show'); return; }
       payload.target    = 'custom';
-      payload.user_ids  = []; // will be resolved by email on server
-      // For custom, use send-one for each or bulk
+      payload.custom_emails  = emails; 
     }
 
     bar.style.width = '60%';
@@ -801,7 +816,7 @@ async function previewCompose() {
 // ── Template preview ───────────────────────────────────────────────
 async function previewTemplate(key, name) {
   try {
-    const res = await fetch(`/api/email/preview/${key}`, {
+    const res = await fetch(`${API_BASE}/email/preview/${key}`, {
       headers: { Authorization: 'Bearer ' + Auth.getAccess() },
     });
     if (!res.ok) { Toast.error('Template not found'); return; }

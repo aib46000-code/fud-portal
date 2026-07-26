@@ -67,15 +67,19 @@ exports.sendBulk = async (req, res, next) => {
         FROM   users u JOIN admins a ON a.user_id = u.id
         WHERE  u.is_active = 1`, []);
       recipients = rows.map(r => ({ to: r.email_to, full_name: r.full_name }));
-    } else if (target === 'custom' && user_ids.length) {
-      const ph   = user_ids.map(() => '?').join(',');
-      const rows = await dbAll(`
-        SELECT u.email AS email_to, COALESCE(s.full_name, a.full_name, u.email) AS full_name
-        FROM   users u
-        LEFT JOIN students s ON s.user_id = u.id
-        LEFT JOIN admins   a ON a.user_id = u.id
-        WHERE  u.id IN (${ph}) AND u.is_active = 1`, user_ids);
-      recipients = rows.map(r => ({ to: r.email_to, full_name: r.full_name }));
+    } else if (target === 'custom') {
+      if (req.body.custom_emails && req.body.custom_emails.length) {
+        recipients = req.body.custom_emails.map(e => ({ to: e, full_name: e.split('@')[0] }));
+      } else if (user_ids && user_ids.length) {
+        const ph   = user_ids.map(() => '?').join(',');
+        const rows = await dbAll(`
+          SELECT u.email AS email_to, COALESCE(s.full_name, a.full_name, u.email) AS full_name
+          FROM   users u
+          LEFT JOIN students s ON s.user_id = u.id
+          LEFT JOIN admins   a ON a.user_id = u.id
+          WHERE  u.id IN (${ph}) AND u.is_active = 1`, user_ids);
+        recipients = rows.map(r => ({ to: r.email_to, full_name: r.full_name }));
+      }
     }
 
     if (!recipients.length)

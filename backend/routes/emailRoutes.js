@@ -26,16 +26,16 @@ router.get ('/queue',              role('admin','superadmin','staff'),  ctrl.lis
 router.get ('/queue/:id',          role('admin','superadmin','staff'),  ctrl.getJob);
 
 // Template preview
-router.get ('/preview/:type',      role('admin','superadmin'),          ctrl.previewTemplate);
+router.get ('/preview/:type',      role('admin','superadmin','staff'),          ctrl.previewTemplate);
 
 // Send actions
-router.post('/send',               role('admin','superadmin'),          ctrl.sendBulk);
-router.post('/send-one',           role('admin','superadmin'),          ctrl.sendOne);
-router.post('/process-queue',      role('admin','superadmin'),          ctrl.processQueue);
+router.post('/send',               role('admin','superadmin','staff'),          ctrl.sendBulk);
+router.post('/send-one',           role('admin','superadmin','staff'),          ctrl.sendOne);
+router.post('/process-queue',      role('admin','superadmin','staff'),          ctrl.processQueue);
 
 // Retry
-router.post('/retry-all',          role('admin','superadmin'),          ctrl.retryAll);
-router.post('/retry/:id',          role('admin','superadmin'),          ctrl.retryOne);
+router.post('/retry-all',          role('admin','superadmin','staff'),          ctrl.retryAll);
+router.post('/retry/:id',          role('admin','superadmin','staff'),          ctrl.retryOne);
 
 // Housekeeping
 router.delete('/purge',            role('superadmin'),                  ctrl.purgeSent);
