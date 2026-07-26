@@ -304,12 +304,9 @@
         <div class="topbar-subtitle" id="topbar-sub">Upload, preview and manage files</div>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-sm btn-primary" id="btn-upload-open" onclick="document.getElementById('file-input').click()">
+        <button class="btn btn-sm btn-primary" id="btn-upload-open" onclick="showModal('modal-upload-opts')">
           <i class="fas fa-cloud-upload-alt"></i> Upload
         </button>
-        <input type="file" id="file-input" style="display:none" multiple
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.tar,.rar,.7z,.gz"
-          onchange="handleUpload(this.files)">
         <button class="btn btn-sm btn-secondary" onclick="location.href='notifications.html'">
           <i class="fas fa-bell"></i>
         </button>
@@ -323,7 +320,7 @@
 
       <!-- Drop Zone -->
       <div id="drop-zone" class="drop-zone"
-           onclick="document.getElementById('file-input').click()"
+           onclick="showModal('modal-upload-opts')"
            ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
         <div class="drop-icon">☁️</div>
         <h3>Drop files here or click to upload</h3>
@@ -395,7 +392,7 @@
         <div class="empty-state-icon">📂</div>
         <h3 id="empty-title">No Files Yet</h3>
         <p id="empty-msg">Upload files to get started. Supports images, PDFs, videos, audio and ZIP archives.</p>
-        <button class="btn btn-primary admin-only" onclick="document.getElementById('file-input').click()">
+        <button class="btn btn-primary admin-only" onclick="showModal('modal-upload-opts')">
           <i class="fas fa-cloud-upload-alt"></i> Upload First File
         </button>
       </div>
@@ -451,6 +448,12 @@
       <span class="modal-close" onclick="hideModal('modal-upload-opts')">&times;</span>
     </div>
     <div class="modal-body">
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Select Files</label>
+        <input type="file" id="file-input" class="form-input" multiple
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.tar,.rar,.7z,.gz"
+          onchange="pendingFiles = this.files">
+      </div>
       <div class="form-group">
         <label class="form-label">Visibility</label>
         <select class="form-select" id="upload-visibility">
@@ -495,6 +498,7 @@
 </div>
 
 <script src="js/api.js" defer></script>
+<script src="js/admin.js" defer></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    Media Library – FUD Portal
