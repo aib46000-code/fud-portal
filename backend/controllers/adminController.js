@@ -653,15 +653,31 @@ exports.downloadBackup = async (req, res, next) => {
     const dbPath = path.resolve(process.cwd(), process.env.DB_PATH || './backend/database/fud_portal.db');
     if (!fs.existsSync(dbPath)) return R.notFound(res, 'Database file not found');
 
-    const filename = `fud_portal_backup_${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}.db`;
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const filename = `fud_portal_backup_${ts}.zip`;
 
     await logActivity({ userId: req.user.id, action: 'DOWNLOAD_BACKUP',
       description: 'Downloaded database backup', ipAddress: req.ip });
 
-    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', fs.statSync(dbPath).size);
-    return fs.createReadStream(dbPath).pipe(res);
+    
+    const archiver = require('archiver');
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    archive.on('error', (err) => next(err));
+    archive.pipe(res);
+
+    // Append SQLite DB
+    archive.file(dbPath, { name: 'fud_portal.db' });
+
+    // Append Uploads Directory
+    const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+    if (fs.existsSync(uploadDir)) {
+      archive.directory(uploadDir, 'uploads');
+    }
+
+    return archive.finalize();
   } catch (err) { next(err); }
 };
 
