@@ -678,7 +678,9 @@ exports.downloadBackup = async (req, res, next) => {
     }
 
     return archive.finalize();
-  } catch (err) { next(err); }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message, stack: err.stack });
+  }
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
