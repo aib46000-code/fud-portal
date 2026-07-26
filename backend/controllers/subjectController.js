@@ -135,3 +135,23 @@ exports.importQuestions = async (req, res, next) => {
     next(e);
   }
 };
+
+// -- ADD MANUAL QUESTION ------------------------------------------------------
+exports.addBankQuestion = async (req, res, next) => {
+  try {
+    const subjectId = +req.params.subjectId;
+    const { question_text, question_type = 'mcq', options, correct_answer } = req.body;
+    
+    if (!question_text || !options || !correct_answer) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const { run } = require('../database/db');
+    const result = await run(`
+      INSERT INTO questions (subject_id, question_text, question_type, options, correct_answer)
+      VALUES (?, ?, ?, ?, ?)
+    `, [subjectId, question_text, question_type, JSON.stringify(options), correct_answer]);
+    
+    return res.status(201).json({ success: true, message: 'Question added', data: { id: result.lastID } });
+  } catch (err) { next(err); }
+};

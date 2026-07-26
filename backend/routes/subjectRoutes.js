@@ -26,6 +26,7 @@ router.delete('/:id', role('admin', 'superadmin'), ctrl.deleteSubject);
 
 // Question Bank for a specific subject
 router.get('/:subjectId/questions', ctrl.listQuestionBank);
+router.post('/:subjectId/questions', role('admin','superadmin','staff'), ctrl.addBankQuestion);
 router.delete('/questions/:qid', ctrl.deleteBankQuestion);
 
 // CSV/Excel Import

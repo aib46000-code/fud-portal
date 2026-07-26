@@ -949,6 +949,50 @@ window.deleteBankQuestion = function(qid) {
   });
 };
 
+window.addBankQuestionModal = function() {
+  if (!State.currentBankSubject) {
+    Toast.warning('Please select a subject bank first');
+    return;
+  }
+  document.getElementById('qb-qtext').value = '';
+  document.getElementById('qb-opt-a').value = '';
+  document.getElementById('qb-opt-b').value = '';
+  document.getElementById('qb-opt-c').value = '';
+  document.getElementById('qb-opt-d').value = '';
+  document.getElementById('qb-correct').value = '';
+  showModal('modal-question');
+};
+
+window.saveBankQuestion = async function() {
+  const text = document.getElementById('qb-qtext').value.trim();
+  const optA = document.getElementById('qb-opt-a').value.trim();
+  const optB = document.getElementById('qb-opt-b').value.trim();
+  const optC = document.getElementById('qb-opt-c').value.trim();
+  const optD = document.getElementById('qb-opt-d').value.trim();
+  const correct = document.getElementById('qb-correct').value;
+
+  if (!text || !optA || !optB || !correct) {
+    Toast.warning('Please fill in the question, at least options A & B, and the correct answer.');
+    return;
+  }
+
+  const payload = {
+    question_text: text,
+    question_type: 'mcq',
+    options: { A: optA, B: optB, ...(optC && { C: optC }), ...(optD && { D: optD }) },
+    correct_answer: correct
+  };
+
+  try {
+    await API.post(`/subjects/${State.currentBankSubject}/questions`, payload);
+    Toast.success('Question added to bank');
+    hideModal('modal-question');
+    loadQuestionBank(State.currentBankSubject, document.getElementById('bank-subtitle').textContent);
+  } catch(e) {
+    Toast.error('Failed to add question');
+  }
+};
+
 // Import CSV/Excel
 window.openImportModal = function() {
   document.getElementById('import-file').value = '';
