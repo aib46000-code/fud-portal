@@ -659,24 +659,32 @@ exports.downloadBackup = async (req, res, next) => {
     await logActivity({ userId: req.user.id, action: 'DOWNLOAD_BACKUP',
       description: 'Downloaded database backup', ipAddress: req.ip });
 
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
     const archiver = require('archiver');
+    const tempZip = path.join(process.cwd(), 'temp_backup.zip');
+    const output = require('fs').createWriteStream(tempZip);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
-    archive.on('error', (err) => next(err));
-    archive.pipe(res);
+    output.on('close', () => {
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', archive.pointer());
+      const readStream = require('fs').createReadStream(tempZip);
+      readStream.on('end', () => require('fs').unlinkSync(tempZip)); // Cleanup
+      readStream.pipe(res);
+    });
 
-    // Append SQLite DB
+    archive.on('error', (err) => {
+      if (!res.headersSent) {
+        return res.status(500).json({ success: false, message: 'Archive error: ' + err.message, stack: err.stack });
+      }
+    });
+
+    archive.pipe(output);
     archive.file(dbPath, { name: 'fud_portal.db' });
-
-    // Append Uploads Directory
     const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
-    if (fs.existsSync(uploadDir)) {
+    if (require('fs').existsSync(uploadDir)) {
       archive.directory(uploadDir, 'uploads');
     }
-
     return archive.finalize();
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message, stack: err.stack });
