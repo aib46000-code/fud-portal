@@ -1,0 +1,181 @@
+[2026-07-25 18:54:23] INFO: [DB] Connected to SQLite at: C:\Users\LENOVO\Documents\fud-portal\backend\backend\database\fud_portal.db
+[2026-07-25 18:54:23] INFO: [DB] Added column: users.force_password_change
+[2026-07-25 18:54:23] INFO: [DB] Added column: users.failed_attempts
+[2026-07-25 18:54:23] INFO: [DB] Added column: users.locked_until
+[2026-07-25 18:54:23] INFO: [DB] Added column: users.verify_token
+[2026-07-25 18:54:23] INFO: [DB] Added column: users.verify_token_expires
+[2026-07-25 18:54:23] INFO: [DB] Schema, indexes & triggers applied
+[2026-07-25 18:54:24] INFO: [DB] Default superadmin seeded – email: admin@fudportal.edu.ng
+[2026-07-25 18:54:24] INFO: [DB] Database fully ready
+[2026-07-25 18:54:24] INFO: [EmailWorker] Started – polling every 30s
+[2026-07-25 18:54:24] INFO: ╔══════════════════════════════════════════════╗
+[2026-07-25 18:54:24] INFO: ║   FUD Portal – Ahmaditech School             ║
+[2026-07-25 18:54:24] INFO: ║   Server running on http://localhost:5000    ║
+[2026-07-25 18:54:24] INFO: ║   Environment: development                 ║
+[2026-07-25 18:54:24] INFO: ╚══════════════════════════════════════════════╝
+[2026-07-25 19:02:39] INFO: [DB] Connected to SQLite at: C:\Users\LENOVO\Documents\fud-portal\backend\backend\database\fud_portal.db
+[2026-07-25 19:02:39] INFO: [DB] Schema, indexes & triggers applied
+[2026-07-25 19:02:39] INFO: [DB] An admin user already exists - skipping default seed
+[2026-07-25 19:02:39] INFO: [DB] Database fully ready
+[2026-07-25 19:02:39] INFO: [EmailWorker] Started – polling every 30s
+[2026-07-25 19:02:39] INFO: ╔══════════════════════════════════════════════╗
+[2026-07-25 19:02:39] INFO: ║   FUD Portal – Ahmaditech School             ║
+[2026-07-25 19:02:39] INFO: ║   Server running on http://localhost:5000    ║
+[2026-07-25 19:02:39] INFO: ║   Environment: development                 ║
+[2026-07-25 19:02:39] INFO: ╚══════════════════════════════════════════════╝
+[2026-07-25 19:02:56] INFO: [Auth] Student registered: admin_ev_1785002575727@test.com (ADMIN1785002575727)
+[2026-07-25 19:02:56] INFO: [Auth] Login: admin_ev_1785002575727@test.com (student)
+[2026-07-25 19:02:57] INFO: [Auth] Student registered: student_ev_1785002575727@test.com (STU1785002576970)
+[2026-07-25 19:02:57] INFO: [Auth] Login: student_ev_1785002575727@test.com (student)
+[2026-07-25 19:03:15] INFO: [Auth] Student registered: admin_ev_1785002594855@test.com (ADMIN1785002594855)
+[2026-07-25 19:03:15] INFO: [Auth] Login: admin_ev_1785002594855@test.com (student)
+[2026-07-25 19:03:16] INFO: [Auth] Student registered: student_ev_1785002594855@test.com (STU1785002595986)
+[2026-07-25 19:03:16] INFO: [Auth] Login: student_ev_1785002594855@test.com (student)
+[2026-07-25 19:03:41] INFO: [Auth] Student registered: admin_ev_1785002620888@test.com (ADMIN1785002620888)
+[2026-07-25 19:03:42] INFO: [Auth] Login: admin_ev_1785002620888@test.com (student)
+[2026-07-25 19:03:42] INFO: [Auth] Student registered: student_ev_1785002620888@test.com (STU1785002622056)
+[2026-07-25 19:03:43] INFO: [Auth] Login: student_ev_1785002620888@test.com (student)
+[2026-07-25 19:04:15] INFO: [Auth] Student registered: admin_ev_1785002654715@test.com (ADMIN1785002654715)
+[2026-07-25 19:04:15] INFO: [Auth] Login: admin_ev_1785002654715@test.com (student)
+[2026-07-25 19:04:16] INFO: [Auth] Student registered: student_ev_1785002654715@test.com (STU1785002655831)
+[2026-07-25 19:04:16] INFO: [Auth] Login: student_ev_1785002654715@test.com (student)
+[2026-07-25 19:04:37] INFO: [Auth] Student registered: admin_ev_1785002676838@test.com (ADMIN1785002676838)
+[2026-07-25 19:04:37] INFO: [Auth] Login: admin_ev_1785002676838@test.com (student)
+[2026-07-25 19:04:38] INFO: [Auth] Student registered: student_ev_1785002676838@test.com (STU1785002677969)
+[2026-07-25 19:04:38] INFO: [Auth] Login: student_ev_1785002676838@test.com (student)
+[2026-07-25 19:04:57] INFO: [Auth] Student registered: admin_ev_1785002696731@test.com (ADMIN1785002696731)
+[2026-07-25 19:04:57] INFO: [Auth] Login: admin_ev_1785002696731@test.com (student)
+[2026-07-25 19:04:58] INFO: [Auth] Student registered: student_ev_1785002696731@test.com (STU1785002697852)
+[2026-07-25 19:04:58] INFO: [Auth] Login: student_ev_1785002696731@test.com (student)
+[2026-07-25 19:05:22] INFO: [Auth] Login: admin@fudportal.edu.ng (superadmin)
+[2026-07-25 19:05:22] INFO: [Auth] Student registered: student_ev_1785002721869@test.com (STU1785002722509)
+[2026-07-25 19:05:23] INFO: [Auth] Login: student_ev_1785002721869@test.com (student)
+[2026-07-25 19:05:42] INFO: [Auth] Login: admin@fudportal.edu.ng (superadmin)
+[2026-07-25 19:05:42] INFO: [Auth] Student registered: student_ev_1785002741697@test.com (STU1785002742297)
+[2026-07-25 19:05:43] INFO: [Auth] Login: student_ev_1785002741697@test.com (student)
+[2026-07-25 19:14:17] INFO: [Auth] Login: admin@fudportal.edu.ng (superadmin)
+[2026-07-25 19:14:18] INFO: [Auth] Student registered: student_ev_1785003257338@test.com (STU1785003257972)
+[2026-07-25 19:14:18] INFO: [Auth] Login: student_ev_1785003257338@test.com (student)
+[2026-07-25 19:15:00] INFO: [Auth] Login: admin@fudportal.edu.ng (superadmin)
+[2026-07-25 19:15:01] INFO: [Auth] Student registered: student_ev_1785003300365@test.com (STU1785003301022)
+[2026-07-25 19:15:01] INFO: [Auth] Login: student_ev_1785003300365@test.com (student)
+[2026-07-26 00:30:06] INFO: [Auth] Student registered: lockout_1785022205463@test.com (LK1785022205463)
+[2026-07-26 00:35:02] INFO: [DB] Connected to SQLite at: C:\Users\LENOVO\Documents\fud-portal\backend\backend\database\fud_portal.db
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.early_access_mins
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.late_entry_mins
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.max_attempts
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.token_required
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.display_limit
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.randomize_questions
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.randomize_options
+[2026-07-26 00:35:02] INFO: [DB] Added column: tests.negative_marking
+[2026-07-26 00:35:02] INFO: [DB] Added column: results.assigned_questions
+[2026-07-26 00:35:02] INFO: [DB] Added column: results.violations_count
+[2026-07-26 00:35:02] INFO: [DB] Added column: results.anti_cheat_logs
+[2026-07-26 00:35:02] INFO: [DB] Added column: questions.pool_name
+[2026-07-26 00:35:02] INFO: [DB] Added column: questions.times_used
+[2026-07-26 00:35:02] INFO: [DB] Added column: questions.times_correct
+[2026-07-26 00:35:02] INFO: [DB] Added column: questions.times_wrong
+[2026-07-26 00:35:02] INFO: [DB] Schema, indexes & triggers applied
+[2026-07-26 00:35:02] INFO: [DB] An admin user already exists - skipping default seed
+[2026-07-26 00:35:02] INFO: [DB] Database fully ready
+[2026-07-26 00:35:02] INFO: [EmailWorker] Started – polling every 30s
+[2026-07-26 00:35:02] INFO: ╔══════════════════════════════════════════════╗
+[2026-07-26 00:35:02] INFO: ║   FUD Portal – Ahmaditech School             ║
+[2026-07-26 00:35:02] INFO: ║   Server running on http://localhost:5000    ║
+[2026-07-26 00:35:02] INFO: ║   Environment: development                 ║
+[2026-07-26 00:35:02] INFO: ╚══════════════════════════════════════════════╝
+[2026-07-26 00:35:12] INFO: [Auth] Student registered: lockout_1785022511753@test.com (LK1785022511753)
+[2026-07-26 00:35:38] INFO: [Auth] Student registered: lockout_1785022537721@test.com (LK1785022537721)
+[2026-07-26 00:36:25] INFO: [DB] Connected to SQLite at: C:\Users\LENOVO\Documents\fud-portal\backend\backend\database\fud_portal.db
+[2026-07-26 00:36:25] INFO: [DB] Schema, indexes & triggers applied
+[2026-07-26 00:36:25] INFO: [DB] An admin user already exists - skipping default seed
+[2026-07-26 00:36:25] INFO: [DB] Database fully ready
+[2026-07-26 00:36:25] INFO: [EmailWorker] Started – polling every 30s
+[2026-07-26 00:36:25] INFO: ╔══════════════════════════════════════════════╗
+[2026-07-26 00:36:25] INFO: ║   FUD Portal – Ahmaditech School             ║
+[2026-07-26 00:36:25] INFO: ║   Server running on http://localhost:5000    ║
+[2026-07-26 00:36:25] INFO: ║   Environment: development                 ║
+[2026-07-26 00:36:25] INFO: ╚══════════════════════════════════════════════╝
+[2026-07-26 00:36:37] INFO: [Auth] Student registered: lockout_1785022596439@test.com (LK1785022596439)
+[2026-07-26 00:37:22] INFO: [Auth] Student registered: lockout_1785022641616@test.com (LK1785022641616)
+[2026-07-26 00:37:40] INFO: [DB] Connected to SQLite at: C:\Users\LENOVO\Documents\fud-portal\backend\backend\database\fud_portal.db
+[2026-07-26 00:37:40] INFO: [DB] Schema, indexes & triggers applied
+[2026-07-26 00:37:40] INFO: [DB] An admin user already exists - skipping default seed
+[2026-07-26 00:37:40] INFO: [DB] Database fully ready
+[2026-07-26 00:37:40] INFO: [EmailWorker] Started – polling every 30s
+[2026-07-26 00:37:40] INFO: ╔══════════════════════════════════════════════╗
+[2026-07-26 00:37:40] INFO: ║   FUD Portal – Ahmaditech School             ║
+[2026-07-26 00:37:40] INFO: ║   Server running on http://localhost:5000    ║
+[2026-07-26 00:37:40] INFO: ║   Environment: development                 ║
+[2026-07-26 00:37:40] INFO: ╚══════════════════════════════════════════════╝
+[2026-07-26 00:37:52] INFO: [Auth] Student registered: lockout_1785022671919@test.com (LK1785022671919)
+[2026-07-26 01:00:10] INFO: [EmailWorker] Processing 20 queued email(s)
+[2026-07-26 01:00:12] INFO: [Email] Ethereal test account: w7lzqbpvucqn3fem@ethereal.email
+[2026-07-26 01:00:15] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOD6h0HEC2PmJPAAAAAQQaf2JgQhukkgKTpkkwW0A
+[2026-07-26 01:00:15] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002575727@test.com (id: <a3e503d1-14a9-4c4c-4987-9235d66edcf9@fudportal.edu.ng>)
+[2026-07-26 01:00:15] INFO: [EmailWorker] ✓ Sent job #1 to admin_ev_1785002575727@test.com
+[2026-07-26 01:00:19] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOE6h0HEC2PmJ8AAAAAoHN8LoGNKuO3XWaAUQW4jM
+[2026-07-26 01:00:19] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002575727@test.com (id: <fc3a5664-0156-3c5a-e2d8-65412b672bb2@fudportal.edu.ng>)
+[2026-07-26 01:00:19] INFO: [EmailWorker] ✓ Sent job #2 to student_ev_1785002575727@test.com
+[2026-07-26 01:00:23] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOFyLBEfRi4Pd3AAAAA9wqxzi2Yx9Xfwm6PpWpeE4
+[2026-07-26 01:00:23] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002594855@test.com (id: <05621c64-d22e-68fb-ef25-6dfe198e9e5a@fudportal.edu.ng>)
+[2026-07-26 01:00:23] INFO: [EmailWorker] ✓ Sent job #3 to admin_ev_1785002594855@test.com
+[2026-07-26 01:00:28] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOHMj-4oM0GtF4AAAABCaLNBzlVI2odPMrPoYGkZg
+[2026-07-26 01:00:28] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002594855@test.com (id: <81a4e553-2545-32dd-992c-a795c47b368d@fudportal.edu.ng>)
+[2026-07-26 01:00:28] INFO: [EmailWorker] ✓ Sent job #4 to student_ev_1785002594855@test.com
+[2026-07-26 01:00:32] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOIah0HEC2PmMtAAAABf-Rh2p2ZFhFjVDOZn2ZXcs
+[2026-07-26 01:00:32] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002620888@test.com (id: <afae5171-22f1-fbc7-1328-61af6f626622@fudportal.edu.ng>)
+[2026-07-26 01:00:32] INFO: [EmailWorker] ✓ Sent job #5 to admin_ev_1785002620888@test.com
+[2026-07-26 01:00:37] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOJSLBEfRi4PgoAAAABhDqYpm2TlLmErMcBMX2xyY
+[2026-07-26 01:00:37] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002620888@test.com (id: <d39162e9-e9b8-f39e-a418-3e0beaea5ad4@fudportal.edu.ng>)
+[2026-07-26 01:00:37] INFO: [EmailWorker] ✓ Sent job #6 to student_ev_1785002620888@test.com
+[2026-07-26 01:00:41] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOKcj-4oM0GtIvAAAAB0xq4oowAoRrMSzIfpQQPpk
+[2026-07-26 01:00:41] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002654715@test.com (id: <acac406c-79e3-02ff-d51e-d3450dac67a5@fudportal.edu.ng>)
+[2026-07-26 01:00:41] INFO: [EmailWorker] ✓ Sent job #7 to admin_ev_1785002654715@test.com
+[2026-07-26 01:00:45] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOLSLBEfRi4PivAAAACAgcQ6wZGIGeypqaAz.iNZs
+[2026-07-26 01:00:45] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002654715@test.com (id: <93e182e9-2375-33e1-1ada-fa607ed7c0cf@fudportal.edu.ng>)
+[2026-07-26 01:00:45] INFO: [EmailWorker] ✓ Sent job #8 to student_ev_1785002654715@test.com
+[2026-07-26 01:00:49] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOMcj-4oM0GtKbAAAACdAMzFgL4.YlyjOj7m2Shkw
+[2026-07-26 01:00:49] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002676838@test.com (id: <a5a0d32d-5d81-4927-9d67-68ba17418fa0@fudportal.edu.ng>)
+[2026-07-26 01:00:49] INFO: [EmailWorker] ✓ Sent job #9 to admin_ev_1785002676838@test.com
+[2026-07-26 01:00:53] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVONah0HEC2PmQTAAAACghW3XhlZc1OVDZ0.HD.0XY
+[2026-07-26 01:00:53] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002676838@test.com (id: <6644bbb9-2115-ba92-f989-94a4cce10405@fudportal.edu.ng>)
+[2026-07-26 01:00:53] INFO: [EmailWorker] ✓ Sent job #10 to student_ev_1785002676838@test.com
+[2026-07-26 01:00:56] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOOCLBEfRi4PkVAAAACw06IobZek2275vB7kKIHjk
+[2026-07-26 01:00:56] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → admin_ev_1785002696731@test.com (id: <9d1e90c1-619b-cdd8-4f0b-b664cc4186c9@fudportal.edu.ng>)
+[2026-07-26 01:00:56] INFO: [EmailWorker] ✓ Sent job #11 to admin_ev_1785002696731@test.com
+[2026-07-26 01:01:01] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOPvraIFk9auWTAAAADB5AUKbRhS7Qb7x2FrLj8HE
+[2026-07-26 01:01:01] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002696731@test.com (id: <950837b4-0534-4a4a-f1a8-cb1365dde32d@fudportal.edu.ng>)
+[2026-07-26 01:01:01] INFO: [EmailWorker] ✓ Sent job #12 to student_ev_1785002696731@test.com
+[2026-07-26 01:01:05] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOQah0HEC2PmSyAAAADepMCDpW-ttGizT25-p1GYo
+[2026-07-26 01:01:05] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002721869@test.com (id: <f46945db-146c-d7d5-5068-ab8b6cc781fe@fudportal.edu.ng>)
+[2026-07-26 01:01:05] INFO: [EmailWorker] ✓ Sent job #13 to student_ev_1785002721869@test.com
+[2026-07-26 01:01:10] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVORvraIFk9auX8AAAADugJOj.oLTHmg.bUgOUPtSc
+[2026-07-26 01:01:10] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785002741697@test.com (id: <23772349-9af3-def0-514e-b2bfa96354f1@fudportal.edu.ng>)
+[2026-07-26 01:01:10] INFO: [EmailWorker] ✓ Sent job #14 to student_ev_1785002741697@test.com
+[2026-07-26 01:01:13] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOScj-4oM0GtPuAAAAD4CbbuJOsd136csDkSEnHeo
+[2026-07-26 01:01:13] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785003257338@test.com (id: <ece5a614-7208-9139-92aa-e12be03de168@fudportal.edu.ng>)
+[2026-07-26 01:01:13] INFO: [EmailWorker] ✓ Sent job #15 to student_ev_1785003257338@test.com
+[2026-07-26 01:01:15] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOTPraIFk9auZWAAAAENz6N52ptIp1Ub3TRUElvw4
+[2026-07-26 01:01:15] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → student_ev_1785003300365@test.com (id: <c5c14adb-9cdc-0911-cd34-5da4234241a7@fudportal.edu.ng>)
+[2026-07-26 01:01:15] INFO: [EmailWorker] ✓ Sent job #16 to student_ev_1785003300365@test.com
+[2026-07-26 01:01:19] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOT6h0HEC2PmWNAAAAEYURnYzW6kiQaKgNJwVcvWY
+[2026-07-26 01:01:19] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022205463@test.com (id: <67afe1b2-0950-5166-203f-827c59d9255f@fudportal.edu.ng>)
+[2026-07-26 01:01:19] INFO: [EmailWorker] ✓ Sent job #17 to lockout_1785022205463@test.com
+[2026-07-26 01:01:22] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOUqh0HEC2PmWrAAAAEvqgzrAkwLXLz.ONn0tkdSk
+[2026-07-26 01:01:22] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022511753@test.com (id: <cc2d4943-ab42-7845-577a-406804e22d8e@fudportal.edu.ng>)
+[2026-07-26 01:01:22] INFO: [EmailWorker] ✓ Sent job #18 to lockout_1785022511753@test.com
+[2026-07-26 01:01:28] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOWKh0HEC2PmX5AAAAE2KN2lIfY2QvMnVJsfY4BHs
+[2026-07-26 01:01:28] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022537721@test.com (id: <100c650a-6f45-ce1c-020e-4e67eb59dbd8@fudportal.edu.ng>)
+[2026-07-26 01:01:28] INFO: [EmailWorker] ✓ Sent job #19 to lockout_1785022537721@test.com
+[2026-07-26 01:01:32] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOXKh0HEC2PmYpAAAAFLDL8ld6TEYxtrK-wdTWups
+[2026-07-26 01:01:32] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022596439@test.com (id: <b8b35793-00b2-8e2a-8473-cd0edbb40e5b@fudportal.edu.ng>)
+[2026-07-26 01:01:32] INFO: [EmailWorker] ✓ Sent job #20 to lockout_1785022596439@test.com
+[2026-07-26 01:01:40] INFO: [EmailWorker] Processing 2 queued email(s)
+[2026-07-26 01:01:44] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVOaCLBEfRi4PtvAAAAFfCQtZp4ZyQrsL.C.qYVnlE
+[2026-07-26 01:01:44] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022641616@test.com (id: <e0604540-ca86-c7b3-8ecf-cf8948492cab@fudportal.edu.ng>)
+[2026-07-26 01:01:44] INFO: [EmailWorker] ✓ Sent job #21 to lockout_1785022641616@test.com
+[2026-07-26 01:01:49] INFO: [Email] Preview: https://ethereal.email/message/amVODHkibTVgShm4amVObvraIFk9aue1AAAAFnPvE3GhFZZxrwNYe6KAuxk
+[2026-07-26 01:01:49] INFO: [Email] Sent: 🎉 Welcome to FUD Portal — Your Account is Ready! → lockout_1785022671919@test.com (id: <ff2b78ad-561e-1868-baeb-1907b84b1a5a@fudportal.edu.ng>)
+[2026-07-26 01:01:49] INFO: [EmailWorker] ✓ Sent job #22 to lockout_1785022671919@test.com

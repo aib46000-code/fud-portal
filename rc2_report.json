@@ -1,0 +1,177 @@
+[
+  {
+    "flow": "ADMIN",
+    "name": "Admin Login",
+    "status": 200,
+    "pass": true,
+    "notes": "Logged in as superadmin",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Dashboard",
+    "status": 200,
+    "pass": true,
+    "notes": "Fetched stats",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Subject Management",
+    "status": 201,
+    "pass": true,
+    "notes": "Created subject 1",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Question Bank",
+    "status": 200,
+    "pass": true,
+    "notes": "Imported questions to subject",
+    "data": {
+      "success": true,
+      "message": "Import completed",
+      "data": {
+        "total_rows": 2,
+        "imported_rows": 2,
+        "skipped_rows": 0,
+        "duplicate_rows": 0,
+        "invalid_rows": 0,
+        "error_messages": []
+      }
+    }
+  },
+  {
+    "flow": "ADMIN",
+    "name": "CBT Create",
+    "status": 201,
+    "pass": true,
+    "notes": "Created CBT",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "CBT Add Questions",
+    "status": 200,
+    "pass": true,
+    "notes": "Added questions to CBT",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "CBT Publish",
+    "status": 200,
+    "pass": true,
+    "notes": "Published CBT",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Notifications Broadcast",
+    "status": 200,
+    "pass": true,
+    "notes": "Sent broadcast notification",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Registration",
+    "status": 201,
+    "pass": true,
+    "notes": "Student registered",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Student Login",
+    "status": 200,
+    "pass": true,
+    "notes": "Student logged in",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Dashboard",
+    "status": 200,
+    "pass": true,
+    "notes": "Fetched /auth/me profile",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Notifications Fetch",
+    "status": 200,
+    "pass": true,
+    "notes": "Fetched notifications",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Student Upload",
+    "status": 201,
+    "pass": true,
+    "notes": "Student uploaded file",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Media Approval",
+    "status": 200,
+    "pass": true,
+    "notes": "Admin approved media",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Learning Progress",
+    "status": 200,
+    "pass": true,
+    "notes": "Tracked progress 100%",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "CBT Start",
+    "status": 200,
+    "pass": true,
+    "notes": "Student started test",
+    "data": null
+  },
+  {
+    "flow": "STUDENT",
+    "name": "CBT Submit",
+    "status": 201,
+    "pass": true,
+    "notes": "Student submitted test",
+    "data": {
+      "success": true,
+      "message": "Test submitted successfully",
+      "data": {
+        "result_id": 1,
+        "score": 0,
+        "total_marks": 1,
+        "percentage": 0,
+        "grade": "F",
+        "passed": false,
+        "pass_mark": 50
+      }
+    }
+  },
+  {
+    "flow": "STUDENT",
+    "name": "Results (Student)",
+    "status": 200,
+    "pass": true,
+    "notes": "Student viewed results",
+    "data": null
+  },
+  {
+    "flow": "ADMIN",
+    "name": "Results (Admin)",
+    "status": 200,
+    "pass": true,
+    "notes": "Admin viewed test results",
+    "data": null
+  }
+]

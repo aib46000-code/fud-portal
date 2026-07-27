@@ -254,61 +254,55 @@
   <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
-<div class="app-layout">
+<div class="layout">
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">F</div>
-      <div><div class="sidebar-title">FUD Portal</div><div class="sidebar-subtitle">Ahmaditech School</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main Menu</div>
-      <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
-
-      <div class="nav-section-label">CBT System</div>
-      <a href="tests.html" class="nav-item admin-only"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Test Management</span></a>
-      <a href="tests.html?view=results-admin" class="nav-item admin-only"><i class="fas fa-chart-bar nav-item-icon"></i><span class="nav-item-text">Results Overview</span></a>
-      <a href="tests.html" class="nav-item student-only"><i class="fas fa-play-circle nav-item-icon"></i><span class="nav-item-text">CBT Exams</span></a>
-      <a href="tests.html?view=my-results" class="nav-item student-only"><i class="fas fa-trophy nav-item-icon"></i><span class="nav-item-text">My Results</span></a>
-
-      <div class="nav-section-label">Resources</div>
-      <a href="media.html" class="nav-item"><i class="fas fa-photo-video nav-item-icon"></i><span class="nav-item-text">Media Library</span></a>
-      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
-
-      <div class="nav-section-label admin-only">Administration</div>
-      <a href="admin.html" class="nav-item admin-only"><i class="fas fa-cogs nav-item-icon"></i><span class="nav-item-text">Admin Panel</span></a>
-      <a href="email.html" class="nav-item admin-only active"><i class="fas fa-envelope nav-item-icon"></i><span class="nav-item-text">Email Management</span></a>
-
-      <div class="nav-section-label">Account</div>
-      <a href="profile.html" class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="user-avatar" id="sidebar-avatar">A</div>
-        <div class="user-info">
-          <div class="user-name" id="sidebar-user-name">Loading...</div>
-          <div class="user-role" id="sidebar-user-role">—</div>
+      <div class="sidebar-logo">
+        <div class="logo-icon">FUD</div>
+        <div class="logo-text">
+          <div class="logo-name">FUD Portal</div>
+          <div class="logo-sub">Ahmaditech School</div>
         </div>
       </div>
-      <button class="btn btn-ghost w-full" id="btn-logout" style="margin-top:.5rem;justify-content:center;gap:.5rem;font-size:.82rem;color:var(--clr-danger)">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </button>
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt nav-item-icon"></i><span class="nav-item-text">Dashboard</span></a>
+      <a href="admin.html"     class="nav-item"><i class="fas fa-user-shield nav-item-icon"></i><span class="nav-item-text">Admin Panel</span></a>
+      <a href="tests.html"     class="nav-item"><i class="fas fa-file-alt nav-item-icon"></i><span class="nav-item-text">Tests</span></a>
+      <div class="nav-section-label">General</div>
+      <a href="notifications.html" class="nav-item"><i class="fas fa-bell nav-item-icon"></i><span class="nav-item-text">Notifications</span><span class="nav-badge hidden" id="notif-badge"></span></a>
+      <a href="media.html"     class="nav-item"><i class="fas fa-photo-video nav-item-icon"></i><span class="nav-item-text">Media Library</span></a>
+      <a href="email.html"     class="nav-item active"><i class="fas fa-envelope nav-item-icon"></i><span class="nav-item-text">Email</span></a>
+      <a href="profile.html"   class="nav-item"><i class="fas fa-user-cog nav-item-icon"></i><span class="nav-item-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-user-name">Loading...</div>
+        <div class="sidebar-user-role" id="sidebar-user-role">—</div>
+      </div>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main-content">
-    <header class="topbar">
-      <button class="topbar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
-      <div>
-        <div class="topbar-title">Email Management</div>
-        <div class="topbar-subtitle">Compose, schedule & track all portal emails</div>
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon-only" id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Email Management</h1>
+          <p class="page-subtitle">Compose, schedule & track all portal emails</p>
+        </div>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-sm btn-primary" id="btn-compose" onclick="showTab('tab-compose')">
+        <button class="btn btn-primary" id="btn-compose" onclick="showTab('tab-compose')">
           <i class="fas fa-pen"></i> Compose Email
         </button>
       </div>
-    </header>
+    </div>
 
     <!-- SMTP Status Banner -->
     <div id="smtp-banner" class="smtp-status ethereal" style="margin-bottom:8px">
@@ -538,6 +532,7 @@
 </div>
 
 <script src="js/api.js" defer></script>
+<script src="js/admin.js" defer></script>
 <script>
 'use strict';
 

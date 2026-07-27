@@ -80,6 +80,10 @@ async function loadDashboard() {
     if (!d) return;
 
     const o = d.overview;
+    
+    // Ensure we are actually on the admin dashboard page before setting textContent
+    if (!document.getElementById('s-total')) return;
+
     document.getElementById('s-total').textContent    = o.totalUsers;
     document.getElementById('s-students').textContent = o.students;
     document.getElementById('s-admins').textContent   = o.admins;

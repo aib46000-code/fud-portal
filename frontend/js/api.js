@@ -392,9 +392,15 @@ function renderSidebarUser() {
   const nameEl = document.getElementById('sidebar-user-name');
   const roleEl = document.getElementById('sidebar-user-role');
   const avatEl = document.getElementById('sidebar-avatar');
-  if (nameEl) nameEl.textContent = user.profile?.full_name || user.email.split('@')[0];
-  if (roleEl) roleEl.textContent = user.role;
-  if (avatEl) avatEl.textContent = (user.profile?.full_name || user.email)[0].toUpperCase();
+  if (nameEl) {
+    const defaultName = user.email ? user.email.split('@')[0] : 'User';
+    nameEl.textContent = user.profile?.full_name || defaultName;
+  }
+  if (roleEl) roleEl.textContent = user.role || 'Unknown';
+  if (avatEl) {
+    const avatStr = user.profile?.full_name || user.email || '?';
+    avatEl.textContent = avatStr[0].toUpperCase();
+  }
 }
 
 // ── Force-password-change banner ──────────────────────────────────────────────

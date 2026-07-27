@@ -436,8 +436,8 @@ window.openTestModal = async function(id = null) {
   showModal('modal-test');
 };
 
-window.saveTest = async function() {
-  const btn = document.getElementById('btn-save-test');
+window.saveTest = async function(keepOpen = false) {
+  const btn = document.getElementById(keepOpen ? 'btn-apply-test' : 'btn-save-test');
   const id  = document.getElementById('edit-test-id').value;
   const title = document.getElementById('t-title').value.trim();
   if (!title) { Toast.warning('Title is required'); return; }
@@ -469,12 +469,17 @@ window.saveTest = async function() {
     } else {
       const res = await API.post('/tests', data);
       testId = res?.data?.id;
-      Toast.success('Test created — now add questions!');
+      document.getElementById('edit-test-id').value = testId; // Set ID so future saves update
+      Toast.success('Test created');
     }
-    hideModal('modal-test');
+    
     loadTests(); loadStats();
-    if (!id && testId) {
-      setTimeout(() => openBuilder(testId), 400);
+    
+    if (!keepOpen) {
+      hideModal('modal-test');
+      if (!id && testId) {
+        setTimeout(() => openBuilder(testId), 400);
+      }
     }
   } catch (err) {
     if (err.data?.errors) err.data.errors.forEach(e => Toast.warning(e.msg));
