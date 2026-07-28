@@ -1058,7 +1058,7 @@ async function doUpload(files, meta) {
 
 function uploadWithProgress(formData, onProgress) {
   return new Promise((resolve, reject) => {
-    const token = Auth.getToken();
+    const token = Auth.getAccess();
     const xhr   = new XMLHttpRequest();
     xhr.open('POST', '/api/media/upload');
     if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
