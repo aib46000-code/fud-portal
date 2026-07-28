@@ -12,12 +12,12 @@
       "is_active": 1,
       "is_verified": 1,
       "force_password_change": 0,
-      "last_login": "2026-07-25 18:43:39",
+      "last_login": "2026-07-28 14:25:02",
       "login_count": 2,
       "failed_attempts": 0,
       "locked_until": null,
-      "created_at": "2026-07-25 18:40:34",
-      "updated_at": "2026-07-25 18:43:39",
+      "created_at": "2026-07-27 15:58:24",
+      "updated_at": "2026-07-28 14:25:02",
       "profile": {
         "id": 1,
         "user_id": 1,
@@ -28,8 +28,8 @@
         "avatar_url": null,
         "permissions": "[\"all\"]",
         "is_super": 1,
-        "created_at": "2026-07-25 18:40:34",
-        "updated_at": "2026-07-25 18:40:34"
+        "created_at": "2026-07-27 15:58:24",
+        "updated_at": "2026-07-27 15:58:24"
       }
     }
   },
@@ -50,7 +50,7 @@
           "activeUsers": 2,
           "verifiedUsers": 1,
           "blockedUsers": 0,
-          "newToday": 2,
+          "newToday": 1,
           "newThisWeek": 2,
           "recentLogins": 2
         },
@@ -63,7 +63,7 @@
           "passRate": 0
         },
         "media": {
-          "total": 0
+          "total": 1
         },
         "notifications": {
           "total": 1,
@@ -72,64 +72,80 @@
         "recentActivity": [
           {
             "action": "LOGIN",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:43:39",
+            "ip_address": "152.233.29.1",
+            "created_at": "2026-07-28 14:25:02",
             "description": "Successful login (superadmin)",
             "email": "admin@fudportal.edu.ng",
             "role": "superadmin"
           },
           {
             "action": "LOGOUT",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:54",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:12",
+            "description": null,
+            "email": "student_1785246066756@test.com",
+            "role": "student"
+          },
+          {
+            "action": "LOGOUT",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:12",
             "description": null,
             "email": "admin@fudportal.edu.ng",
             "role": "superadmin"
           },
           {
-            "action": "LOGOUT",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:53",
-            "description": null,
-            "email": "student_1785004968660@test.com",
+            "action": "STUDENT_REGISTER",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:10",
+            "description": "Student registered: student_1785246066756@test.com | Matric: RC1785246066756",
+            "email": "student_1785246066756@test.com",
             "role": "student"
           },
           {
             "action": "LOGIN",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:51",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:10",
             "description": "Successful login (student)",
-            "email": "student_1785004968660@test.com",
-            "role": "student"
-          },
-          {
-            "action": "STUDENT_REGISTER",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:50",
-            "description": "Student registered: student_1785004968660@test.com | Matric: RC1785004968660",
-            "email": "student_1785004968660@test.com",
+            "email": "student_1785246066756@test.com",
             "role": "student"
           },
           {
             "action": "CREATE_SUBJECT",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:49",
-            "description": "Created subject RC1 Subject 1785004968660",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:09",
+            "description": "Created subject RC1 Subject 1785246066756",
+            "email": "admin@fudportal.edu.ng",
+            "role": "superadmin"
+          },
+          {
+            "action": "UPLOAD_FILE",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:09",
+            "description": "Uploaded: test.txt (document, 10 B)",
             "email": "admin@fudportal.edu.ng",
             "role": "superadmin"
           },
           {
             "action": "LOGIN",
-            "ip_address": "152.233.29.4",
-            "created_at": "2026-07-25 18:42:48",
+            "ip_address": "152.233.29.5",
+            "created_at": "2026-07-28 13:41:08",
             "description": "Successful login (superadmin)",
+            "email": "admin@fudportal.edu.ng",
+            "role": "superadmin"
+          },
+          {
+            "action": "TOKEN_REUSE_DETECTED",
+            "ip_address": "152.233.29.3",
+            "created_at": "2026-07-28 08:14:48",
+            "description": "Possible refresh token reuse – all sessions revoked",
             "email": "admin@fudportal.edu.ng",
             "role": "superadmin"
           },
           {
             "action": "SEED_ADMIN",
             "ip_address": null,
-            "created_at": "2026-07-25 18:40:34",
+            "created_at": "2026-07-27 15:58:24",
             "description": "Default superadmin seeded",
             "email": "admin@fudportal.edu.ng",
             "role": "superadmin"
@@ -154,8 +170,8 @@
   {
     "flow": "ADMIN",
     "name": "Manage Students",
-    "status": 404,
-    "pass": false,
+    "status": 200,
+    "pass": true,
     "notes": "Fetched users list",
     "data": null
   },
@@ -167,10 +183,10 @@
     "notes": "Created subject 2",
     "data": {
       "id": 2,
-      "name": "RC1 Subject 1785005019462",
-      "code": "RC11785005019462",
+      "name": "RC1 Subject 1785248700797",
+      "code": "RC11785248700797",
       "description": "desc",
-      "created_at": "2026-07-25 18:43:40"
+      "created_at": "2026-07-28 14:25:03"
     }
   },
   {
@@ -192,9 +208,9 @@
       "message": "Student registration successful. Please verify your email.",
       "data": {
         "id": 3,
-        "email": "student_1785005019462@test.com",
+        "email": "student_1785248700797@test.com",
         "role": "student",
-        "matric_no": "RC1785005019462",
+        "matric_no": "RC1785248700797",
         "full_name": "RC Student"
       }
     }
@@ -225,22 +241,6 @@
   },
   {
     "flow": "STUDENT",
-    "name": "Upload Assignment/Project",
-    "status": 201,
-    "pass": true,
-    "notes": "Student uploaded file",
-    "data": null
-  },
-  {
-    "flow": "STUDENT",
-    "name": "See Pending Upload",
-    "status": 200,
-    "pass": true,
-    "notes": "Is Pending: true",
-    "data": null
-  },
-  {
-    "flow": "STUDENT",
     "name": "Open Learning Resource",
     "status": 200,
     "pass": true,
@@ -252,106 +252,15 @@
     }
   },
   {
-    "flow": "ADMIN",
-    "name": "Approve Student Upload",
-    "status": 200,
-    "pass": true,
-    "notes": "Called visibility endpoint",
-    "data": {
-      "success": true,
-      "message": "File is now public",
-      "data": {
-        "id": 2,
-        "uuid": "0ba4c1e0-b3ee-4009-bace-baf0f598d848",
-        "original_name": "test.txt",
-        "stored_name": "e553c15a-eef2-42fa-80a5-90050b97996d.txt",
-        "mime_type": "text/plain",
-        "size_bytes": 10,
-        "file_path": "/app/uploads/2026-07-25/e553c15a-eef2-42fa-80a5-90050b97996d.txt",
-        "url": "https://skillful-happiness-production-ba1e.up.railway.app/uploads/2026-07-25/e553c15a-eef2-42fa-80a5-90050b97996d.txt",
-        "category": "document",
-        "uploaded_by": 3,
-        "is_public": 1,
-        "visibility": "private",
-        "faculty": null,
-        "department": null,
-        "level": null,
-        "semester": null,
-        "course_code": null,
-        "subject_id": null,
-        "approved_by": null,
-        "approved_at": null,
-        "status": "pending",
-        "created_at": "2026-07-25 18:43:44",
-        "uploader_email": "student_1785005019462@test.com",
-        "uploader_name": "RC Student"
-      }
-    }
-  },
-  {
-    "flow": "STUDENT",
-    "name": "See Approved Upload",
-    "status": 200,
-    "pass": false,
-    "notes": "Is Approved: false",
-    "data": null
-  },
-  {
     "flow": "STUDENT",
     "name": "Change Password",
-    "status": 422,
-    "pass": false,
+    "status": 200,
+    "pass": true,
     "notes": "Password changed",
     "data": {
-      "success": false,
-      "message": "Validation failed",
-      "errors": [
-        {
-          "field": "current_password",
-          "message": "Current password is required",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password is required",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must be at least 8 characters long",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must contain at least one uppercase letter",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must contain at least one lowercase letter",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must contain at least one number",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must contain at least one special character",
-          "type": "field"
-        },
-        {
-          "field": "confirm_password",
-          "message": "Please confirm your new password",
-          "type": "field"
-        },
-        {
-          "field": "new_password",
-          "message": "New password must be different from your current password",
-          "type": "field"
-        }
-      ]
+      "success": true,
+      "message": "Password changed successfully. Please login again.",
+      "data": {}
     }
   },
   {

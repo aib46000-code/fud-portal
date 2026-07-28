@@ -324,7 +324,7 @@ window.blockUser = function(id, name, type) {
     `Block account for <strong style="color:var(--txt-100)">${esc(name)}</strong>? They will not be able to login.`,
     async () => {
       try {
-        await API.patch(`/admin/${type === 'student' ? 'students' : 'students'}/${id}/block`);
+        await API.patch(`/admin/${type === 'student' ? 'students' : 'admins'}/${id}/block`);
         Toast.success(`${name} blocked`);
         type === 'student' ? loadStudents() : loadAdmins();
       } catch (err) { Toast.error(err.message); }
@@ -338,7 +338,7 @@ window.unblockUser = function(id, name, type) {
     `Restore access for <strong style="color:var(--txt-100)">${esc(name)}</strong>?`,
     async () => {
       try {
-        const endpoint = type === 'student' ? `/admin/students/${id}/unblock` : `/admin/students/${id}/unblock`;
+        const endpoint = type === 'student' ? `/admin/students/${id}/unblock` : `/admin/admins/${id}/unblock`;
         await API.patch(endpoint);
         Toast.success(`${name} unblocked`);
         type === 'student' ? loadStudents() : loadAdmins();

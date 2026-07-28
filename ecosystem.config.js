@@ -1,7 +1,7 @@
-# ────────────────────────────────────────────────────────────────────────────
-#  FUD Portal – PM2 Ecosystem Configuration
-#  Usage:  pm2 start ecosystem.config.js --env production
-# ────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
+//  FUD Portal – PM2 Ecosystem Configuration
+//  Usage:  pm2 start ecosystem.config.js --env production
+// ────────────────────────────────────────────────────────────────────────────
 module.exports = {
   apps: [
     {

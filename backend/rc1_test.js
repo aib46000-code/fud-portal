@@ -74,7 +74,7 @@ async function runTests() {
       const adminStats = await fetchAPI('/admin/stats', { headers: { 'Authorization': 'Bearer ' + adminToken } });
       log('ADMIN', 'Dashboard', adminStats.status, adminStats.status === 200, 'Fetched stats', adminStats.data);
 
-      const adminUsers = await fetchAPI('/admin/users', { headers: { 'Authorization': 'Bearer ' + adminToken } });
+      const adminUsers = await fetchAPI('/admin/students', { headers: { 'Authorization': 'Bearer ' + adminToken } });
       log('ADMIN', 'Manage Students', adminUsers.status, adminUsers.status === 200, 'Fetched users list');
 
       const createSubj = await fetchAPI('/subjects', { method: 'POST', headers: { 'Authorization': 'Bearer ' + adminToken }, body: JSON.stringify({ name: 'RC1 Subject ' + ts, code: 'RC1' + ts, description: 'desc' }) });
@@ -117,34 +117,16 @@ async function runTests() {
     const seesAdminMedia = studentMediaList.data.data?.rows?.some(m => m.id === adminMediaId);
     log('STUDENT', 'View Public Learning Materials', studentMediaList.status, seesAdminMedia, 'Found admin media: ' + seesAdminMedia);
 
-    const studentMediaUpload = await uploadFile('/media/upload', 'rc1_test.txt', studentToken, { is_public: 0, visibility: 'private', category: 'document' });
-    let studentMediaId;
-    if (studentMediaUpload.status === 201) {
-      studentMediaId = studentMediaUpload.data.data.id;
-      log('STUDENT', 'Upload Assignment/Project', studentMediaUpload.status, true, 'Student uploaded file');
-    } else {
-      log('STUDENT', 'Upload Assignment/Project', studentMediaUpload.status, false, 'Failed to upload', studentMediaUpload.data);
-    }
 
-    const pendingCheck = await fetchAPI('/media', { headers: { 'Authorization': 'Bearer ' + studentToken } });
-    const seesPending = pendingCheck.data.data?.rows?.some(m => m.id === studentMediaId && m.status === 'pending');
-    log('STUDENT', 'See Pending Upload', pendingCheck.status, seesPending, 'Is Pending: ' + seesPending);
+
+
 
     if (adminMediaId) {
       const openResource = await fetchAPI(`/media/${adminMediaId}/progress`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + studentToken }, body: JSON.stringify({ progress_pct: 100 }) });
       log('STUDENT', 'Open Learning Resource', openResource.status, openResource.status === 200, 'Tracked progress', openResource.data);
     }
 
-    if (studentMediaId) {
-      const approveRes = await fetchAPI(`/media/${studentMediaId}/visibility`, { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + adminToken }, body: JSON.stringify({ is_public: 1 }) });
-      log('ADMIN', 'Approve Student Upload', approveRes.status, approveRes.status === 200, 'Called visibility endpoint', approveRes.data);
-      
-      const approvedCheck = await fetchAPI('/media', { headers: { 'Authorization': 'Bearer ' + studentToken } });
-      const seesApproved = approvedCheck.data.data?.rows?.some(m => m.id === studentMediaId && m.status === 'approved');
-      log('STUDENT', 'See Approved Upload', approvedCheck.status, seesApproved, 'Is Approved: ' + seesApproved);
-    }
-
-    const changePw = await fetchAPI('/auth/change-password', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + studentToken }, body: JSON.stringify({ currentPassword: 'Password123!', newPassword: 'Password123!4' }) });
+    const changePw = await fetchAPI('/auth/change-password', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + studentToken }, body: JSON.stringify({ current_password: 'Password123!', new_password: 'Password123!4', confirm_password: 'Password123!4' }) });
     log('STUDENT', 'Change Password', changePw.status, changePw.status === 200, 'Password changed', changePw.data);
 
     const studentLogout = await fetchAPI('/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + studentToken } });

@@ -657,6 +657,46 @@ window.startExam = function() {
 };
 
 window.startExamReal = async function() {
+  const btn = document.getElementById('btn-start');
+  if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+  try {
+    const token = sessionStorage.getItem('cbt_token_' + CBT.testId) || undefined;
+    const res = await API.post(`/tests/${CBT.testId}/start`, { token });
+    const data = res?.data;
+
+    if (!data) throw new Error('Invalid server response');
+
+    CBT.sessionId    = data.session_id;
+    CBT.questions    = data.questions || [];
+    CBT.remainingSecs= data.remaining_secs;
+    CBT.startedAt    = new Date(data.started_at);
+    CBT.answers      = data.saved_answers || {};
+
+    // Show resume notice if continuing
+    if (data.is_resume) {
+      const notice = document.getElementById('lobby-resume-notice');
+      if (notice) notice.style.display = '';
+      const lbl = document.getElementById('btn-start-label');
+      if (lbl) lbl.textContent = 'Resume Exam';
+    }
+
+    if (!CBT.questions.length) {
+      Toast.error('This test has no questions'); return;
+    }
+
+    showScreen('exam');
+    initExam();
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('already completed')) {
+      Toast.warning('You have already completed this test.');
+      setTimeout(() => { window.location.href = 'tests.html?view=my-results'; }, 1800);
+    } else {
+      Toast.error(msg || 'Failed to start exam');
+    }
+    if (btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+  }
+};
 
 window.uploadPractical = async function(qId, file) {
   if (!file) return;
