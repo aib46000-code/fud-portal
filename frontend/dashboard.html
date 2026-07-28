@@ -1146,7 +1146,7 @@ function updateChartColors() {
 async function loadActivity() {
   const feed = $('activity-feed');
   try {
-    const r = await API.get('/admin/logs?limit=7').catch(() => null);
+    const r = await API.get('/admin/activity?limit=7').catch(() => null);
     const logs = r?.data?.rows || r?.data || [];
     if (!logs.length) {
       feed.innerHTML = `<div class="empty"><i class="fas fa-history"></i><p>No recent activity</p></div>`;
