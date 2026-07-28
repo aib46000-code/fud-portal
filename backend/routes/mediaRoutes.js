@@ -31,9 +31,9 @@ function multerErrorHandler(err, req, res, next) {
   next(err);
 }
 
-// ── Upload (admin/staff) ────────────────────────────────────
+// ── Upload (all authenticated users) ────────────────────────
 router.post('/upload',
-  role('admin','superadmin','staff'),
+  role('admin','superadmin','staff','student'),
   uploadLimiter,
   (req, res, next) => {
     upload.single('file')(req, res, err => {
