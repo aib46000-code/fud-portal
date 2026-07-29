@@ -304,7 +304,7 @@
         <div class="topbar-subtitle" id="topbar-sub">Upload, preview and manage files</div>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-sm btn-primary" id="btn-upload-open" onclick="showModal('modal-upload-opts')">
+        <button class="btn btn-sm btn-primary admin-only" id="btn-upload-open" onclick="showModal('modal-upload-opts')">
           <i class="fas fa-cloud-upload-alt"></i> Upload
         </button>
         <button class="btn btn-sm btn-secondary" onclick="location.href='notifications.html'">
@@ -319,7 +319,7 @@
       <div id="stats-bar" class="media-stats-bar admin-only"></div>
 
       <!-- Drop Zone -->
-      <div id="drop-zone" class="drop-zone"
+      <div id="drop-zone" class="drop-zone admin-only"
            onclick="showModal('modal-upload-opts')"
            ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
         <div class="drop-icon">☁️</div>

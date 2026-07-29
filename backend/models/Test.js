@@ -24,8 +24,9 @@ const TestModel = {
       INSERT INTO tests
         (title, description, subject, course_code, semester, academic_year, test_type,
          duration_mins, total_marks, pass_mark, instructions,
-         target_level, target_dept, starts_at, ends_at, is_active, is_published, created_by)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?)`,
+         target_level, target_dept, starts_at, ends_at, is_active, is_published, created_by,
+         bank_subject_id, display_limit, randomize_questions)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?)`,
       [
         data.title,
         data.description   || '',
@@ -43,6 +44,9 @@ const TestModel = {
         data.starts_at     || null,
         data.ends_at       || null,
         data.created_by,
+        data.bank_subject_id || null,
+        data.display_limit   || 0,
+        data.randomize_questions !== undefined ? data.randomize_questions : (data.randomize !== undefined ? data.randomize : 1)
       ]
     );
     return r.lastID;
@@ -51,10 +55,15 @@ const TestModel = {
   async update(id, fields) {
     const allowed = ['title','description','subject','course_code','semester','academic_year',
                      'test_type','duration_mins','total_marks','pass_mark','instructions',
-                     'target_level','target_dept','starts_at','ends_at','is_active','is_published'];
+                     'target_level','target_dept','starts_at','ends_at','is_active','is_published',
+                     'bank_subject_id','display_limit','randomize_questions'];
     const sets = [], vals = [];
+    const mappedFields = { ...fields };
+    if (fields.randomize !== undefined && fields.randomize_questions === undefined) {
+      mappedFields.randomize_questions = fields.randomize;
+    }
     for (const key of allowed) {
-      if (fields[key] !== undefined) { sets.push(`${key} = ?`); vals.push(fields[key]); }
+      if (mappedFields[key] !== undefined) { sets.push(`${key} = ?`); vals.push(mappedFields[key]); }
     }
     if (!sets.length) return { changes: 0 };
     sets.push('updated_at = CURRENT_TIMESTAMP');

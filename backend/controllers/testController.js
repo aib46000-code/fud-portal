@@ -37,9 +37,22 @@ exports.createTest = async (req, res, next) => {
     if (!errors.isEmpty()) return R.validationError(res, errors.array());
 
     const data   = { ...req.body, created_by: req.user.id };
+    if (data.randomize !== undefined) {
+      data.randomize_questions = data.randomize;
+    }
     const testId = await TestModel.create(data);
     await logActivity({ userId: req.user.id, action: 'CREATE_TEST', entityType: 'test',
       entityId: testId, description: `Created: ${data.title}`, ipAddress: req.ip });
+
+    // If subject bank is selected, copy questions from question_bank
+    const bankSubjectId = req.body.bank_subject_id || req.body.subject_id;
+    if (bankSubjectId) {
+      const bankQuestions = await dbAll('SELECT * FROM question_bank WHERE subject_id = ?', [bankSubjectId]);
+      if (bankQuestions && bankQuestions.length > 0) {
+        await QuestionModel.bulkCreate(testId, bankQuestions);
+        await recalcTotalMarks(testId);
+      }
+    }
 
     const test = await TestModel.findById(testId);
     return R.created(res, test, 'Test created successfully');
@@ -74,12 +87,33 @@ exports.getTest = async (req, res, next) => {
 
 exports.updateTest = async (req, res, next) => {
   try {
-    const test = await TestModel.findById(+req.params.id);
+    const testId = +req.params.id;
+    const test = await TestModel.findById(testId);
     if (!test) return R.notFound(res, 'Test not found');
-    await TestModel.update(+req.params.id, req.body);
+
+    const updateData = { ...req.body };
+    if (updateData.randomize !== undefined) {
+      updateData.randomize_questions = updateData.randomize;
+    }
+
+    await TestModel.update(testId, updateData);
     await logActivity({ userId: req.user.id, action: 'UPDATE_TEST', entityType: 'test',
-      entityId: +req.params.id, description: `Updated: ${test.title}`, ipAddress: req.ip });
-    const updated = await TestModel.findById(+req.params.id);
+      entityId: testId, description: `Updated: ${test.title}`, ipAddress: req.ip });
+
+    // If subject bank is changed/supplied, and the test currently has 0 questions, copy them
+    const bankSubjectId = req.body.bank_subject_id || req.body.subject_id;
+    if (bankSubjectId && bankSubjectId !== test.bank_subject_id) {
+      const currentQCount = await QuestionModel.countByTestId(testId);
+      if (currentQCount === 0) {
+        const bankQuestions = await dbAll('SELECT * FROM question_bank WHERE subject_id = ?', [bankSubjectId]);
+        if (bankQuestions && bankQuestions.length > 0) {
+          await QuestionModel.bulkCreate(testId, bankQuestions);
+          await recalcTotalMarks(testId);
+        }
+      }
+    }
+
+    const updated = await TestModel.findById(testId);
     return R.success(res, updated, 'Test updated');
   } catch (err) { next(err); }
 };
