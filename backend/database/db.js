@@ -231,9 +231,13 @@ const SCHEMA_SQL = `
     is_active     INTEGER NOT NULL DEFAULT 0,
     is_published  INTEGER NOT NULL DEFAULT 0,
     created_by    INTEGER NOT NULL,
+    bank_subject_id INTEGER,
+    display_limit INTEGER NOT NULL DEFAULT 0,
+    randomize_questions INTEGER NOT NULL DEFAULT 1,
     created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (bank_subject_id) REFERENCES subjects(id) ON DELETE SET NULL ON UPDATE CASCADE
   );
 
   -- ── questions ───────────────────────────────────────────────────────────────
@@ -541,6 +545,7 @@ const COLUMN_MIGRATIONS = [
   { table: 'media', column: 'status',                sql: `ALTER TABLE media ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
   
   // Tests: Phase 5 CBT configs
+  { table: 'tests', column: 'bank_subject_id', sql: `ALTER TABLE tests ADD COLUMN bank_subject_id INTEGER REFERENCES subjects(id) ON DELETE SET NULL` },
   { table: 'tests', column: 'early_access_mins', sql: `ALTER TABLE tests ADD COLUMN early_access_mins INTEGER NOT NULL DEFAULT 0` },
   { table: 'tests', column: 'late_entry_mins', sql: `ALTER TABLE tests ADD COLUMN late_entry_mins INTEGER NOT NULL DEFAULT 0` },
   { table: 'tests', column: 'max_attempts', sql: `ALTER TABLE tests ADD COLUMN max_attempts INTEGER NOT NULL DEFAULT 1` },
