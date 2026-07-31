@@ -307,6 +307,19 @@ async function startServer() {
       const emailService = require('./services/emailService');
       emailService.startWorker(30000);
       console.log('[Diagnostics] Email worker initialized.');
+
+      // Diagnostic: verify SMTP connection at startup
+      emailService.verifyTransporter().then(result => {
+        if (result.ok) {
+          logger.info(`[Email] ✓ SMTP connection verified — user: ${result.user}, host: ${result.host}`);
+          console.log(`[Diagnostics] SMTP OK: ${result.user} via ${result.host}`);
+        } else {
+          logger.warn(`[Email] ⚠ SMTP not configured: ${result.error}`);
+          console.warn(`[Diagnostics] SMTP WARNING: ${result.error}`);
+          console.warn('[Diagnostics] Emails will remain in queue with status=failed until SMTP is configured.');
+          console.warn('[Diagnostics] Set EMAIL_USER and EMAIL_PASS environment variables to enable email delivery.');
+        }
+      }).catch(() => {});
     } catch(err) {
       console.error('[Diagnostics] Non-fatal: Email worker failed to start:', err);
     }

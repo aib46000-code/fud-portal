@@ -31,6 +31,8 @@ router.get ('/preview/:type',      role('admin','superadmin','staff'),          
 // Send actions
 router.post('/send',               role('admin','superadmin','staff'),          ctrl.sendBulk);
 router.post('/send-one',           role('admin','superadmin','staff'),          ctrl.sendOne);
+router.post('/send-test',          role('admin','superadmin','staff'),          ctrl.sendTest);
+router.get ('/verify-smtp',        role('admin','superadmin'),                  ctrl.verifySMTP);
 router.post('/process-queue',      role('admin','superadmin','staff'),          ctrl.processQueue);
 
 // Retry

@@ -76,8 +76,8 @@ const EmailQueue = {
       SELECT * FROM email_queue
       WHERE  status = 'pending'
         AND  retry_count < max_retries
-        AND  (next_retry_at IS NULL OR next_retry_at <= datetime('now'))
-        AND  scheduled_at <= datetime('now')
+        AND  (next_retry_at IS NULL OR datetime(next_retry_at) <= datetime('now'))
+        AND  datetime(scheduled_at) <= datetime('now')
       ORDER  BY priority ASC, created_at ASC
       LIMIT  ?`, [limit]);
   },

@@ -436,7 +436,7 @@
                 </div>
 
                 <!-- Actions -->
-                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
                   <button type="submit" class="btn btn-primary" id="btn-send" style="min-width:160px">
                     <i class="fas fa-paper-plane"></i> Send Email
                   </button>
@@ -446,7 +446,16 @@
                   <button type="button" class="btn btn-secondary" onclick="resetCompose()">
                     <i class="fas fa-undo"></i> Reset
                   </button>
+                  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="btn btn-secondary" id="btn-verify-smtp" onclick="verifySMTP()" title="Test SMTP connection without sending">
+                      <i class="fas fa-plug"></i> Verify SMTP
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-send-test" onclick="openSendTestModal()" title="Send a test email to verify delivery">
+                      <i class="fas fa-vial"></i> Send Test Email
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </form>
           </div>
@@ -537,9 +546,36 @@
   </div>
 </div>
 
+<!-- Send Test Email Modal -->
+<div class="preview-modal-overlay hidden" id="send-test-overlay" onclick="closeSendTestModal(event)">
+  <div class="preview-modal" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="preview-modal-header">
+      <span style="font-weight:700;font-size:15px;color:var(--text-primary)"><i class="fas fa-vial" style="color:#6366f1;margin-right:6px"></i>Send Test Email</span>
+      <button class="btn btn-secondary" onclick="closeSendTestModal()" style="padding:6px 14px;font-size:13px"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+      <p style="font-size:13px;color:var(--text-muted)">Sends a real email immediately (bypassing the queue) to verify your SMTP configuration is working end-to-end.</p>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-envelope" style="color:#6366f1"></i> Send test to</label>
+        <input type="email" class="form-input" id="test-email-to" placeholder="e.g. yourname@gmail.com" autocomplete="email">
+      </div>
+      <div id="send-test-result" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary" onclick="closeSendTestModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-do-send-test" onclick="sendTestEmail()">
+          <i class="fas fa-paper-plane"></i> Send Test
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js" defer></script>
 <script>
 'use strict';
+// Expose API_BASE so inline fetch() calls in this page can use it
+const API_BASE = '/api';
+window.API_BASE = API_BASE;
 
 // ── Auth guard ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -575,28 +611,37 @@ function renderTemplates() {
   `).join('');
 }
 
-// ── Load stats ─────────────────────────────────────────────────────
+// ── Load stats ────────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const r = await API.get('/email/stats');
     const s = r.data;
-    document.getElementById('stat-pending').textContent = s.pending;
-    document.getElementById('stat-sent').textContent    = s.sent;
-    document.getElementById('stat-failed').textContent  = s.failed;
-    document.getElementById('stat-total').textContent   = s.total;
-    document.getElementById('pending-badge').textContent = s.pending;
+    document.getElementById('stat-pending').textContent = s.pending ?? '0';
+    document.getElementById('stat-sent').textContent    = s.sent    ?? '0';
+    document.getElementById('stat-failed').textContent  = s.failed  ?? '0';
+    document.getElementById('stat-total').textContent   = s.total   ?? '0';
+    document.getElementById('pending-badge').textContent = s.pending || 0;
 
-    // Detect Ethereal vs real SMTP
-    const isReal = !!(document.cookie.includes('smtp_live') || s.smtp_live);
-    const banner = document.getElementById('smtp-banner');
-    if (banner && isReal) {
-      banner.className = 'smtp-banner live';
-      banner.innerHTML = '<i class="fas fa-shield-alt"></i> Using Live SMTP Server';
-      banner.style.background = 'rgba(16, 185, 129, 0.15)';
-      banner.style.color = '#10b981';
-      banner.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    // Update SMTP status banner based on real server response
+    const banner   = document.getElementById('smtp-banner');
+    const bannerTx = document.getElementById('smtp-banner-text');
+    if (banner && bannerTx) {
+      if (s.smtp_live) {
+        banner.className = 'smtp-status live';
+        bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Live SMTP active &mdash; sending via <strong>${s.smtp_user || 'configured account'}</strong>`;
+      } else {
+        banner.className = 'smtp-status ethereal';
+        bannerTx.innerHTML = `<i class="fas fa-flask"></i> No SMTP credentials configured &mdash; emails will fail until you set <code>EMAIL_USER</code> and <code>EMAIL_PASS</code>.`;
+      }
     }
-  } catch(e) {}
+  } catch(e) {
+    // Do NOT swallow this silently — show a non-blocking warning
+    console.error('[Email] Failed to load stats:', e);
+    document.getElementById('stat-pending').textContent = '!';
+    document.getElementById('stat-sent').textContent    = '!';
+    document.getElementById('stat-failed').textContent  = '!';
+    document.getElementById('stat-total').textContent   = '!';
+  }
 }
 
 // ── Queue ──────────────────────────────────────────────────────────
@@ -820,17 +865,28 @@ async function previewCompose() {
 }
 
 // ── Template preview ───────────────────────────────────────────────
+// BUG FIX: api.js defines `const API_BASE = '/api'` as a module-scoped const,
+// NOT exported to window. This page defines its own `const API_BASE = '/api'`
+// at the top of the inline script so fetch() calls here work correctly.
 async function previewTemplate(key, name) {
   try {
+    const token = Auth.getAccess();
     const res = await fetch(`${API_BASE}/email/preview/${key}`, {
-      headers: { Authorization: 'Bearer ' + Auth.getAccess() },
+      headers: { Authorization: 'Bearer ' + token },
     });
-    if (!res.ok) { Toast.error('Template not found'); return; }
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      Toast.error(json?.message || 'Template not found');
+      return;
+    }
     const html = await res.text();
     document.getElementById('preview-title').textContent = name + ' — Preview';
     document.getElementById('preview-iframe').srcdoc = html;
     document.getElementById('preview-overlay').classList.remove('hidden');
-  } catch(e) { Toast.error('Preview failed'); }
+  } catch(e) {
+    console.error('[Email] Template preview failed:', e);
+    Toast.error('Preview failed: ' + e.message);
+  }
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────
@@ -853,6 +909,78 @@ function closePreview(e) {
 // ── Helpers ────────────────────────────────────────────────────────
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── SMTP Verification ─────────────────────────────────────────────
+async function verifySMTP() {
+  const btn = document.getElementById('btn-verify-smtp');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking…';
+  try {
+    const r = await API.get('/email/verify-smtp');
+    Toast.success(`✅ SMTP OK — connected via ${r.data.user || 'configured account'}`);
+  } catch(e) {
+    const msg = e.data?.message || e.message || 'SMTP check failed';
+    Toast.error('❌ ' + msg, 7000);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+// ── Send Test Email Modal ─────────────────────────────────────────
+function openSendTestModal() {
+  const overlay = document.getElementById('send-test-overlay');
+  const resultEl = document.getElementById('send-test-result');
+  document.getElementById('test-email-to').value = '';
+  resultEl.style.display = 'none';
+  resultEl.textContent = '';
+  overlay.classList.remove('hidden');
+  setTimeout(() => document.getElementById('test-email-to').focus(), 100);
+}
+
+function closeSendTestModal(e) {
+  if (!e || e.target === document.getElementById('send-test-overlay')) {
+    document.getElementById('send-test-overlay').classList.add('hidden');
+  }
+}
+
+async function sendTestEmail() {
+  const to = document.getElementById('test-email-to').value.trim();
+  if (!to || !to.includes('@')) { Toast.warning('Enter a valid email address'); return; }
+
+  const btn     = document.getElementById('btn-do-send-test');
+  const resultEl = document.getElementById('send-test-result');
+  const orig    = btn.innerHTML;
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+  resultEl.style.display = 'none';
+
+  try {
+    const r = await API.post('/email/send-test', { to });
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(34,197,94,.12)';
+    resultEl.style.border = '1px solid rgba(34,197,94,.3)';
+    resultEl.style.color = '#15803d';
+    let msg = `✅ Test email sent to <strong>${escHtml(to)}</strong>`;
+    if (r.data?.previewUrl) {
+      msg += `<br><a href="${r.data.previewUrl}" target="_blank" style="color:#6366f1;text-decoration:underline;font-size:12px">📬 View in Ethereal inbox (test mode)</a>`;
+    }
+    resultEl.innerHTML = msg;
+    Toast.success('Test email sent!');
+  } catch(e) {
+    const errMsg = e.data?.message || e.message || 'Send failed';
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(239,68,68,.1)';
+    resultEl.style.border = '1px solid rgba(239,68,68,.3)';
+    resultEl.style.color = '#dc2626';
+    resultEl.innerHTML = `❌ ${escHtml(errMsg)}`;
+    Toast.error('Test send failed: ' + errMsg, 7000);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
 }
 
 // Auto-refresh stats every 30s

@@ -88,20 +88,35 @@ async function sendMail({ to, subject, html, text }) {
   const t    = await getTransporter();
 
   if (!t) {
-    // No transport available — log the email
-    logger.info(`[Email] LOG-ONLY: To: ${to} | Subject: ${subject}`);
-    return { messageId: 'log-only-' + Date.now(), previewUrl: null };
+    // BUG FIX: Previously returned a fake success here.
+    // Now we throw so the queue worker correctly marks the job as failed
+    // and schedules a retry instead of recording a phantom "sent" state.
+    throw new Error('No SMTP transporter available. Set EMAIL_USER and EMAIL_PASS in your environment variables.');
   }
 
   const info = await t.sendMail({ from, to, subject, html, text: text || '' });
 
   const previewUrl = nodemailer.getTestMessageUrl(info);
   if (previewUrl) {
-    logger.info(`[Email] Preview: ${previewUrl}`);
+    logger.info(`[Email] Ethereal preview URL: ${previewUrl}`);
   }
 
   logger.info(`[Email] Sent: ${subject} → ${to} (id: ${info.messageId})`);
   return { messageId: info.messageId, previewUrl };
+}
+
+// ── Verify SMTP connection (diagnostic) ──────────────────────────────────────
+async function verifyTransporter() {
+  try {
+    const t = await getTransporter();
+    if (!t) {
+      return { ok: false, error: 'No transporter — EMAIL_USER/EMAIL_PASS not set' };
+    }
+    await t.verify();
+    return { ok: true, user: process.env.EMAIL_USER, host: process.env.EMAIL_HOST || 'gmail' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
 }
 
 // ── Queue processor ───────────────────────────────────────────────────────────
@@ -113,6 +128,9 @@ async function processQueue() {
 
   try {
     const due = await EmailQueue.fetchDue(20);
+    // BUG FIX: Previously `return` here bypassed the `finally` block in some
+    // Node.js paths and left workerRunning = true forever. Now always falls
+    // through to `finally` to guarantee the flag is reset.
     if (!due.length) return;
 
     logger.info(`[EmailWorker] Processing ${due.length} queued email(s)`);
@@ -136,6 +154,8 @@ async function processQueue() {
   } catch (err) {
     logger.error('[EmailWorker] Queue processing error:', err.message);
   } finally {
+    // BUG FIX: This finally block is ALWAYS executed — even after an early
+    // `return` above — guaranteeing the worker lock is released every time.
     workerRunning = false;
   }
 }
@@ -282,6 +302,7 @@ async function sendBulkEmail({ recipients, subject, message_html, cta_text, cta_
 
 module.exports = {
   sendMail,
+  verifyTransporter,
   processQueue,
   startWorker,
   stopWorker,

@@ -9,10 +9,70 @@ const { all: dbAll, run: dbRun, get: dbGet } = require('../database/db');
 const { logActivity } = require('../database/db');
 const R = require('../utils/response');
 
-// ── GET /api/email/stats ──────────────────────────────────────────
+// ── GET /api/email/verify-smtp ────────────────────────────────────────────────
+// Test SMTP connectivity without sending a real email
+exports.verifySMTP = async (req, res, next) => {
+  try {
+    const result = await emailService.verifyTransporter();
+    if (result.ok) {
+      return R.success(res, result, 'SMTP connection verified successfully');
+    } else {
+      return R.error(res, `SMTP connection failed: ${result.error}`, 502);
+    }
+  } catch (err) { next(err); }
+};
+
+// ── POST /api/email/send-test ───────────────────────────────────────────────
+// Send a live test email to a specified address to verify delivery
+exports.sendTest = async (req, res, next) => {
+  try {
+    const { to } = req.body;
+    if (!to) return R.error(res, '"to" email address is required', 400);
+
+    const templates = require('../services/emailTemplates');
+    const html = templates.announcementEmail({
+      recipient_name: to.split('@')[0],
+      subject_line:   'SMTP Test Email — FUD Portal',
+      message_html:   '<p>This is a <strong>test email</strong> sent from the FUD Portal Email Management page to verify that your SMTP configuration is working correctly.</p><p>If you received this email, your email system is <strong style="color:#22c55e">working correctly</strong>! ✅</p>',
+      cta_text:       'Go to Admin Panel',
+      cta_url:        process.env.FRONTEND_URL + '/admin.html',
+      category:       'info',
+    });
+
+    // Send immediately (bypass the queue) so we get real-time SMTP feedback
+    let result;
+    try {
+      result = await emailService.sendMail({
+        to,
+        subject: '[TEST] FUD Portal Email Delivery Test',
+        html,
+        text: 'This is a test email from FUD Portal. If you received this, SMTP is working correctly.',
+      });
+    } catch (smtpErr) {
+      return R.error(res, `SMTP delivery failed: ${smtpErr.message}`, 502);
+    }
+
+    await logActivity({
+      userId: req.user.id, action: 'SEND_TEST_EMAIL', entityType: 'email',
+      description: `Test email sent to ${to}`, ipAddress: req.ip,
+    });
+
+    return R.success(res, {
+      to,
+      messageId:  result.messageId,
+      previewUrl: result.previewUrl || null,
+    }, `Test email sent to ${to}`);
+  } catch (err) { next(err); }
+};
+
+
+// ── GET /api/email/stats ───────────────────────────────────────────────────────────
 exports.stats = async (req, res, next) => {
   try {
     const stats = await EmailQueue.stats();
+    // Tell the frontend whether real SMTP is configured (used to update the status banner)
+    stats.smtp_live = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    stats.smtp_user = stats.smtp_live ? process.env.EMAIL_USER : null;
     return R.success(res, stats, 'Email queue stats');
   } catch (err) { next(err); }
 };
