@@ -863,8 +863,10 @@ async function previewCompose() {
 // ── Template preview ───────────────────────────────────────────────
 async function previewTemplate(key, name) {
   try {
+    // Use raw fetch with '/api' base — API_BASE is private to api.js and not on window.
+    // Auth header is added manually from Auth.getAccess() which IS exported globally.
     const token = Auth.getAccess();
-    const res = await fetch(`${API_BASE}/email/preview/${key}`, {
+    const res = await fetch(`/api/email/preview/${key}`, {
       headers: { Authorization: 'Bearer ' + token },
     });
     if (!res.ok) {
