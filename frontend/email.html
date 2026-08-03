@@ -573,7 +573,7 @@
 <script src="js/api.js" defer></script>
 <script>
 'use strict';
-// ── Auth guard + page initialization (API_BASE duplicate resolved) ──
+// ── Auth guard + page initialization (redeploy 1) ──
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
   if (!Auth.requireRole(['admin','superadmin','staff'])) return;
