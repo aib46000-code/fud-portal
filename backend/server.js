@@ -99,10 +99,14 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5000',
   'http://localhost:3000',
   'http://127.0.0.1:5000',
+  // Legacy Railway deployments
   'https://skillful-happiness-production-ba1e.up.railway.app',
-  'https://fud-portal-production-1c02.up.railway.app'
+  'https://fud-portal-production-1c02.up.railway.app',
+  // Current production frontend
+  'https://fud-portal-production.up.railway.app',
 ];
 
+// Dynamically add FRONTEND_URL env var (supports comma-separated list)
 if (process.env.FRONTEND_URL) {
   process.env.FRONTEND_URL.split(',').forEach(url => {
     const trimmed = url.trim().replace(/\/$/, '');
@@ -110,6 +114,14 @@ if (process.env.FRONTEND_URL) {
       ALLOWED_ORIGINS.push(trimmed);
     }
   });
+}
+
+// Railway auto-injects RAILWAY_PUBLIC_DOMAIN – use it as a zero-config fallback
+if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+  const railwayOrigin = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`.replace(/\/$/, '');
+  if (!ALLOWED_ORIGINS.includes(railwayOrigin)) {
+    ALLOWED_ORIGINS.push(railwayOrigin);
+  }
 }
 
 console.log('[Diagnostics] CORS Allowed Origins:', ALLOWED_ORIGINS);
