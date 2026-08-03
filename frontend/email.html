@@ -573,10 +573,6 @@
 <script src="js/api.js" defer></script>
 <script>
 'use strict';
-// Expose API_BASE so inline fetch() calls in this page can use it
-const API_BASE = '/api';
-window.API_BASE = API_BASE;
-
 // ── Auth guard ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
@@ -865,9 +861,6 @@ async function previewCompose() {
 }
 
 // ── Template preview ───────────────────────────────────────────────
-// BUG FIX: api.js defines `const API_BASE = '/api'` as a module-scoped const,
-// NOT exported to window. This page defines its own `const API_BASE = '/api'`
-// at the top of the inline script so fetch() calls here work correctly.
 async function previewTemplate(key, name) {
   try {
     const token = Auth.getAccess();
