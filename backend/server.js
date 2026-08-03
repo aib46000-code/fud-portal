@@ -99,7 +99,8 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5000',
   'http://localhost:3000',
   'http://127.0.0.1:5000',
-  'https://skillful-happiness-production-ba1e.up.railway.app'
+  'https://skillful-happiness-production-ba1e.up.railway.app',
+  'https://fud-portal-production-1c02.up.railway.app'
 ];
 
 if (process.env.FRONTEND_URL) {
