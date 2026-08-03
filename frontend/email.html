@@ -573,16 +573,116 @@
 <script src="js/api.js" defer></script>
 <script>
 'use strict';
-// ── Auth guard ─────────────────────────────────────────────────────
+// ── Auth guard + page initialization ───────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
   if (!Auth.requireRole(['admin','superadmin','staff'])) return;
+
   initSidebar();
-  renderSidebarUser();
+  renderSidebarUser(); // renders from localStorage immediately
+
+  // FIX: Fetch fresh profile so admin name/avatar is always correct
+  try {
+    const meRes = await API.getMe();
+    if (meRes?.data) {
+      // Merge fresh profile into stored user object and re-render sidebar
+      const stored = Auth.getUser() || {};
+      const fresh = { ...stored, ...meRes.data };
+      localStorage.setItem('fud_user', JSON.stringify(fresh));
+      renderSidebarUser();
+    }
+  } catch { /* non-fatal — sidebar already rendered from cache */ }
+
   updateUnreadBadge();
   await loadStats();
   await loadQueue();
   renderTemplates();
+
+  // FIX: Wire logout button (was missing in email.html)
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try { await API.logout(Auth.getRefresh()); } catch {}
+      Auth.clear();
+      location.href = 'index.html';
+    });
+  }
+
+  // FIX: Wire target-pills listener inside DOMContentLoaded (was at parse time)
+  document.getElementById('target-pills')?.addEventListener('click', e => {
+    const pill = e.target.closest('[data-val]');
+    if (!pill) return;
+    document.querySelectorAll('.target-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const val = pill.dataset.val;
+    document.getElementById('compose-target').value = val;
+    const customWrap = document.getElementById('custom-recipients-wrap');
+    customWrap.classList.toggle('hidden', val !== 'custom');
+  });
+
+  // FIX: Wire compose-form submit inside DOMContentLoaded (was at parse time)
+  document.getElementById('compose-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const subject  = document.getElementById('compose-subject').value.trim();
+    const body     = document.getElementById('compose-body').innerHTML.trim();
+    const target   = document.getElementById('compose-target').value;
+    const category = document.getElementById('compose-category').value;
+    const ctaText  = document.getElementById('compose-cta-text').value.trim();
+    const ctaUrl   = document.getElementById('compose-cta-url').value.trim();
+
+    if (!subject) { Toast.warning('Subject is required'); return; }
+    if (!body || body === '<br>') { Toast.warning('Message body is required'); return; }
+
+    const progress  = document.getElementById('send-progress');
+    const bar       = document.getElementById('send-bar');
+    const btnSend   = document.getElementById('btn-send');
+    const statusTxt = document.getElementById('send-progress-text');
+
+    progress.classList.add('show');
+    bar.style.width = '20%';
+    statusTxt.textContent = 'Queuing emails…';
+    btnSend.disabled = true;
+
+    try {
+      const payload = { subject, message_html: body, target, category };
+      if (ctaText) payload.cta_text = ctaText;
+      if (ctaUrl)  payload.cta_url  = ctaUrl;
+      if (target === 'custom') {
+        const emails = document.getElementById('custom-emails').value.split(',').map(e => e.trim()).filter(Boolean);
+        if (!emails.length) { Toast.warning('Enter at least one email address'); btnSend.disabled = false; progress.classList.remove('show'); return; }
+        payload.target       = 'custom';
+        payload.custom_emails = emails;
+      }
+
+      bar.style.width = '60%';
+      const r = await API.post('/email/send', payload);
+      bar.style.width = '100%';
+      statusTxt.textContent = `✅ ${r.data.queued} email(s) queued!`;
+      Toast.success(`${r.data.queued} email(s) queued for delivery`);
+
+      setTimeout(() => {
+        progress.classList.remove('show');
+        bar.style.width = '0';
+        resetCompose();
+        showTab('tab-queue');
+        loadQueue(); loadStats();
+      }, 1800);
+
+    } catch(err) {
+      bar.style.width = '0';
+      statusTxt.textContent = '';
+      progress.classList.remove('show');
+      Toast.error(err.message || 'Send failed');
+    } finally {
+      btnSend.disabled = false;
+    }
+  });
+
+  // FIX: Start auto-refresh ONLY after auth is confirmed and page is initialized
+  setInterval(() => {
+    loadStats();
+    if (document.getElementById('tab-queue').classList.contains('active')) loadQueue();
+  }, 30000);
 });
 
 // ── Templates list ─────────────────────────────────────────────────
@@ -761,19 +861,7 @@ async function purgeHistory() {
   } catch(e) { Toast.error('Purge failed: ' + e.message); }
 }
 
-// ── Compose ────────────────────────────────────────────────────────
-// Target pills
-document.getElementById('target-pills')?.addEventListener('click', e => {
-  const pill = e.target.closest('[data-val]');
-  if (!pill) return;
-  document.querySelectorAll('.target-pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-  const val = pill.dataset.val;
-  document.getElementById('compose-target').value = val;
-  const customWrap = document.getElementById('custom-recipients-wrap');
-  customWrap.classList.toggle('hidden', val !== 'custom');
-});
-
+// ── Compose helpers (pure DOM manipulation — safe at parse time) ────
 function fmt(cmd) {
   document.getElementById('compose-body').focus();
   document.execCommand(cmd, false, null);
@@ -785,63 +873,9 @@ function fmtBlock(tag) {
 function clearBody() {
   document.getElementById('compose-body').innerHTML = '';
 }
-
-document.getElementById('compose-form')?.addEventListener('submit', async e => {
-  e.preventDefault();
-  const subject  = document.getElementById('compose-subject').value.trim();
-  const body     = document.getElementById('compose-body').innerHTML.trim();
-  const target   = document.getElementById('compose-target').value;
-  const category = document.getElementById('compose-category').value;
-  const ctaText  = document.getElementById('compose-cta-text').value.trim();
-  const ctaUrl   = document.getElementById('compose-cta-url').value.trim();
-
-  if (!subject) { Toast.warning('Subject is required'); return; }
-  if (!body || body === '<br>') { Toast.warning('Message body is required'); return; }
-
-  const progress  = document.getElementById('send-progress');
-  const bar       = document.getElementById('send-bar');
-  const btnSend   = document.getElementById('btn-send');
-  const statusTxt = document.getElementById('send-progress-text');
-
-  progress.classList.add('show');
-  bar.style.width = '20%';
-  statusTxt.textContent = 'Queuing emails…';
-  btnSend.disabled = true;
-
-  try {
-    const payload = { subject, message_html: body, target, category };
-    if (ctaText) payload.cta_text = ctaText;
-    if (ctaUrl)  payload.cta_url  = ctaUrl;
-    if (target === 'custom') {
-      const emails = document.getElementById('custom-emails').value.split(',').map(e => e.trim()).filter(Boolean);
-      if (!emails.length) { Toast.warning('Enter at least one email address'); btnSend.disabled = false; progress.classList.remove('show'); return; }
-      payload.target    = 'custom';
-      payload.custom_emails  = emails; 
-    }
-
-    bar.style.width = '60%';
-    const r = await API.post('/email/send', payload);
-    bar.style.width = '100%';
-    statusTxt.textContent = `✅ ${r.data.queued} email(s) queued!`;
-    Toast.success(`${r.data.queued} email(s) queued for delivery`);
-
-    setTimeout(() => {
-      progress.classList.remove('show');
-      bar.style.width = '0';
-      resetCompose();
-      showTab('tab-queue');
-      loadQueue(); loadStats();
-    }, 1800);
-
-  } catch(err) {
-    bar.style.width = '0';
-    statusTxt.textContent = '';
-    progress.classList.remove('show');
-    Toast.error(err.message || 'Send failed');
-  } finally {
-    btnSend.disabled = false;
-  }
-});
+// NOTE: target-pills listener and compose-form submit listener have been
+// moved into the DOMContentLoaded handler above to ensure Auth/API are
+// available and to prevent premature execution.
 
 function resetCompose() {
   document.getElementById('compose-form').reset();
@@ -978,8 +1012,8 @@ async function sendTestEmail() {
   }
 }
 
-// Auto-refresh stats every 30s
-setInterval(() => { loadStats(); if (document.getElementById('tab-queue').classList.contains('active')) loadQueue(); }, 30000);
+// NOTE: Auto-refresh setInterval has been moved into the DOMContentLoaded
+// handler above so it only runs after authentication is confirmed.
 </script>
 </body>
 </html>
