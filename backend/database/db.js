@@ -16,10 +16,9 @@ const logger  = require('../utils/logger');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 // ─── Resolve DB Path ──────────────────────────────────────────────────────────
-const DB_PATH = path.resolve(
-  process.cwd(),
-  process.env.DB_PATH || process.env.DATABASE_PATH || './backend/database/fud_portal.db'
-);
+const DB_PATH = process.env.DB_PATH
+  ? path.resolve(process.env.DB_PATH)
+  : path.join(__dirname, 'fud_portal.db');
 
 const dbDir = path.dirname(DB_PATH);
 try {
