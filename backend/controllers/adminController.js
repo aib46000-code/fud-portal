@@ -183,10 +183,24 @@ exports.createStudent = async (req, res, next) => {
       [email.toLowerCase().trim(), hash]
     );
 
+    const finalDepartment = department?.trim() || 'General';
+    const finalFaculty = faculty?.trim() || 'General';
+
+    const finalLevel =
+      ['100','200','300','400','500','600','PG'].includes(level)
+        ? level
+        : '100';
+
+    const normalizedGender = (gender || '').toLowerCase();
+    const finalGender =
+      ['male','female','other'].includes(normalizedGender)
+        ? normalizedGender
+        : 'male';
+
     await run(
       `INSERT INTO students (user_id, full_name, matric_no, department, faculty, level, gender, phone)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId.lastID, full_name, matric_no, department, faculty, level, gender, phone || null]
+      [userId.lastID, full_name, matric_no, finalDepartment, finalFaculty, finalLevel, finalGender, phone || null]
     );
 
     await logActivity({ userId: req.user.id, action: 'CREATE_STUDENT', entityType: 'user',
@@ -212,6 +226,8 @@ exports.updateStudent = async (req, res, next) => {
       await run('UPDATE users SET email = ? WHERE id = ?', [email.toLowerCase().trim(), id]);
     }
 
+    const normalizedGender = gender ? gender.toLowerCase() : undefined;
+
     const student = await get('SELECT * FROM students WHERE user_id = ?', [id]);
     if (student) {
       await run(`
@@ -225,7 +241,7 @@ exports.updateStudent = async (req, res, next) => {
           phone     = COALESCE(?, phone),
           updated_at= CURRENT_TIMESTAMP
         WHERE user_id = ?`,
-        [full_name, matric_no, department, faculty, level, gender, phone, id]
+        [full_name, matric_no, department, faculty, level, normalizedGender, phone, id]
       );
     }
 
