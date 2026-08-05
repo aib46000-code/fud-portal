@@ -280,9 +280,8 @@ exports.startTest = async (req, res, next) => {
     const now = new Date();
     if (test.starts_at) {
        const startsAt = new Date(test.starts_at);
-       const earlyAccessStart = new Date(startsAt.getTime() - (test.early_access_mins || 0) * 60000);
-       if (now < earlyAccessStart) {
-         return R.error(res, `Test is not yet open. Early access starts at ${earlyAccessStart.toLocaleString()}`, 403);
+       if (now < startsAt) {
+         return R.error(res, `Test is not yet open. It opens at ${startsAt.toLocaleString()}`, 403);
        }
        if (test.late_entry_mins > 0) {
          const lateEntryEnd = new Date(startsAt.getTime() + test.late_entry_mins * 60000);
