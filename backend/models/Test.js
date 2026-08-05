@@ -25,8 +25,9 @@ const TestModel = {
         (title, description, subject, course_code, semester, academic_year, test_type,
          duration_mins, total_marks, pass_mark, instructions,
          target_level, target_dept, starts_at, ends_at, is_active, is_published, created_by,
-         bank_subject_id, display_limit, randomize_questions)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?)`,
+         bank_subject_id, display_limit, randomize_questions,
+         early_access_mins, late_entry_mins)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`,
       [
         data.title,
         data.description   || '',
@@ -46,7 +47,9 @@ const TestModel = {
         data.created_by,
         data.bank_subject_id || null,
         data.display_limit   || 0,
-        data.randomize_questions !== undefined ? data.randomize_questions : (data.randomize !== undefined ? data.randomize : 1)
+        data.randomize_questions !== undefined ? data.randomize_questions : (data.randomize !== undefined ? data.randomize : 1),
+        data.early_access_mins || 0,
+        data.late_entry_mins   || 0
       ]
     );
     return r.lastID;
@@ -56,7 +59,8 @@ const TestModel = {
     const allowed = ['title','description','subject','course_code','semester','academic_year',
                      'test_type','duration_mins','total_marks','pass_mark','instructions',
                      'target_level','target_dept','starts_at','ends_at','is_active','is_published',
-                     'bank_subject_id','display_limit','randomize_questions'];
+                     'bank_subject_id','display_limit','randomize_questions',
+                     'early_access_mins','late_entry_mins'];
     const sets = [], vals = [];
     const mappedFields = { ...fields };
     if (fields.randomize !== undefined && fields.randomize_questions === undefined) {
