@@ -223,13 +223,15 @@ exports.login = async (req, res, next) => {
     const user = await UserModel.findByEmail(email);
     console.log("========== LOGIN DEBUG ==========");
     console.log("EMAIL:", email);
-    console.log("USER FOUND:", !!user);
+    console.log("USER:", user);
 
-    if (user) {
-      console.log("USER ID:", user.id);
-      console.log("ROLE:", user.role);
-      console.log("HASH EXISTS:", !!user.password_hash);
-    }
+    const match = user
+      ? await bcrypt.compare(password, user.password_hash)
+      : false;
+
+    console.log("PASSWORD MATCH:", match);
+    console.log("================================");
+
     if (!user) {
       return R.unauthorized(res, 'Invalid email or password');
     }
@@ -260,9 +262,7 @@ exports.login = async (req, res, next) => {
     }
 
     // ── Verify password ─────────────────────────────────────────────────────
-    const match = await bcrypt.compare(password, user.password_hash);
-    console.log("PASSWORD MATCH:", match);
-    console.log("===============================");
+    // match already computed above
     if (!match) {
       await UserModel.recordFailedLogin(user.id);
       const updated = await UserModel.findById(user.id);
