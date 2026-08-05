@@ -221,6 +221,15 @@ exports.login = async (req, res, next) => {
 
     // ── Fetch user ──────────────────────────────────────────────────────────
     const user = await UserModel.findByEmail(email);
+    console.log("========== LOGIN DEBUG ==========");
+    console.log("EMAIL:", email);
+    console.log("USER FOUND:", !!user);
+
+    if (user) {
+      console.log("USER ID:", user.id);
+      console.log("ROLE:", user.role);
+      console.log("HASH EXISTS:", !!user.password_hash);
+    }
     if (!user) {
       return R.unauthorized(res, 'Invalid email or password');
     }
@@ -252,6 +261,8 @@ exports.login = async (req, res, next) => {
 
     // ── Verify password ─────────────────────────────────────────────────────
     const match = await bcrypt.compare(password, user.password_hash);
+    console.log("PASSWORD MATCH:", match);
+    console.log("===============================");
     if (!match) {
       await UserModel.recordFailedLogin(user.id);
       const updated = await UserModel.findById(user.id);
@@ -307,26 +318,21 @@ exports.adminLogin = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    // ── DEBUG START ──────────────────────────────────────────────────────────
-    logger.warn(`[DEBUG:adminLogin] 1. Incoming email: "${email}"`);
+    console.log("EMAIL FROM REQUEST:", email);
+    console.log("PASSWORD FROM REQUEST:", password);
 
     const user = await UserModel.findByEmail(email);
-    logger.warn(`[DEBUG:adminLogin] 2. findByEmail result: ${user ? 'USER FOUND (id=' + user.id + ')' : 'NULL – no user with that email'}`);
+    console.log("USER:", user);
 
     if (!user) {
-      logger.warn('[DEBUG:adminLogin] 401 EXIT: user not found');
       return R.unauthorized(res, 'Invalid credentials');
     }
 
-    logger.warn(`[DEBUG:adminLogin] 3. role="${user.role}"  is_active=${user.is_active}  is_verified=${user.is_verified}  failed_attempts=${user.failed_attempts}  locked_until=${user.locked_until || 'null'}`);
-
     if (!['admin','superadmin','staff'].includes(user.role)) {
-      logger.warn(`[DEBUG:adminLogin] 403 EXIT: role "${user.role}" is not admin/superadmin/staff`);
       return R.forbidden(res, 'This login is for administrators only');
     }
 
     if (!user.is_active) {
-      logger.warn('[DEBUG:adminLogin] 401 EXIT: is_active=0 (account deactivated)');
       return R.unauthorized(res, 'Account is deactivated. Contact ICT support.');
     }
 
@@ -334,7 +340,6 @@ exports.adminLogin = async (req, res, next) => {
     if (isLocked(user)) {
       const unlockAt    = new Date(user.locked_until);
       const minutesLeft = Math.ceil((unlockAt - Date.now()) / 60000);
-      logger.warn(`[DEBUG:adminLogin] 423 EXIT: account locked for ${minutesLeft} more minute(s)`);
       await logActivity({
         userId: user.id, action: 'ADMIN_LOGIN_LOCKED', entityType: 'user', entityId: user.id,
         description: `Admin login blocked – account locked for ${minutesLeft} more minutes`,
@@ -343,22 +348,19 @@ exports.adminLogin = async (req, res, next) => {
       return R.error(res,
         `Account temporarily locked. Try again in ${minutesLeft} minute(s).`, 423);
     } else if (user.locked_until) {
-      logger.warn('[DEBUG:adminLogin] lock expired – resetting failed_attempts');
       await UserModel.resetFailedAttempts(user.id);
       user.failed_attempts = 0;
       user.locked_until = null;
     }
 
-    logger.warn(`[DEBUG:adminLogin] 4. hash present: ${!!user.password_hash}  hash prefix: "${(user.password_hash || '').slice(0, 7)}"`);
-
+    console.log("HASH:", user.password_hash);
     const match = await bcrypt.compare(password, user.password_hash);
-    logger.warn(`[DEBUG:adminLogin] 5. bcrypt.compare() result: ${match}`);
+    console.log("COMPARE RESULT:", match);
 
     if (!match) {
       await UserModel.recordFailedLogin(user.id);
       const updated = await UserModel.findById(user.id);
       const attemptsLeft = Math.max(0, 5 - (updated?.failed_attempts || 0));
-      logger.warn(`[DEBUG:adminLogin] 401 EXIT: password mismatch – ${attemptsLeft} attempt(s) remaining`);
 
       await logActivity({
         userId: user.id, action: 'ADMIN_LOGIN_FAILED', entityType: 'user',
@@ -371,9 +373,6 @@ exports.adminLogin = async (req, res, next) => {
         : 'Account locked for 5 minutes due to too many failed attempts.';
       return R.unauthorized(res, msg);
     }
-
-    logger.warn('[DEBUG:adminLogin] 6. bcrypt MATCHED – issuing tokens');
-    // ── DEBUG END ────────────────────────────────────────────────────────────
 
     const { accessToken, refreshToken } = await issueTokenPair(user, req);
     await UserModel.recordLogin(user.id);
