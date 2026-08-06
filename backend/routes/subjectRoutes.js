@@ -30,6 +30,14 @@ router.post('/:subjectId/questions', role('admin','superadmin','staff'), ctrl.ad
 router.delete('/questions/:qid', ctrl.deleteBankQuestion);
 
 // CSV/Excel Import
-router.post('/:subjectId/import', upload.single('file'), ctrl.importQuestions);
+router.post(
+  '/:subjectId/import',
+  (req, res, next) => {
+    console.log("CONTENT-TYPE:", req.headers["content-type"]);
+    next();
+  },
+  upload.single("file"),
+  ctrl.importQuestions
+);
 
 module.exports = router;
