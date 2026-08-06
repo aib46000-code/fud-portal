@@ -1019,6 +1019,11 @@ window.runCsvImport = async function() {
   const btn = document.getElementById('btn-run-import');
   btn.classList.add('btn-loading');
   try {
+    console.log("FILE:", fileInput.files[0]);
+    console.log("FORM_DATA IS FORMDATA:", formData instanceof FormData);
+    for (const [k, v] of formData.entries()) {
+      console.log(k, v);
+    }
     const res = await API.post(`/subjects/${subjectId}/import`, formData);
     
     Toast.success('Import completed');
