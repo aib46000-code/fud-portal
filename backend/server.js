@@ -174,8 +174,8 @@ app.use(express.static(path.join(__dirname, '../frontend'), {
   etag:         true,
   lastModified: true,
   setHeaders(res, filePath) {
-    // HTML: always revalidate (SPA entry points change)
-    if (filePath.endsWith('.html')) {
+    // HTML & JS: always revalidate
+    if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
     // Fonts/icons: long cache
@@ -281,6 +281,9 @@ async function startServer() {
       logger.info(`║   Server running on http://localhost:${PORT}    ║`);
       logger.info(`║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(28)}║`);
       logger.info(`╚══════════════════════════════════════════════╝`);
+      if (process.send) {
+        process.send('ready');
+      }
     });
 
     server.on('error', (err) => {
