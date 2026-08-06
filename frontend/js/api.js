@@ -77,8 +77,19 @@ async function apiFetch(endpoint, options = {}, retry = true) {
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
+  console.log("BODY:", options.body);
+  console.log("IS FORMDATA:", options.body instanceof FormData);
+
+  if (options.body instanceof FormData) {
+    for (const pair of options.body.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+  }
+
   const token = Auth.getAccess();
   if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  console.log("HEADERS:", headers);
 
   const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
