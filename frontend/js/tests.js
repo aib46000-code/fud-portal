@@ -1019,9 +1019,7 @@ window.runCsvImport = async function() {
   const btn = document.getElementById('btn-run-import');
   btn.classList.add('btn-loading');
   try {
-    const res = await API.post(`/subjects/${subjectId}/import`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const res = await API.post(`/subjects/${subjectId}/import`, formData);
     
     Toast.success('Import completed');
     

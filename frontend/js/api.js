@@ -73,7 +73,10 @@ async function refreshTokens() {
 
 // ── Core Fetch Wrapper ────────────────────────────────────────────────────────
 async function apiFetch(endpoint, options = {}, retry = true) {
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const headers = { ...options.headers };
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
   const token = Auth.getAccess();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -113,7 +116,7 @@ async function apiFetch(endpoint, options = {}, retry = true) {
 // ── Shorthand Methods ─────────────────────────────────────────────────────────
 const API = {
   get:    (ep, opts={})         => apiFetch(ep, { method:'GET',    ...opts }),
-  post:   (ep, body={},opts={}) => apiFetch(ep, { method:'POST',   body: JSON.stringify(body), ...opts }),
+  post:   (ep, body={},opts={}) => apiFetch(ep, { method:'POST',   body: body instanceof FormData ? body : JSON.stringify(body), ...opts }),
   put:    (ep, body={},opts={}) => apiFetch(ep, { method:'PUT',    body: JSON.stringify(body), ...opts }),
   patch:  (ep, body={},opts={}) => apiFetch(ep, { method:'PATCH',  body: JSON.stringify(body), ...opts }),
   delete: (ep, body=null,opts={}) => apiFetch(ep, { method:'DELETE', ...(body ? { body: JSON.stringify(body) } : {}), ...opts }),
