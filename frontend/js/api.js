@@ -89,7 +89,19 @@ async function apiFetch(endpoint, options = {}, retry = true) {
   const token = Auth.getAccess();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
+  console.log("========== FETCH DEBUG ==========");
+  console.log("ENDPOINT:", endpoint);
+  console.log("BODY INSTANCEOF FORMDATA:", options.body instanceof FormData);
+  console.log("BODY:", options.body);
+
+  if (options.body instanceof FormData) {
+    for (const [k, v] of options.body.entries()) {
+      console.log("FORMDATA:", k, v);
+    }
+  }
+
   console.log("HEADERS:", headers);
+  console.log("================================");
 
   const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
