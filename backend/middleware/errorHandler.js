@@ -6,6 +6,13 @@
 const logger = require('../utils/logger');
 
 module.exports = function errorHandler(err, req, res, next) {
+  console.error("========== [L] GLOBAL ERROR HANDLER ==========");
+  console.error("METHOD:", req.method);
+  console.error("URL:", req.originalUrl);
+  console.error("STATUS (before):", res.statusCode);
+  console.error("ERROR MESSAGE:", err.message);
+  console.error("STACK:", err.stack);
+  
   // Log the full error
   logger.error(`${req.method} ${req.originalUrl} → ${err.message}`, { stack: err.stack });
 

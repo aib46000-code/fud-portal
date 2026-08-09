@@ -130,9 +130,17 @@ exports.importQuestions = async (req, res, next) => {
       return R.error(res, 'Database error during import. Transaction rolled back.', 500);
     }
     
-    await logActivity({ userId: req.user.id, action: 'IMPORT_QUESTIONS', entityType: 'subject', entityId: subjectId, description: `Imported ${imported} questions`, ipAddress: req.ip });
+    try {
+      await logActivity({ userId: req.user.id, action: 'IMPORT_QUESTIONS', entityType: 'subject', entityId: subjectId, description: `Imported ${imported} questions`, ipAddress: req.ip });
+    } catch(errK) {
+      console.error("========== [K] POST-INSERT ERROR (logActivity) ==========");
+      console.error("MESSAGE:", errK.message);
+      console.error("CODE:", errK.code);
+      console.error("STACK:", errK.stack);
+      throw errK;
+    }
     
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: 'Import completed',
       data: {
@@ -143,7 +151,15 @@ exports.importQuestions = async (req, res, next) => {
         invalid_rows: invalid,
         error_messages: errors.slice(0, 50)
       }
-    });
+    };
+    
+    console.log("========== [I] BEFORE SUCCESS RESPONSE ==========");
+    console.log("STATUS: 200");
+    console.log("PAYLOAD:", JSON.stringify(payload));
+    
+    const ret = res.status(200).json(payload);
+    console.log("========== [J] SUCCESS RESPONSE SENT ==========");
+    return ret;
   } catch(e) {
     console.error("========== [H] CONTROLLER TOP-LEVEL ERROR ==========");
     console.error("MESSAGE:", e.message);
