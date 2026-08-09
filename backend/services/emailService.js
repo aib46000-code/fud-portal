@@ -5,116 +5,44 @@
  * ║  Nodemailer transporter + queue worker + send helpers            ║
  * ╚══════════════════════════════════════════════════════════════════╝
  */
-const nodemailer = require('nodemailer');
 const EmailQueue = require('../models/EmailQueue');
 const templates  = require('./emailTemplates');
 const logger     = require('../utils/logger');
-
-// ── Build transporter ─────────────────────────────────────────────────────────
-function createTransporter() {
-  const service = process.env.EMAIL_SERVICE || '';   // 'gmail' | 'outlook' | ''
-  const host    = process.env.EMAIL_HOST    || 'smtp.gmail.com';
-  const port    = parseInt(process.env.EMAIL_PORT || '587', 10);
-  const secure  = process.env.EMAIL_SECURE === 'true' || port === 465;
-  const user    = process.env.EMAIL_USER    || '';
-  const pass    = process.env.EMAIL_PASS    || '';
-
-  // Use Ethereal (test SMTP) if no real credentials configured
-  if (!user || !pass) {
-    logger.warn('[Email] No SMTP credentials configured – using Ethereal test transport');
-    return null; // will create on demand
-  }
-
-  const opts = {
-    auth:   { user, pass },
-    tls:    { rejectUnauthorized: false },
-    pool:   true,
-    maxConnections: 5,
-    maxMessages:    100,
-    rateDelta:      1000,
-    rateLimit:      5,
-  };
-
-  if (service) {
-    opts.service = service;
-  } else {
-    opts.host   = host;
-    opts.port   = port;
-    opts.secure = secure;
-  }
-
-  return nodemailer.createTransport(opts);
-}
-
-let transporter = null;
-let etherealAccount = null;
-
-async function getTransporter() {
-  if (transporter) return transporter;
-
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-
-  if (user && pass) {
-    transporter = createTransporter();
-    return transporter;
-  }
-
-  // Create Ethereal test account on first use
-  if (!etherealAccount) {
-    try {
-      etherealAccount = await nodemailer.createTestAccount();
-      logger.info(`[Email] Ethereal test account: ${etherealAccount.user}`);
-    } catch (err) {
-      logger.error('[Email] Failed to create Ethereal account:', err.message);
-      // Fallback: just log emails
-      return null;
-    }
-  }
-
-  transporter = nodemailer.createTransport({
-    host:   'smtp.ethereal.email',
-    port:   587,
-    secure: false,
-    auth: { user: etherealAccount.user, pass: etherealAccount.pass },
-  });
-
-  return transporter;
-}
+const { getProvider } = require('./emailProviders');
 
 // ── Core send function ────────────────────────────────────────────────────────
 async function sendMail({ to, subject, html, text }) {
-  const from = `"${process.env.EMAIL_FROM_NAME || 'FUD Portal'}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@fudportal.edu.ng'}>`;
-  const t    = await getTransporter();
-
-  if (!t) {
-    // BUG FIX: Previously returned a fake success here.
-    // Now we throw so the queue worker correctly marks the job as failed
-    // and schedules a retry instead of recording a phantom "sent" state.
-    throw new Error('No SMTP transporter available. Set EMAIL_USER and EMAIL_PASS in your environment variables.');
+  const fromName = process.env.EMAIL_FROM_NAME || 'FUD Portal';
+  const from     = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@fudportal.edu.ng';
+  
+  const provider = getProvider();
+  
+  try {
+    const info = await provider.send({ from, fromName, to, subject, html, text: text || '' });
+    logger.info(`[Email] Sent: ${subject} → ${to} (id: ${info.messageId})`);
+    return { messageId: info.messageId, previewUrl: info.previewUrl };
+  } catch (err) {
+    // If it's a "No SMTP transporter" error, we throw it as-is for the queue worker to catch
+    throw err;
   }
-
-  const info = await t.sendMail({ from, to, subject, html, text: text || '' });
-
-  const previewUrl = nodemailer.getTestMessageUrl(info);
-  if (previewUrl) {
-    logger.info(`[Email] Ethereal preview URL: ${previewUrl}`);
-  }
-
-  logger.info(`[Email] Sent: ${subject} → ${to} (id: ${info.messageId})`);
-  return { messageId: info.messageId, previewUrl };
 }
 
 // ── Verify SMTP connection (diagnostic) ──────────────────────────────────────
 async function verifyTransporter() {
   try {
-    const t = await getTransporter();
-    if (!t) {
-      return { ok: false, error: 'No transporter — EMAIL_USER/EMAIL_PASS not set' };
+    const provider = getProvider();
+    logger.info('[Email] Calling provider.verify()...');
+    const result = await provider.verify();
+    
+    if (result.ok) {
+      logger.info(`[Email] ${result.user ? result.user + ' @ ' : ''}${result.host} verified.`);
+    } else {
+      logger.error(`[Email] Provider failed: ${result.error}`);
     }
-    await t.verify();
-    return { ok: true, user: process.env.EMAIL_USER, host: process.env.EMAIL_HOST || 'gmail' };
+    
+    return result;
   } catch (err) {
+    logger.error(`[Email] Provider failed: ${err.message}`);
     return { ok: false, error: err.message };
   }
 }

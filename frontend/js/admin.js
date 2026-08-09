@@ -287,8 +287,8 @@ window.saveStudent = async function() {
     matric_no:  document.getElementById('st-matric').value.trim(),
     department: document.getElementById('st-dept-input').value.trim() || undefined,
     faculty:    document.getElementById('st-faculty').value.trim() || undefined,
-    level:      document.getElementById('st-level').value || undefined,
-    gender:     document.getElementById('st-gender').value || undefined,
+    level:      document.getElementById('st-level').value || '100',
+    gender:     (document.getElementById('st-gender').value || 'male').toLowerCase(),
     phone:      document.getElementById('st-phone').value.trim() || undefined,
   };
   if (!id) {

@@ -328,7 +328,9 @@
         showModal('modal-force-change-pw');
       } else {
         Toast.success('Login successful! Redirecting…');
-        setTimeout(() => window.location.href = 'dashboard.html', 800);
+        const role = loginData.user ? loginData.user.role : null;
+        const targetUrl = ['admin', 'superadmin', 'staff'].includes(role) ? 'admin.html' : 'dashboard.html';
+        setTimeout(() => window.location.href = targetUrl, 800);
       }
     } catch (err) {
       if (err.data?.errors) handleApiErrors(err.data.errors, { email:'email', password:'password' });
@@ -395,9 +397,11 @@
     btn.classList.add('btn-loading'); btn.disabled = true;
     try {
       await API.changePassword(curr, nw);
-      Toast.success('Password changed! Redirecting to dashboard…');
+      const role = Auth.getRole();
+      const targetUrl = ['admin', 'superadmin', 'staff'].includes(role) ? 'admin.html' : 'dashboard.html';
+      Toast.success('Password changed! Redirecting…');
       hideModal('modal-force-change-pw');
-      setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      setTimeout(() => window.location.href = targetUrl, 1000);
     } catch (err) {
       Toast.error(err.message || 'Failed to change password');
     } finally {

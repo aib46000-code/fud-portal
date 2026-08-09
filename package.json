@@ -34,7 +34,7 @@
   "author": "Ahmaditech",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0.0",
+    "node": "20.x || 22.x",
     "npm": ">=10.0.0"
   },
   "dependencies": {
