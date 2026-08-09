@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = path.join('C:\\Users\\LENOVO\\Documents\\fud-portal', 'backend', 'database', 'fud_portal.db');
+const dbPath = path.resolve(__dirname, 'database/fud_portal.db');
 const db = new sqlite3.Database(dbPath);
 
 function query(sql, params = []) {

@@ -1,6 +1,8 @@
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3');
-const db = new sqlite3.Database('./backend/database/fud_portal.db');
+const dbPath = path.resolve(__dirname, 'backend/database/fud_portal.db');
+const db = new sqlite3.Database(dbPath);
 db.get("SELECT password_hash FROM users WHERE email='admin@fudportal.edu.ng'", async (err, row) => {
     if(err) console.error(err);
     else if(row) {

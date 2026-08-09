@@ -666,7 +666,9 @@ exports.downloadBackup = async (req, res, next) => {
   try {
     if (req.user.role !== 'superadmin') return R.forbidden(res, 'Only superadmin can download backups');
 
-    const dbPath = path.resolve(process.cwd(), process.env.DB_PATH || './backend/database/fud_portal.db');
+    const dbPath = process.env.DB_PATH
+      ? (path.isAbsolute(process.env.DB_PATH) ? process.env.DB_PATH : path.resolve(__dirname, '..', '..', process.env.DB_PATH))
+      : path.resolve(__dirname, '..', 'database', 'fud_portal.db');
     if (!fs.existsSync(dbPath)) return R.notFound(res, 'Database file not found');
 
     const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);

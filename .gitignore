@@ -11,9 +11,11 @@ yarn-error.log*
 .env.staging
 
 # Database files (keep .example, ignore actual DB)
-backend/database/*.db
-backend/database/*.db-shm
-backend/database/*.db-wal
+**/*.db
+**/*.sqlite
+**/*.db-shm
+**/*.db-wal
+backend/database/backup/
 
 # Uploads (persisted via volume)
 uploads/*

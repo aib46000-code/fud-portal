@@ -2,7 +2,10 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const DB_PATH = path.resolve(process.cwd(), process.env.DB_PATH || './backend/database/fud_portal.db');
+const projectRoot = path.resolve(__dirname, '../..');
+const DB_PATH = process.env.DB_PATH
+  ? (path.isAbsolute(process.env.DB_PATH) ? process.env.DB_PATH : path.resolve(projectRoot, process.env.DB_PATH))
+  : path.resolve(__dirname, 'fud_portal.db');
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
