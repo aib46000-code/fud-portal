@@ -909,7 +909,7 @@ window.populateSubjectSelect = function(subjects) {
   const select = document.getElementById('t-bank-subject');
   if(!select) return;
   const currentVal = select.value;
-  select.innerHTML = '<option value="">-- No Bank (Manual Questions) --</option>' + subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  select.innerHTML = '<option value="">Select Subject</option>' + subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   select.value = currentVal;
 };
 
