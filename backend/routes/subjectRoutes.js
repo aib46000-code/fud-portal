@@ -33,10 +33,32 @@ router.delete('/questions/:qid', ctrl.deleteBankQuestion);
 router.post(
   '/:subjectId/import',
   (req, res, next) => {
+    console.log("========== [A] BEFORE MULTER ==========");
+    console.log("SUBJECT_ID:", req.params.subjectId);
     console.log("CONTENT-TYPE:", req.headers["content-type"]);
+    console.log("CONTENT-LENGTH:", req.headers["content-length"]);
     next();
   },
-  upload.single("file"),
+  (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      console.log("========== [B] AFTER MULTER ==========");
+      if (err) {
+        console.error("MULTER ERROR NAME:", err.name);
+        console.error("MULTER ERROR MESSAGE:", err.message);
+        console.error("MULTER ERROR CODE:", err.code);
+        console.error("MULTER ERROR STACK:", err.stack);
+        return next(err);
+      }
+      console.log("REQ.FILE PRESENT:", !!req.file);
+      if (req.file) {
+        console.log("FILE NAME:", req.file.originalname);
+        console.log("FILE MIME:", req.file.mimetype);
+        console.log("FILE SIZE:", req.file.size);
+      }
+      console.log("REQ.BODY:", req.body);
+      next();
+    });
+  },
   ctrl.importQuestions
 );
 

@@ -55,20 +55,29 @@ exports.deleteBankQuestion = async (req, res, next) => {
 };
 
 exports.importQuestions = async (req, res, next) => {
+  console.log("========== [C] START CONTROLLER ==========");
   try {
     const { subjectId } = req.params;
-    if(!req.file) return R.error(res, 'No file uploaded', 400);
+    console.log("========== [D] AFTER REQ.FILE CHECK ==========");
+    if(!req.file) {
+      console.error("NO FILE UPLOADED IN REQ");
+      return R.error(res, 'No file uploaded', 400);
+    }
     
     const subject = await get('SELECT id FROM subjects WHERE id=?', [subjectId]);
     if(!subject) return R.error(res, 'Subject not found', 404);
     
+    console.log("Parsing XLSX...");
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    console.log("========== [E] AFTER XLSX PARSE ==========");
+    console.log(`Parsed ${rows.length} rows`);
     
     let imported = 0, duplicate = 0, invalid = 0;
     const errors = [];
     
+    console.log("========== [F] BEFORE DB INSERT ==========");
     await run('BEGIN TRANSACTION');
     try {
       const existingQs = await dbAll('SELECT question_text FROM question_bank WHERE subject_id=?', [subjectId]);
@@ -111,9 +120,13 @@ exports.importQuestions = async (req, res, next) => {
       }
       
       await run('COMMIT');
+      console.log("========== [G] AFTER DB INSERT ==========");
     } catch(err) {
       await run('ROLLBACK');
-      logger.error('Import Error:', err);
+      console.error("========== [H] DB INSERT ERROR ==========");
+      console.error("MESSAGE:", err.message);
+      console.error("CODE:", err.code);
+      console.error("STACK:", err.stack);
       return R.error(res, 'Database error during import. Transaction rolled back.', 500);
     }
     
@@ -132,6 +145,9 @@ exports.importQuestions = async (req, res, next) => {
       }
     });
   } catch(e) {
+    console.error("========== [H] CONTROLLER TOP-LEVEL ERROR ==========");
+    console.error("MESSAGE:", e.message);
+    console.error("STACK:", e.stack);
     next(e);
   }
 };
