@@ -83,6 +83,13 @@ exports.importQuestions = async (req, res, next) => {
       const existingQs = await dbAll('SELECT question_text FROM question_bank WHERE subject_id=?', [subjectId]);
       const existingSet = new Set(existingQs.map(q => String(q.question_text).trim().toLowerCase()));
       
+      console.log("========== DUPLICATE DIAGNOSTIC ==========");
+      console.log("SUBJECT_ID:", subjectId);
+      console.log("DATABASE QUESTION COUNT:", existingQs.length);
+      console.log("EXISTINGSET SIZE:", existingSet.size);
+      console.log("FIRST 5 DB QUESTIONS:", existingQs.slice(0, 5).map(q => String(q.question_text).trim().substring(0, 80)));
+      console.log("===========================================");
+      
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const qText = String(row.question_text || row.Question || row.question || '').trim();
@@ -94,7 +101,21 @@ exports.importQuestions = async (req, res, next) => {
           continue;
         }
         
-        if (existingSet.has(qText.toLowerCase())) {
+        const isDup = existingSet.has(qText.toLowerCase());
+        if (i < 5 || isDup) {
+          console.log("========== ROW", i+2, "DIAGNOSTIC ==========");
+          console.log("ROW:", i+2);
+          console.log("IMPORT QUESTION:", qText.substring(0, 80));
+          console.log("IMPORT QUESTION LOWERED:", qText.toLowerCase().substring(0, 80));
+          console.log("DUPLICATE:", isDup);
+          if (isDup) {
+            const match = existingQs.find(q => String(q.question_text).trim().toLowerCase() === qText.toLowerCase());
+            console.log("MATCHING DB QUESTION:", match ? String(match.question_text).trim().substring(0, 80) : "NOT FOUND");
+          }
+          console.log("===========================================");
+        }
+        
+        if (isDup) {
           duplicate++;
           errors.push(`Row ${i+2}: Duplicate question text`);
           continue;
