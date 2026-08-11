@@ -33,10 +33,6 @@ const dbOpenPromise = new Promise((resolve, reject) => {
       console.log(`[Diagnostics] DB Directory not found. Creating: ${dbDir}`);
       fs.mkdirSync(dbDir, { recursive: true });
     }
-    
-    // Test write permission explicitly
-    fs.accessSync(dbDir, fs.constants.W_OK);
-    console.log(`[Diagnostics] Directory is writable: ${dbDir}`);
   } catch (err) {
     console.error(`[Diagnostics] DB directory permission/creation error for ${dbDir}:`, err.stack || err.message);
     reject(err);
@@ -707,6 +703,7 @@ async function purgeExpiredTokens() {
 
 // ─── Close ────────────────────────────────────────────────────────────────────
 function close() {
+  if (!db) return;
   db.close((err) => {
     if (!err) logger.info('[DB] Connection closed');
     else logger.error('[DB] Close error: ' + err.message);
