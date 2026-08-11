@@ -24,23 +24,38 @@ const DB_PATH = process.env.DB_PATH
   : path.join(__dirname, 'fud_portal.db');
 
 const dbDir = path.dirname(DB_PATH);
-try {
-  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-} catch (err) {
-  console.error('[Diagnostics] Failed to create DB directory:', err.message);
-}
+let db;
 
-// ─── Open Connection ──────────────────────────────────────────────────────────
-console.log('[Diagnostics] Opening SQLite database connection...');
-const db = new sqlite3.Database(DB_PATH, (err) => {
-  if (err) {
-    console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
-    logger.error('[DB] Failed to open database: ' + err.message);
-    setTimeout(() => process.exit(1), 500);
-  } else {
+// ─── Check Permissions & Open Connection ──────────────────────────────────────
+const dbOpenPromise = new Promise((resolve, reject) => {
+  try {
+    if (!fs.existsSync(dbDir)) {
+      console.log(`[Diagnostics] DB Directory not found. Creating: ${dbDir}`);
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    
+    // Test write permission explicitly
+    fs.accessSync(dbDir, fs.constants.W_OK);
+    console.log(`[Diagnostics] Directory is writable: ${dbDir}`);
+  } catch (err) {
+    console.error(`[Diagnostics] DB directory permission/creation error for ${dbDir}:`, err.stack || err.message);
+    reject(err);
+    return;
+  }
+
+  console.log(`[Diagnostics] Opening SQLite database connection...`);
+  db = new sqlite3.Database(DB_PATH, (err) => {
+    if (err) {
+      console.error('[Diagnostics] FATAL DB OPEN ERROR:', err.stack || err.message);
+      logger.error('[DB] Failed to open database: ' + err.message);
+      reject(err);
+      return;
+    } 
+    
     console.log(`[Diagnostics] Database successfully opened at: ${DB_PATH}`);
     logger.info(`[DB] Connected to SQLite at: ${DB_PATH}`);
-  }
+    resolve(db);
+  });
 });
 
 // ─── Promise Wrappers ─────────────────────────────────────────────────────────
@@ -645,6 +660,10 @@ async function seedDefaultAdmin() {
 async function initialize() {
   try {
     console.log('[Diagnostics] db.initialize() started...');
+    
+    console.log('[Diagnostics] Waiting for database connection to open...');
+    await dbOpenPromise;
+    console.log('[Diagnostics] Database connection confirmed.');
     
     console.log('[Diagnostics] Calling applyPragmas()...');
     await applyPragmas();
