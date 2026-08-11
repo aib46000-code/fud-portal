@@ -26,6 +26,41 @@ const DB_PATH = process.env.DB_PATH
 const dbDir = path.dirname(DB_PATH);
 let db;
 
+// ─── Pre-Open Diagnostics ─────────────────────────────────────────────────────
+console.log(`[Diagnostics] DB_PATH: ${DB_PATH}`);
+console.log(`[Diagnostics] DB_DIR: ${dbDir}`);
+
+try {
+  console.log(`[Diagnostics] Running as UID: ${process.getuid()}, GID: ${process.getgid()}`);
+} catch (_) {
+  console.log(`[Diagnostics] UID/GID not available (Windows)`);
+}
+
+try {
+  const dirExists = fs.existsSync(dbDir);
+  console.log(`[Diagnostics] DB_DIR exists: ${dirExists}`);
+
+  if (dirExists) {
+    const stat = fs.statSync(dbDir);
+    console.log(`[Diagnostics] DB_DIR stat: uid=${stat.uid}, gid=${stat.gid}, mode=${stat.mode.toString(8)}`);
+
+    const contents = fs.readdirSync(dbDir);
+    console.log(`[Diagnostics] DB_DIR contents: [${contents.join(', ')}]`);
+
+    // Write test
+    const testFile = path.join(dbDir, '.db_write_test');
+    try {
+      fs.writeFileSync(testFile, 'test');
+      fs.unlinkSync(testFile);
+      console.log(`[Diagnostics] DB_DIR writable: true (write test passed)`);
+    } catch (wErr) {
+      console.error(`[Diagnostics] DB_DIR writable: false (${wErr.code || wErr.message})`);
+    }
+  }
+} catch (diagErr) {
+  console.error(`[Diagnostics] Pre-open diagnostics error:`, diagErr.message);
+}
+
 // ─── Check Permissions & Open Connection ──────────────────────────────────────
 const dbOpenPromise = new Promise((resolve, reject) => {
   try {
