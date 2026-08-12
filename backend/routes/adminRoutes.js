@@ -38,6 +38,12 @@ const router  = require('express').Router();
 const ctrl    = require('../controllers/adminController');
 const protect = require('../middleware/authMiddleware');
 const role    = require('../middleware/roleMiddleware');
+const multer  = require('multer');
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // All admin routes require login + admin/superadmin/staff
 router.use(protect);
@@ -49,6 +55,7 @@ router.get('/stats', ctrl.stats);
 // ── Students ─────────────────────────────────────────────────────────────────
 router.get ('/students',                      ctrl.listStudents);
 router.post('/students',                      ctrl.createStudent);
+router.post('/students/import',               upload.single('file'), ctrl.importStudentsCSV);
 router.put ('/students/:id',                  ctrl.updateStudent);
 router.delete('/students/:id',  role('admin','superadmin'), ctrl.deleteStudent);
 router.patch('/students/:id/block',           ctrl.blockStudent);

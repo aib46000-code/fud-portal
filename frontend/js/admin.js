@@ -247,6 +247,51 @@ function populateDeptFilter(rows) {
   deptsFilled = true;
 }
 
+// Import students via CSV
+window.importStudents = async function(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  Toast.info('Uploading and importing students…');
+  input.disabled = true;
+
+  try {
+    const res = await API.post('/admin/students/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    const { imported, duplicate, invalid, errors } = res.data;
+    let msg = `Successfully imported ${imported} students.`;
+    if (duplicate > 0) msg += ` Duplicates skipped: ${duplicate}.`;
+    if (invalid > 0) msg += ` Invalid rows: ${invalid}.`;
+
+    if (errors && errors.length > 0) {
+      console.warn('Import warnings/errors:', errors);
+      Toast.warning(msg + ' Check console for details.');
+    } else {
+      Toast.success(msg);
+    }
+    
+    // Reload students list
+    deptsFilled = false; // Reset depts to update list
+    const deptFilter = document.getElementById('st-dept');
+    if (deptFilter) {
+      deptFilter.innerHTML = '<option value="">All Departments</option>';
+    }
+    State.students.page = 1;
+    loadStudents();
+
+  } catch (err) {
+    Toast.error('Import failed: ' + (err.response?.data?.message || err.message));
+  } finally {
+    input.value = ''; // Reset file input
+    input.disabled = false;
+  }
+};
+
 // Create / Edit student
 window.openStudentModal = function(data = null) {
   const isEdit = !!data;

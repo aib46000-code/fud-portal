@@ -731,3 +731,103 @@ exports.forcePasswordChange = async (req, res, next) => {
     return R.success(res, {}, 'Force password change flag set');
   } catch (err) { next(err); }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORT STUDENTS CSV/EXCEL
+// ═══════════════════════════════════════════════════════════════════════════════
+exports.importStudentsCSV = async (req, res, next) => {
+  const xlsx = require('xlsx');
+  try {
+    if (!req.file) {
+      return R.error(res, 'No file uploaded', 400);
+    }
+
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    let imported = 0, duplicate = 0, invalid = 0;
+    const errors = [];
+
+    await run('BEGIN TRANSACTION');
+    try {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Find fields (supporting various header casings/names)
+        const email = String(row.email || row.Email || row['Email Address'] || '').trim().toLowerCase();
+        const password = String(row.password || row.Password || '').trim();
+        const fullName = String(row.full_name || row['Full Name'] || row.name || row.Name || '').trim();
+        const matricNo = String(row.matric_no || row['Matric Number'] || row.matric || row.Matric || '').trim();
+        const department = String(row.department || row.Department || row.dept || row.Dept || 'General').trim();
+        const faculty = String(row.faculty || row.Faculty || 'General').trim();
+        const level = String(row.level || row.Level || '100').trim();
+        const gender = String(row.gender || row.Gender || 'male').trim().toLowerCase();
+        const phone = String(row.phone || row.Phone || row['Phone Number'] || '').trim();
+
+        if (!email || !password || !fullName || !matricNo) {
+          invalid++;
+          errors.push(`Row ${i + 2}: Missing email, password, full_name, or matric_no`);
+          continue;
+        }
+
+        // Check if email or matric_no already exists in database
+        const emailDup = await get('SELECT 1 FROM users WHERE email = ? COLLATE NOCASE', [email]);
+        if (emailDup) {
+          duplicate++;
+          errors.push(`Row ${i + 2}: Email "${email}" is already registered`);
+          continue;
+        }
+
+        const matricDup = await get('SELECT 1 FROM students WHERE matric_no = ? COLLATE NOCASE', [matricNo]);
+        if (matricDup) {
+          duplicate++;
+          errors.push(`Row ${i + 2}: Matric number "${matricNo}" is already registered`);
+          continue;
+        }
+
+        // Hash password
+        const hash = await bcrypt.hash(password, 12);
+
+        // Insert into users
+        const userResult = await run(
+          `INSERT INTO users (email, password_hash, role, is_active, is_verified)
+           VALUES (?, ?, 'student', 1, 1)`,
+          [email, hash]
+        );
+        const userId = userResult.lastID;
+
+        // Normalize level and gender
+        const finalLevel = ['100','200','300','400','500','600','PG'].includes(level) ? level : '100';
+        const finalGender = ['male','female','other'].includes(gender) ? gender : 'male';
+
+        // Insert into students
+        await run(
+          `INSERT INTO students (user_id, full_name, matric_no, department, faculty, level, gender, phone)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [userId, fullName, matricNo, department, faculty, finalLevel, finalGender, phone || null]
+        );
+
+        imported++;
+      }
+
+      await run('COMMIT');
+      
+      await logActivity({
+        userId: req.user.id,
+        action: 'IMPORT_STUDENTS_CSV',
+        entityType: 'user',
+        description: `Imported ${imported} students from file. Duplicate: ${duplicate}, Invalid: ${invalid}`,
+        ipAddress: req.ip
+      });
+
+      return R.success(res, { imported, duplicate, invalid, errors }, `Imported ${imported} students successfully. Duplicate: ${duplicate}, Invalid: ${invalid}`);
+
+    } catch (err) {
+      await run('ROLLBACK');
+      throw err;
+    }
+  } catch (err) {
+    next(err);
+  }
+};
