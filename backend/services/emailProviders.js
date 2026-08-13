@@ -47,10 +47,26 @@ class SmtpProvider extends EmailProvider {
         greetingTimeout: 10000,
         socketTimeout: 10000,
       };
-      if (service) opts.service = service;
-      else { opts.host = host; opts.port = port; opts.secure = secure; }
-      
-      this.transporter = nodemailer.createTransport(opts);
+      this.transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: {
+          user,
+          pass
+        },
+        tls: {
+          rejectUnauthorized: false
+        },
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateDelta: 1000,
+        rateLimit: 5,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000
+      });
       return this.transporter;
     }
 
