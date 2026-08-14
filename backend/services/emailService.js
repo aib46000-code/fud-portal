@@ -51,20 +51,38 @@ async function verifyTransporter() {
 let workerRunning = false;
 
 async function processQueue() {
-  if (workerRunning) return;
+  if (workerRunning) {
+    logger.info('[EmailWorker] Queue processor already running, skipping concurrent tick.');
+    return;
+  }
   workerRunning = true;
 
   try {
-    const due = await EmailQueue.fetchDue(20);
-    // BUG FIX: Previously `return` here bypassed the `finally` block in some
-    // Node.js paths and left workerRunning = true forever. Now always falls
-    // through to `finally` to guarantee the flag is reset.
-    if (!due.length) return;
+    let due = [];
+    try {
+      logger.info('[EmailWorker] Polling queue for due emails (EmailQueue.fetchDue)...');
+      due = await EmailQueue.fetchDue(20);
+    } catch (fetchErr) {
+      logger.error(`[EmailWorker] Failed to fetch due emails from queue: ${fetchErr.message}`);
+      throw fetchErr;
+    }
 
-    logger.info(`[EmailWorker] Processing ${due.length} queued email(s)`);
+    if (!due || !due.length) {
+      logger.info('[EmailWorker] Queue poll complete: 0 pending emails due for delivery.');
+      return;
+    }
+
+    logger.info(`[EmailWorker] Found ${due.length} queued email(s) ready for delivery.`);
 
     for (const job of due) {
-      await EmailQueue.markSending(job.id);
+      logger.info(`[EmailWorker] Processing job #${job.id} (to: ${job.to_address}, type: ${job.type || 'general'}, attempt: ${(job.retry_count || 0) + 1}/${job.max_retries || 5})`);
+
+      try {
+        await EmailQueue.markSending(job.id);
+      } catch (markSendingErr) {
+        logger.error(`[EmailWorker] Warning: Failed to mark job #${job.id} as sending: ${markSendingErr.message}`);
+      }
+
       try {
         const result = await sendMail({
           to:      job.to_address,
@@ -72,18 +90,22 @@ async function processQueue() {
           html:    job.html_body,
           text:    job.text_body || '',
         });
-        await EmailQueue.markSent(job.id, result.messageId);
-        logger.info(`[EmailWorker] ✓ Sent job #${job.id} to ${job.to_address}`);
-      } catch (err) {
-        logger.error(`[EmailWorker] ✗ Failed job #${job.id}: ${err.message}`);
-        await EmailQueue.markFailed(job.id, err.message);
+        await EmailQueue.markSent(job.id, result?.messageId);
+        logger.info(`[EmailWorker] ✓ Successfully sent job #${job.id} to ${job.to_address} (messageId: ${result?.messageId || 'n/a'})`);
+      } catch (sendErr) {
+        logger.error(`[EmailWorker] ✗ Failed to send job #${job.id} to ${job.to_address}: ${sendErr.message}`);
+        try {
+          await EmailQueue.markFailed(job.id, sendErr.message);
+          logger.info(`[EmailWorker] Scheduled retry/failure for job #${job.id} via EmailQueue.markFailed.`);
+        } catch (markFailedErr) {
+          logger.error(`[EmailWorker] Critical: Failed to update retry status for job #${job.id}: ${markFailedErr.message}`);
+        }
       }
     }
   } catch (err) {
-    logger.error('[EmailWorker] Queue processing error:', err.message);
+    logger.error(`[EmailWorker] Queue processing cycle error: ${err.message}`);
+    throw err;
   } finally {
-    // BUG FIX: This finally block is ALWAYS executed — even after an early
-    // `return` above — guaranteeing the worker lock is released every time.
     workerRunning = false;
   }
 }
@@ -92,17 +114,39 @@ async function processQueue() {
 let workerInterval = null;
 
 function startWorker(intervalMs = 30000) {
-  if (workerInterval) return;
-  // Process immediately on start, then on interval
-  processQueue().catch(() => {});
-  workerInterval = setInterval(() => processQueue().catch(() => {}), intervalMs);
-  logger.info(`[EmailWorker] Started – polling every ${intervalMs / 1000}s`);
+  if (workerInterval) {
+    logger.warn('[EmailWorker] startWorker() called while worker is already running.');
+    return;
+  }
+
+  logger.info(
+    `[EmailWorker] Starting worker — polling every ${intervalMs / 1000}s`
+  );
+
+  // Process immediately on start
+  processQueue().catch(err => {
+    logger.error(
+      `[EmailWorker] Initial queue processing failed: ${err.message}`
+    );
+  });
+
+  // Schedule recurring polls
+  workerInterval = setInterval(() => {
+    processQueue().catch(err => {
+      logger.error(
+        `[EmailWorker] Scheduled queue processing failed: ${err.message}`
+      );
+    });
+  }, intervalMs);
+
+  logger.info('[EmailWorker] Worker interval initialized successfully.');
 }
 
 function stopWorker() {
   if (workerInterval) {
     clearInterval(workerInterval);
     workerInterval = null;
+    logger.info('[EmailWorker] Worker stopped.');
   }
 }
 
