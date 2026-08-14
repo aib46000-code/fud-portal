@@ -14,6 +14,14 @@ class EmailProvider {
   }
 }
 
+function withTimeout(promise, ms, errorMessage) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(errorMessage)), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+}
+
 class SmtpProvider extends EmailProvider {
   constructor(options = {}) {
     super();
@@ -108,19 +116,12 @@ class SmtpProvider extends EmailProvider {
 
       logger.info(`[SMTP] Verifying connection to ${hostInfo}:${portInfo} (user: ${userInfo})...`);
 
-      const doVerify = async (timeoutMs = 15000) => {
-        return Promise.race([
-          t.verify(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error(`SMTP verify timeout after ${timeoutMs}ms (${hostInfo}:${portInfo})`)), timeoutMs))
-        ]);
-      };
-
       try {
-        await doVerify(15000);
+        await withTimeout(t.verify(), 15000, `SMTP verify timeout after 15000ms (${hostInfo}:${portInfo})`);
       } catch (firstErr) {
         logger.warn(`[SMTP] Initial verification attempt failed (${firstErr.message}). Retrying in 1.5s...`);
         await new Promise(r => setTimeout(r, 1500));
-        await doVerify(15000);
+        await withTimeout(t.verify(), 15000, `SMTP verify timeout after 15000ms (${hostInfo}:${portInfo})`);
       }
 
       logger.info(`[SMTP] ✓ Verification successful for ${userInfo} via ${hostInfo}:${portInfo}`);
