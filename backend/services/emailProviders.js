@@ -116,7 +116,14 @@ class SmtpProvider extends EmailProvider {
         t.verify(),
         new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP verify timeout")), 10000))
       ]);
-      return { ok: true, user: this.options.user || process.env.EMAIL_USER || this.etherealAccount?.user, host: this.options.host || process.env.EMAIL_HOST || 'smtp.ethereal.email' };
+      return {
+        ok: true,
+        user: this.options.user || process.env.EMAIL_USER || this.etherealAccount?.user,
+        host:
+          this.options.host ||
+          process.env.EMAIL_HOST ||
+          (this.options.user || process.env.EMAIL_USER ? 'smtp.gmail.com' : 'smtp.ethereal.email')
+      };
     } catch (err) {
       return { ok: false, error: err.message };
     }
