@@ -318,42 +318,48 @@ async function startServer() {
     }, 6 * 60 * 60 * 1000);
 
     // Start email queue worker (polls every 30 seconds)
-    // SMTP is verified first to avoid the worker racing the transporter initialization.
+    // The worker is started unconditionally. It handles transient SMTP errors
+    // through the queue retry/backoff mechanism.
     console.log('[Diagnostics] Initializing email service...');
 
     try {
       const emailService = require('./services/emailService');
 
-      emailService.verifyTransporter().then(result => {
-        if (result.ok) {
-          logger.info(
-            `[Email] ✓ SMTP connection verified — user: ${result.user}, host: ${result.host}`
-          );
-          console.log(
-            `[Diagnostics] SMTP OK: ${result.user} via ${result.host}`
-          );
+      // Start worker independently of SMTP diagnostic verification.
+      emailService.startWorker(30000);
+      console.log('[Diagnostics] Email worker initialized.');
 
-          // Start the worker only after SMTP verification succeeds.
-          emailService.startWorker(30000);
-          console.log(
-            '[Diagnostics] Email worker initialized after SMTP verification.'
+      // SMTP verification is diagnostic only; it must not block the worker.
+      emailService.verifyTransporter()
+        .then(result => {
+          if (result.ok) {
+            logger.info(
+              `[Email] ✓ SMTP connection verified — user: ${result.user}, host: ${result.host}`
+            );
+            console.log(
+              `[Diagnostics] SMTP OK: ${result.user} via ${result.host}`
+            );
+          } else {
+            logger.warn(
+              `[Email] ⚠ SMTP diagnostic failed: ${result.error}`
+            );
+            console.warn(
+              `[Diagnostics] SMTP WARNING: ${result.error}`
+            );
+            console.warn(
+              '[Diagnostics] Worker is running, but emails may temporarily fail and retry if SMTP remains down.'
+            );
+          }
+        })
+        .catch(err => {
+          logger.error(
+            `[Email] Provider verification error: ${err.message}`
           );
-        } else {
-          logger.warn(`[Email] ⚠ SMTP not configured: ${result.error}`);
-          console.warn(`[Diagnostics] SMTP WARNING: ${result.error}`);
-          console.warn(
-            '[Diagnostics] Email worker was not started because SMTP verification failed.'
+          console.error(
+            `[Diagnostics] SMTP verification error: ${err.message}`
           );
-          console.warn(
-            '[Diagnostics] Emails will remain in the queue until SMTP is configured.'
-          );
-        }
-      }).catch(err => {
-        logger.error(`[Email] Provider verification error: ${err.message}`);
-        console.error(
-          `[Diagnostics] SMTP verification error: ${err.message}`
-        );
-      });
+        });
+
     } catch (err) {
       console.error(
         '[Diagnostics] Non-fatal: Email service failed to initialize:',
