@@ -27,15 +27,18 @@ class SmtpProvider extends EmailProvider {
 
     let { host, port, secure, user, pass, service } = this.options;
     
+    service = service || process.env.EMAIL_SERVICE;
     host = host || process.env.EMAIL_HOST || 'smtp.gmail.com';
-    port = parseInt(port || process.env.EMAIL_PORT || '587', 10);
-    secure = secure !== undefined ? secure : (process.env.EMAIL_SECURE === 'true' || port === 465);
+    port = parseInt(port || process.env.EMAIL_PORT || (service === 'gmail' ? '465' : '587'), 10);
+    secure = secure !== undefined ? secure : (process.env.EMAIL_SECURE === 'true' || port === 465 || service === 'gmail');
     user = user || process.env.EMAIL_USER;
     pass = pass || process.env.EMAIL_PASS;
-    service = service || process.env.EMAIL_SERVICE;
 
     if (user && pass) {
-      const opts = {
+      const transportOpts = {
+        host,
+        port,
+        secure,
         auth: { user, pass },
         tls: { rejectUnauthorized: false },
         pool: true,
@@ -43,30 +46,16 @@ class SmtpProvider extends EmailProvider {
         maxMessages: 100,
         rateDelta: 1000,
         rateLimit: 5,
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 15000
       };
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: {
-          user,
-          pass
-        },
-        tls: {
-          rejectUnauthorized: false
-        },
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-        rateDelta: 1000,
-        rateLimit: 5,
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000
-      });
+
+      if (service) {
+        transportOpts.service = service;
+      }
+
+      this.transporter = nodemailer.createTransport(transportOpts);
       return this.transporter;
     }
 
@@ -112,19 +101,36 @@ class SmtpProvider extends EmailProvider {
       if (!t) {
         return { ok: false, error: 'No transporter — EMAIL_USER/EMAIL_PASS not set' };
       }
-      await Promise.race([
-        t.verify(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP verify timeout")), 10000))
-      ]);
+
+      const hostInfo = this.options.host || process.env.EMAIL_HOST || (this.options.user || process.env.EMAIL_USER ? 'smtp.gmail.com' : 'smtp.ethereal.email');
+      const portInfo = this.options.port || process.env.EMAIL_PORT || (process.env.EMAIL_SERVICE === 'gmail' ? '465' : '587');
+      const userInfo = this.options.user || process.env.EMAIL_USER || this.etherealAccount?.user;
+
+      logger.info(`[SMTP] Verifying connection to ${hostInfo}:${portInfo} (user: ${userInfo})...`);
+
+      const doVerify = async (timeoutMs = 15000) => {
+        return Promise.race([
+          t.verify(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error(`SMTP verify timeout after ${timeoutMs}ms (${hostInfo}:${portInfo})`)), timeoutMs))
+        ]);
+      };
+
+      try {
+        await doVerify(15000);
+      } catch (firstErr) {
+        logger.warn(`[SMTP] Initial verification attempt failed (${firstErr.message}). Retrying in 1.5s...`);
+        await new Promise(r => setTimeout(r, 1500));
+        await doVerify(15000);
+      }
+
+      logger.info(`[SMTP] ✓ Verification successful for ${userInfo} via ${hostInfo}:${portInfo}`);
       return {
         ok: true,
-        user: this.options.user || process.env.EMAIL_USER || this.etherealAccount?.user,
-        host:
-          this.options.host ||
-          process.env.EMAIL_HOST ||
-          (this.options.user || process.env.EMAIL_USER ? 'smtp.gmail.com' : 'smtp.ethereal.email')
+        user: userInfo,
+        host: hostInfo
       };
     } catch (err) {
+      logger.error(`[SMTP] ✗ Verification failed: ${err.message}`);
       return { ok: false, error: err.message };
     }
   }
