@@ -180,6 +180,40 @@ const EmailQueue = {
     return r.changes;
   },
 
+  // ── Recover stuck sending jobs (interrupted by server crash/restart) ──
+  async recoverStuckJobs(staleThresholdMins = 5) {
+    const logger = require('../utils/logger');
+    const stuck = await all(
+      `SELECT id, retry_count, max_retries FROM email_queue
+       WHERE  status = 'sending'
+         AND  datetime(updated_at) <= datetime('now', '-' || ? || ' minutes')`,
+      [staleThresholdMins]
+    );
+
+    if (!stuck || !stuck.length) return 0;
+
+    logger.info(`[EmailRecovery] Found ${stuck.length} interrupted sending job(s)`);
+
+    for (const job of stuck) {
+      const nextCount = (job.retry_count || 0) + 1;
+      const backoff   = Math.min(5 * Math.pow(2, nextCount), 60); // 10m → 20m → 40m → max 60m
+      const nextRetry = new Date(Date.now() + backoff * 60000).toISOString();
+      const status    = nextCount >= job.max_retries ? 'failed' : 'pending';
+      await run(
+        `UPDATE email_queue
+         SET    retry_count=?, last_error='Interrupted by server restart/crash', status=?, next_retry_at=?,
+                updated_at=datetime('now')
+         WHERE  id=? AND status='sending'`,
+        [nextCount, status, nextRetry, job.id]
+      );
+
+      logger.info(`[EmailRecovery] Requeued job #${job.id} for retry (attempts: ${nextCount}/${job.max_retries})`);
+    }
+
+    logger.info('[EmailRecovery] Recovery complete');
+    return stuck.length;
+  },
+
   async findById(id) {
     return get('SELECT * FROM email_queue WHERE id=?', [id]);
   },

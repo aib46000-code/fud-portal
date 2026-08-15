@@ -123,12 +123,24 @@ function startWorker(intervalMs = 30000) {
     `[EmailWorker] Starting worker — polling every ${intervalMs / 1000}s`
   );
 
-  // Process immediately on start
-  processQueue().catch(err => {
-    logger.error(
-      `[EmailWorker] Initial queue processing failed: ${err.message}`
-    );
-  });
+  // Recover stuck sending jobs (older than 5 mins) at startup, then start queue processing
+  EmailQueue.recoverStuckJobs(5)
+    .then(count => {
+      if (count > 0) {
+        logger.info(`[EmailRecovery] Successfully requeued ${count} stuck job(s)`);
+      }
+    })
+    .catch(err => {
+      logger.error(`[EmailRecovery] Failed to recover stuck email jobs: ${err.message}`);
+    })
+    .finally(() => {
+      // Process immediately on start after recovery completes
+      processQueue().catch(err => {
+        logger.error(
+          `[EmailWorker] Initial queue processing failed: ${err.message}`
+        );
+      });
+    });
 
   // Schedule recurring polls
   workerInterval = setInterval(() => {
