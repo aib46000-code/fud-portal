@@ -15,8 +15,51 @@ const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'fud_dev_refresh_secret
 const ACCESS_EXP     = process.env.JWT_EXPIRES_IN          || '15m';  // SECURITY: short-lived
 const REFRESH_EXP    = process.env.JWT_REFRESH_EXPIRES_IN  || '7d';   // Reduced from 30d
 
-// Warn on weak secret entropy in production instead of fatal exit (prevents cloud crash on auto-deploy)
 if (process.env.NODE_ENV === 'production') {
+  let fatalError = false;
+  const rawAccess = process.env.JWT_SECRET;
+  const rawRefresh = process.env.JWT_REFRESH_SECRET;
+
+  if (!rawAccess || rawAccess.trim() === '') {
+    console.error('[JWT] CRITICAL: Unsafe production JWT configuration (JWT_SECRET is missing or empty) — startup aborted.');
+    logger.error('JWT_SECRET is missing or empty.');
+    fatalError = true;
+  }
+  if (!rawRefresh || rawRefresh.trim() === '') {
+    console.error('[JWT] CRITICAL: Unsafe production JWT configuration (JWT_REFRESH_SECRET is missing or empty) — startup aborted.');
+    logger.error('JWT_REFRESH_SECRET is missing or empty.');
+    fatalError = true;
+  }
+  if (ACCESS_SECRET.includes('CHANGE_IN_PRODUCTION')) {
+    console.error('[JWT] CRITICAL: Unsafe production JWT configuration (JWT_SECRET uses development fallback) — startup aborted.');
+    logger.error('JWT_SECRET uses development fallback.');
+    fatalError = true;
+  }
+  if (REFRESH_SECRET.includes('CHANGE_IN_PRODUCTION')) {
+    console.error('[JWT] CRITICAL: Unsafe production JWT configuration (JWT_REFRESH_SECRET uses development fallback) — startup aborted.');
+    logger.error('JWT_REFRESH_SECRET uses development fallback.');
+    fatalError = true;
+  }
+  if (ACCESS_SECRET === REFRESH_SECRET) {
+    console.error('[JWT] CRITICAL: Unsafe production JWT configuration (JWT_SECRET and JWT_REFRESH_SECRET are identical) — startup aborted.');
+    logger.error('JWT_SECRET and JWT_REFRESH_SECRET are identical.');
+    fatalError = true;
+  }
+
+  if (fatalError) {
+    process.exit(1);
+  }
+
+  if (ACCESS_SECRET.length < 32) {
+    console.warn('[JWT] WARNING: JWT_SECRET is too short. Minimum 32 characters recommended.');
+    logger.warn('JWT_SECRET is too short.');
+  }
+  if (REFRESH_SECRET.length < 32) {
+    console.warn('[JWT] WARNING: JWT_REFRESH_SECRET is too short. Minimum 32 characters recommended.');
+    logger.warn('JWT_REFRESH_SECRET is too short.');
+  }
+} else {
+  // Warn on weak secret entropy in development (preserve existing warnings)
   if (ACCESS_SECRET.length  < 32) { console.warn('[JWT] WARNING: JWT_SECRET is too short. Minimum 32 characters recommended.'); logger.warn('JWT_SECRET is too short.'); }
   if (REFRESH_SECRET.length < 32) { console.warn('[JWT] WARNING: JWT_REFRESH_SECRET is too short. Minimum 32 characters recommended.'); logger.warn('JWT_REFRESH_SECRET is too short.'); }
   if (ACCESS_SECRET.includes('CHANGE_IN_PRODUCTION'))  { console.warn('[JWT] CRITICAL: JWT_SECRET must be changed from default in production.'); logger.warn('Using default JWT_SECRET.'); }
