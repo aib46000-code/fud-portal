@@ -8,8 +8,8 @@
  *
  * Blocks ALL routes except the auth change-password, logout, and me endpoints.
  */
-const jwt        = require('jsonwebtoken');
-const UserModel  = require('../models/User');
+const { verifyAccess } = require('../utils/jwtHelper');
+const UserModel        = require('../models/User');
 
 // Routes force-change users are ALLOWED to access (exact match or prefix)
 const ALLOWED_PREFIXES = [
@@ -25,7 +25,7 @@ module.exports = async function requirePasswordChange(req, res, next) {
     const token = authHeader.slice(7);
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fud_portal_secret_change_me');
+      decoded = verifyAccess(token);
     } catch {
       return next(); // Invalid token → let authMiddleware handle the 401
     }
