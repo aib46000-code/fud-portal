@@ -835,6 +835,14 @@ exports.exportResultPDF = async (req, res, next) => {
     const QRCode = require('qrcode');
     const result = await ResultModel.findById(+req.params.resultId);
     if (!result) return R.notFound(res, 'Result not found');
+
+    // Students can only export their own result PDF
+    if (req.user.role === 'student') {
+      const student = await StudentModel.findByUserId(req.user.id);
+      if (!student || result.student_id !== student.id)
+        return R.forbidden(res, 'Not your result');
+    }
+
     const test = await TestModel.findById(result.test_id);
     const student = await StudentModel.findById(result.student_id);
 
