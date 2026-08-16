@@ -1,4 +1,5 @@
 'use strict';
+const crypto = require('crypto');
 const { all, run, get } = require('../database/db');
 const R = require('../utils/response');
 
@@ -14,17 +15,23 @@ exports.generateToken = async (req, res, next) => {
   try {
     const testId = +req.params.id;
     const { max_attempts = 1, count = 1, expires_at = null } = req.body;
-    
+
     const tokens = [];
     for (let i = 0; i < count; i++) {
-       const token = 'FUD-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-       const id = await run(
-         `INSERT INTO test_tokens (test_id, token, max_attempts, expires_at, created_by) VALUES (?, ?, ?, ?, ?)`,
-         [testId, token, max_attempts, expires_at, req.user.id]
-       );
-       tokens.push({ id, token, max_attempts, expires_at });
+      let token;
+      let exists;
+      do {
+        token = 'FUD-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+        exists = await get('SELECT 1 FROM test_tokens WHERE token = ?', [token]);
+      } while (exists);
+
+      const id = await run(
+        `INSERT INTO test_tokens (test_id, token, max_attempts, expires_at, created_by) VALUES (?, ?, ?, ?, ?)`,
+        [testId, token, max_attempts, expires_at, req.user.id]
+      );
+      tokens.push({ id, token, max_attempts, expires_at });
     }
-    
+
     return R.success(res, tokens, `${count} token(s) generated`);
   } catch (err) { next(err); }
 };
