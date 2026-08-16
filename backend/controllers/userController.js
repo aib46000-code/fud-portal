@@ -24,7 +24,16 @@ exports.list = async (req, res, next) => {
 // ─── Get Single User ───────────────────────────────────────────────────────────
 exports.getOne = async (req, res, next) => {
   try {
-    const user = await UserModel.findWithProfile(+req.params.id);
+    const targetId = +req.params.id;
+
+    // SECURITY: Allow only self-access or admin/superadmin/staff
+    const isSelf  = req.user.id === targetId;
+    const isAdmin = ['admin', 'superadmin', 'staff'].includes(req.user.role);
+    if (!isSelf && !isAdmin) {
+      return R.forbidden(res, 'Access denied');
+    }
+
+    const user = await UserModel.findWithProfile(targetId);
     if (!user) return R.notFound(res, 'User not found');
     return R.success(res, user);
   } catch (err) { next(err); }
