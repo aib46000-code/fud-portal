@@ -432,6 +432,14 @@ exports.startTest = async (req, res, next) => {
       entityType: 'test', entityId: testId,
       description: `${isResume ? 'Resumed' : 'Started'}: ${test.title}`, ipAddress: req.ip });
 
+    // SECURITY: Strip correct answers, explanations, and server-only metadata
+    // before sending questions to the client. The server retains all data
+    // internally for grading in submitResult.
+    const safeQuestions = questions.map(({ correct_answer, explanation,
+      times_used, times_correct, times_wrong, pool_name,
+      is_active, created_at, updated_at, test_id,
+      ...studentFields }) => studentFields);
+
     return R.success(res, {
       session_id:    session.id,
       is_resume:     isResume,
@@ -442,9 +450,9 @@ exports.startTest = async (req, res, next) => {
         id: test.id, title: test.title, subject: test.subject,
         duration_mins: test.duration_mins, total_marks: test.total_marks,
         pass_mark: test.pass_mark, instructions: test.instructions,
-        question_count: questions.length,
+        question_count: safeQuestions.length,
       },
-      questions,
+      questions: safeQuestions,
     }, isResume ? 'Session resumed' : 'Test started');
   } catch (err) { next(err); }
 };
