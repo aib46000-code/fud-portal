@@ -221,16 +221,10 @@ exports.login = async (req, res, next) => {
 
     // ── Fetch user ──────────────────────────────────────────────────────────
     const user = await UserModel.findByEmail(email);
-    console.log("========== LOGIN DEBUG ==========");
-    console.log("EMAIL:", email);
-    console.log("USER:", user);
 
     const match = user
       ? await bcrypt.compare(password, user.password_hash)
       : false;
-
-    console.log("PASSWORD MATCH:", match);
-    console.log("================================");
 
     if (!user) {
       return R.unauthorized(res, 'Invalid email or password');
@@ -318,11 +312,7 @@ exports.adminLogin = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    console.log("EMAIL FROM REQUEST:", email);
-    console.log("PASSWORD FROM REQUEST:", password);
-
     const user = await UserModel.findByEmail(email);
-    console.log("USER:", user);
 
     if (!user) {
       return R.unauthorized(res, 'Invalid credentials');
@@ -353,9 +343,7 @@ exports.adminLogin = async (req, res, next) => {
       user.locked_until = null;
     }
 
-    console.log("HASH:", user.password_hash);
     const match = await bcrypt.compare(password, user.password_hash);
-    console.log("COMPARE RESULT:", match);
 
     if (!match) {
       await UserModel.recordFailedLogin(user.id);
