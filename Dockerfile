@@ -38,8 +38,8 @@ COPY --chown=fudportal:nodejs frontend/    ./frontend/
 COPY --chown=fudportal:nodejs package.json ./
 
 # Create required runtime directories
-RUN mkdir -p /app/uploads /app/logs /app/data && \
-    chown -R fudportal:nodejs /app/uploads /app/logs /app/data
+RUN mkdir -p /app/uploads /app/logs /app/data /app/database && \
+    chown -R fudportal:nodejs /app/uploads /app/logs /app/data /app/database
 
 # Environment defaults (override via docker-compose or --env-file)
 ENV NODE_ENV=production \
