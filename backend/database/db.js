@@ -358,6 +358,7 @@ const SCHEMA_SQL = `
     used_attempts     INTEGER NOT NULL DEFAULT 0,
     max_attempts      INTEGER NOT NULL DEFAULT 1,
     expires_at        TEXT,
+    created_by        INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at        TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
   );
@@ -613,6 +614,9 @@ const COLUMN_MIGRATIONS = [
   { table: 'questions', column: 'times_used', sql: `ALTER TABLE questions ADD COLUMN times_used INTEGER NOT NULL DEFAULT 0` },
   { table: 'questions', column: 'times_correct', sql: `ALTER TABLE questions ADD COLUMN times_correct INTEGER NOT NULL DEFAULT 0` },
   { table: 'questions', column: 'times_wrong', sql: `ALTER TABLE questions ADD COLUMN times_wrong INTEGER NOT NULL DEFAULT 0` },
+
+  // Test tokens: Phase 5 tracking
+  { table: 'test_tokens', column: 'created_by', sql: `ALTER TABLE test_tokens ADD COLUMN created_by INTEGER REFERENCES users(id) ON DELETE SET NULL` },
 ];
 
 async function runColumnMigrations() {
