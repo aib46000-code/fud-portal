@@ -527,19 +527,21 @@ exports.submitResult = async (req, res, next) => {
 
     // Score the answers
     let questions = [];
+    let hasAssigned = false;
     if (session.assigned_questions) {
       try {
         const assignedIds = JSON.parse(session.assigned_questions);
         if (assignedIds && assignedIds.length > 0) {
+          hasAssigned = true;
           const { all: dbAll } = require('../database/db');
           const placeholders = assignedIds.map(() => '?').join(',');
-          questions = await dbAll(`SELECT id, correct_answer FROM question_bank WHERE id IN (${placeholders})`, assignedIds);
-          // For question_bank, we assume 1 mark per question by default if not specified
-          questions = questions.map(q => ({ ...q, marks: 1 }));
+          questions = await dbAll(`SELECT id, correct_answer, question_type, marks FROM questions WHERE id IN (${placeholders})`, assignedIds);
         }
-      } catch(e) {}
+      } catch (e) {
+        console.error('[submitResult] Error loading assigned questions:', e);
+      }
     } 
-    if (!questions.length) {
+    if (!hasAssigned && !questions.length) {
       questions = await QuestionModel.findByTestId(testId);
     }
     
