@@ -55,40 +55,26 @@ exports.deleteBankQuestion = async (req, res, next) => {
 };
 
 exports.importQuestions = async (req, res, next) => {
-  console.log("========== [C] START CONTROLLER ==========");
   try {
     const { subjectId } = req.params;
-    console.log("========== [D] AFTER REQ.FILE CHECK ==========");
     if(!req.file) {
-      console.error("NO FILE UPLOADED IN REQ");
       return R.error(res, 'No file uploaded', 400);
     }
     
     const subject = await get('SELECT id FROM subjects WHERE id=?', [subjectId]);
     if(!subject) return R.error(res, 'Subject not found', 404);
     
-    console.log("Parsing XLSX...");
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    console.log("========== [E] AFTER XLSX PARSE ==========");
-    console.log(`Parsed ${rows.length} rows`);
     
     let imported = 0, duplicate = 0, invalid = 0;
     const errors = [];
     
-    console.log("========== [F] BEFORE DB INSERT ==========");
     await run('BEGIN TRANSACTION');
     try {
       const existingQs = await dbAll('SELECT question_text FROM question_bank WHERE subject_id=?', [subjectId]);
       const existingSet = new Set(existingQs.map(q => String(q.question_text).trim().toLowerCase()));
-      
-      console.log("========== DUPLICATE DIAGNOSTIC ==========");
-      console.log("SUBJECT_ID:", subjectId);
-      console.log("DATABASE QUESTION COUNT:", existingQs.length);
-      console.log("EXISTINGSET SIZE:", existingSet.size);
-      console.log("FIRST 5 DB QUESTIONS:", existingQs.slice(0, 5).map(q => String(q.question_text).trim().substring(0, 80)));
-      console.log("===========================================");
       
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -102,18 +88,6 @@ exports.importQuestions = async (req, res, next) => {
         }
         
         const isDup = existingSet.has(qText.toLowerCase());
-        if (i < 5 || isDup) {
-          console.log("========== ROW", i+2, "DIAGNOSTIC ==========");
-          console.log("ROW:", i+2);
-          console.log("IMPORT QUESTION:", qText.substring(0, 80));
-          console.log("IMPORT QUESTION LOWERED:", qText.toLowerCase().substring(0, 80));
-          console.log("DUPLICATE:", isDup);
-          if (isDup) {
-            const match = existingQs.find(q => String(q.question_text).trim().toLowerCase() === qText.toLowerCase());
-            console.log("MATCHING DB QUESTION:", match ? String(match.question_text).trim().substring(0, 80) : "NOT FOUND");
-          }
-          console.log("===========================================");
-        }
         
         if (isDup) {
           duplicate++;
@@ -141,27 +115,19 @@ exports.importQuestions = async (req, res, next) => {
       }
       
       await run('COMMIT');
-      console.log("========== [G] AFTER DB INSERT ==========");
     } catch(err) {
       await run('ROLLBACK');
-      console.error("========== [H] DB INSERT ERROR ==========");
-      console.error("MESSAGE:", err.message);
-      console.error("CODE:", err.code);
-      console.error("STACK:", err.stack);
+      logger.error(`[Subject] Import DB error: ${err.message}`, { stack: err.stack });
       return R.error(res, 'Database error during import. Transaction rolled back.', 500);
     }
     
     try {
       await logActivity({ userId: req.user.id, action: 'IMPORT_QUESTIONS', entityType: 'subject', entityId: subjectId, description: `Imported ${imported} questions`, ipAddress: req.ip });
     } catch(err) {
-      console.error("========== [K] POST-INSERT ERROR ==========");
-      console.error("MESSAGE:", err.message);
-      console.error("CODE:", err.code);
-      console.error("STACK:", err.stack);
+      logger.error(`[Subject] Post-import logActivity error: ${err.message}`);
       throw err;
     }
     
-    console.log("========== [I] BEFORE SUCCESS RESPONSE ==========");
     const payload = {
       success: true,
       message: 'Import completed',
@@ -174,16 +140,9 @@ exports.importQuestions = async (req, res, next) => {
         error_messages: errors.slice(0, 50)
       }
     };
-    console.log("STATUS: 200");
-    console.log("PAYLOAD:", payload);
     
-    res.status(200).json(payload);
-    console.log("========== [J] SUCCESS RESPONSE SENT ==========");
-    return;
+    return res.status(200).json(payload);
   } catch(e) {
-    console.error("========== [H] CONTROLLER TOP-LEVEL ERROR ==========");
-    console.error("MESSAGE:", e.message);
-    console.error("STACK:", e.stack);
     next(e);
   }
 };
