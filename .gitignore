@@ -60,3 +60,13 @@ test_health.js
 website_check.js
 migrate_cbt.js
 migrate_fix_fk.js
+
+# Scratch, test outputs, & local query scripts
+query*.js
+*evidence*.txt
+rc*_test.*
+rc*_upload.txt
+rc*_report.json
+rc*_questions.csv
+test_backup.zip
+test_restore_dir/

@@ -27,6 +27,18 @@ media_upload_test.js
 *.ps1
 audit_report.json
 
+# Backend test / verification / evidence scripts
+backend/cbt_*.js
+backend/rc*.js
+backend/verify_*.js
+backend/test.js
+backend/test_*.js
+
+# Root query & evidence artifacts
+query*.js
+*evidence*.txt
+rc*_test.*
+
 # Migration / one-off scripts
 migrate_*.js
 create_zip.js
