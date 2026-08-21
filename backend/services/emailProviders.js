@@ -3,7 +3,7 @@
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 const FormData = require('form-data');
-const fetchApi = globalThis.fetch; // Native fetch in Node 20
+const fetchApi = (...args) => globalThis.fetch(...args); // Native fetch in Node 20
 
 class EmailProvider {
   async send({ from, fromName, to, subject, html, text }) {
@@ -137,16 +137,66 @@ class SmtpProvider extends EmailProvider {
   }
 }
 
-class BrevoProvider extends SmtpProvider {
+class BrevoApiProvider extends EmailProvider {
   constructor() {
-    super({
-      host: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
-      port: process.env.EMAIL_PORT || 587,
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+    super();
+    this.apiKey = process.env.BREVO_API_KEY;
+  }
+
+  async send({ from, fromName, to, subject, html, text }) {
+    if (!this.apiKey) {
+      throw new Error('BREVO_API_KEY is not set');
+    }
+
+    const payload = {
+      sender: {
+        name: fromName || process.env.EMAIL_FROM_NAME || 'FUD Portal',
+        email: from || process.env.EMAIL_FROM || 'noreply@fudportal.edu.ng'
+      },
+      to: [
+        {
+          email: to
+        }
+      ],
+      subject,
+      htmlContent: html,
+      textContent: text || ''
+    };
+
+    const res = await fetchApi('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': this.apiKey,
+        'Authorization': `Bearer ${this.apiKey}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const errMsg = data.message || res.statusText || 'Brevo API request failed';
+      throw new Error(`Brevo Error: ${errMsg}`);
+    }
+
+    return {
+      messageId: data.messageId || data.id || `brevo-${Date.now()}`,
+      previewUrl: null
+    };
+  }
+
+  async verify() {
+    if (!this.apiKey) {
+      return { ok: false, error: 'BREVO_API_KEY is not set' };
+    }
+    return { ok: true, user: 'Brevo API', host: 'api.brevo.com' };
   }
 }
+
+// Backwards compatibility alias
+const BrevoProvider = BrevoApiProvider;
 
 class ResendProvider extends EmailProvider {
   constructor() {
@@ -248,7 +298,7 @@ function getProvider() {
   if (provider === 'resend') {
     activeProvider = new ResendProvider();
   } else if (provider === 'brevo') {
-    activeProvider = new BrevoProvider();
+    activeProvider = new BrevoApiProvider();
   } else if (provider === 'mailgun') {
     activeProvider = new MailgunProvider();
   } else {
@@ -263,5 +313,10 @@ function getProvider() {
 }
 
 module.exports = {
-  getProvider
+  getProvider,
+  BrevoApiProvider,
+  BrevoProvider,
+  SmtpProvider,
+  ResendProvider,
+  MailgunProvider
 };
