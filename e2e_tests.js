@@ -73,7 +73,7 @@ function req(method, urlPath, opts) {
       ? (typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body))
       : null;
     const headers = Object.assign(
-      { 'Content-Type': 'application/json' },
+      { 'Content-Type': 'application/json', 'User-Agent': 'E2ETests/1.0' },
       opts.token ? { Authorization: 'Bearer ' + opts.token } : {},
       opts.headers || {}
     );

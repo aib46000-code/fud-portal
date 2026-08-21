@@ -70,3 +70,20 @@ rc*_report.json
 rc*_questions.csv
 test_backup.zip
 test_restore_dir/
+
+# Temporary debug and audit scratch files
+auth_old.js
+check-schema.js
+check_hash.js
+test-queue.js
+test-sqlite.js
+test_email.js
+verify_live.js
+temp_*
+output.txt
+backup_schema.txt
+evidence/
+scratch/
+backend/database/diagnose-backups.js
+backend/database/dump_db.js
+backend/database/inspect_tests.js

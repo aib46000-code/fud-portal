@@ -30,7 +30,7 @@ const auth    = require('../controllers/authController');
 const protect = require('../middleware/authMiddleware');
 const role    = require('../middleware/roleMiddleware');
 
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, refreshLimiter } = require('../middleware/rateLimiter');
 
 const {
   validateLogin,
@@ -72,7 +72,7 @@ router.post(
 /** Refresh access token using a valid refresh token */
 router.post(
   '/refresh',
-  authLimiter, // SECURITY (VULN-13): Rate limit refresh to prevent token stuffing
+  refreshLimiter, // SECURITY (VULN-13): Rate limit refresh to prevent token stuffing
   auth.refreshToken
 );
 

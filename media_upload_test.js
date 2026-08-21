@@ -14,7 +14,7 @@ const ADMIN  = { email:'admin@fudportal.edu.ng', password:'Admin@FUD2024' };
 function post(url, data, token=null, isJson=true) {
   return new Promise((resolve, reject) => {
     const body    = isJson ? JSON.stringify(data) : data;
-    const headers = { 'Content-Length': Buffer.byteLength(body) };
+    const headers = { 'Content-Length': Buffer.byteLength(body), 'User-Agent': 'MediaUploadTest/1.0' };
     if (isJson) headers['Content-Type'] = 'application/json';
     if (token)  headers['Authorization'] = 'Bearer ' + token;
     const u = new URL(url);
@@ -35,7 +35,7 @@ function post(url, data, token=null, isJson=true) {
 function req(method, url, data=null, token=null) {
   return new Promise((resolve, reject) => {
     const body    = data ? JSON.stringify(data) : null;
-    const headers = {};
+    const headers = { 'User-Agent': 'MediaUploadTest/1.0' };
     if (body)  { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = Buffer.byteLength(body); }
     if (token) headers['Authorization'] = 'Bearer ' + token;
     const u = new URL(url);
@@ -69,6 +69,7 @@ function uploadFile(filePath, token, isPublic=1) {
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
       'Content-Length': body.length,
       'Authorization': 'Bearer ' + token,
+      'User-Agent': 'MediaUploadTest/1.0',
     };
     const u = new URL(`${BASE}/api/media/upload`);
     const r = http.request({ hostname: u.hostname, port: u.port, path: u.pathname,

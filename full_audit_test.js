@@ -20,7 +20,7 @@ const HDR  = (m)            => { console.log(`\n\x1b[1m\x1b[34m══ ${m} ═�
 function req(method, url, body=null, token=null, isForm=false) {
   return new Promise((resolve, reject) => {
     const b = body && !isForm ? JSON.stringify(body) : body;
-    const h = {};
+    const h = { 'User-Agent': `FullAuditTest/${RND}` };
     if (b && !isForm) { h['Content-Type']='application/json'; h['Content-Length']=Buffer.byteLength(b); }
     if (token)        h['Authorization'] = 'Bearer '+token;
     const u = new URL(url);

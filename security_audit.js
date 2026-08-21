@@ -16,10 +16,11 @@ function HDR(t) { console.log('\n--- ' + t + ' ---'); }
 function req(method, path, opts) {
   opts = opts || {};
   return new Promise(function(resolve) {
+    const suite = opts.suite || 'default';
     const options = {
       hostname: 'localhost', port: 5000, path: path, method: method,
       headers: Object.assign(
-        { 'Content-Type': 'application/json' },
+        { 'Content-Type': 'application/json', 'User-Agent': 'SecurityAudit/' + ts + '/' + suite },
         opts.token ? { 'Authorization': 'Bearer ' + opts.token } : {},
         opts.headers || {}
       )
@@ -158,7 +159,7 @@ async function run() {
   ];
   var sqliAllSafe = true;
   for (var si = 0; si < sqliTests.length; si++) {
-    var sqliR = await req('POST', '/api/auth/login', { body: { email: sqliTests[si], password: 'test' } });
+    var sqliR = await req('POST', '/api/auth/login', { body: { email: sqliTests[si], password: 'test' }, suite: 'sqli' });
     if (sqliR.status === 200) { FAIL('SQLI-01', 'SQLi succeeded on login with: ' + sqliTests[si]); sqliAllSafe = false; break; }
   }
   if (sqliAllSafe) PASS('SQLI-01', 'Login: all SQL injection payloads rejected');
@@ -180,7 +181,7 @@ async function run() {
 
   // ── 5. XSS ────────────────────────────────────────────────────────
   HDR('5. XSS (CROSS-SITE SCRIPTING)');
-  var xssR = await req('POST', '/api/auth/login', { body: { email: '<script>alert(1)</script>', password: 'x' } });
+  var xssR = await req('POST', '/api/auth/login', { body: { email: '<script>alert(1)</script>', password: 'x' }, suite: 'xss' });
   !(xssR.body || '').includes('<script>alert')
     ? PASS('XSS-01', 'XSS payload not reflected in API JSON response')
     : FAIL('XSS-01', 'VULN: XSS payload reflected verbatim!');
@@ -310,12 +311,12 @@ async function run() {
 
   // ── 9. RATE LIMITING ──────────────────────────────────────────────
   HDR('9. RATE LIMITING');
-  var rlR = await req('POST', '/api/auth/login', { body: { email: 'x@x.com', password: 'wrong' } });
+  var rlR = await req('POST', '/api/auth/login', { body: { email: 'x@x.com', password: 'wrong' }, suite: 'ratelimit' });
   var rlH = rlR.headers['ratelimit-limit'] || rlR.headers['x-ratelimit-limit'];
   rlH
     ? PASS('RATE-01', 'Rate limit header on /login: ' + rlH + ' req/window')
     : WARN('RATE-01', 'No rate limit header on /login endpoint');
-  var rlR2 = await req('POST', '/api/auth/refresh', { body: { refreshToken: 'fake_token_xyz' } });
+  var rlR2 = await req('POST', '/api/auth/refresh', { body: { refreshToken: 'fake_token_xyz' }, suite: 'ratelimit_refresh' });
   var rlH2 = rlR2.headers['ratelimit-limit'] || rlR2.headers['x-ratelimit-limit'];
   rlH2
     ? PASS('RATE-02', 'Rate limit header on /refresh: ' + rlH2 + ' req/window')
@@ -356,12 +357,12 @@ async function run() {
 
   // ── 11. TOKEN SECURITY ────────────────────────────────────────────
   HDR('11. TOKEN SECURITY');
-  var badRefresh = await req('POST', '/api/auth/refresh', { body: { refreshToken: 'completely_invalid_token' } });
+  var badRefresh = await req('POST', '/api/auth/refresh', { body: { refreshToken: 'completely_invalid_token' }, suite: 'token_bad' });
   badRefresh.status !== 200
     ? PASS('TOKEN-01', 'Invalid refresh token rejected: ' + badRefresh.status)
     : FAIL('TOKEN-01', 'VULN: Invalid refresh token ACCEPTED!');
   if (studentRefreshToken) {
-    var goodRefresh = await req('POST', '/api/auth/refresh', { body: { refreshToken: studentRefreshToken } });
+    var goodRefresh = await req('POST', '/api/auth/refresh', { body: { refreshToken: studentRefreshToken }, suite: 'token_good' });
     goodRefresh.status === 200 && goodRefresh.json && goodRefresh.json.data && goodRefresh.json.data.accessToken
       ? PASS('TOKEN-02', 'Valid refresh token -> new access token')
       : WARN('TOKEN-02', 'Refresh failed: ' + goodRefresh.status + ' ' + (goodRefresh.json ? goodRefresh.json.message : ''));
@@ -372,16 +373,16 @@ async function run() {
   // Short delay so auth rate limiter doesn't interfere with these checks
   await new Promise(function(r) { setTimeout(r, 2000); });
   var ts2 = Date.now();
-  var emptyEmail = await req('POST', '/api/auth/login', { body: { email: '', password: 'x' } });
+  var emptyEmail = await req('POST', '/api/auth/login', { body: { email: '', password: 'x' }, suite: 'input_login' });
   (emptyEmail.status === 422 || emptyEmail.status === 400)
     ? PASS('INPUT-01', 'Empty email -> ' + emptyEmail.status)
     : FAIL('INPUT-01', 'Empty email not rejected: ' + emptyEmail.status);
-  var weakPw = await req('POST', '/api/auth/register/student', { body: { email: 'weakpw'+ts2+'@test.com', password: 'weak', full_name: 'X', matric_no: 'WEAK/'+ts2, department: 'CS', faculty: 'FST' } });
+  var weakPw = await req('POST', '/api/auth/register/student', { body: { email: 'weakpw'+ts2+'@test.com', password: 'weak', full_name: 'X', matric_no: 'WEAK/'+ts2, department: 'CS', faculty: 'FST' }, suite: 'input_reg_weak' });
   // 422=validation rejected, 400=business logic rejected, 409=duplicate, 429=rate limited (also blocks request)
   (weakPw.status === 422 || weakPw.status === 400 || weakPw.status === 409 || weakPw.status === 429)
     ? PASS('INPUT-02', 'Weak password blocked: ' + weakPw.status + ' (' + (weakPw.status === 429 ? 'rate-limited before reaching validation' : 'validation rejected') + ')')
     : FAIL('INPUT-02', 'Weak password not blocked: ' + weakPw.status);
-  var noCaps = await req('POST', '/api/auth/register/student', { body: { email: 'nocaps'+ts2+'@test.com', password: 'password123!', full_name: 'Y', matric_no: 'NOCAPS/'+ts2, department: 'CS', faculty: 'FST' } });
+  var noCaps = await req('POST', '/api/auth/register/student', { body: { email: 'nocaps'+ts2+'@test.com', password: 'password123!', full_name: 'Y', matric_no: 'NOCAPS/'+ts2, department: 'CS', faculty: 'FST' }, suite: 'input_reg_nocaps' });
   (noCaps.status === 422 || noCaps.status === 400 || noCaps.status === 409 || noCaps.status === 429)
     ? PASS('INPUT-03', 'No-uppercase password blocked: ' + noCaps.status + ' (' + (noCaps.status === 429 ? 'rate-limited before reaching validation' : 'validation rejected') + ')')
     : FAIL('INPUT-03', 'No-uppercase password not blocked: ' + noCaps.status);

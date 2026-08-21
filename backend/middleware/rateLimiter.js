@@ -10,8 +10,19 @@ const rateLimit = require('express-rate-limit');
 
 const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '300000', 10); // 5 min
 
-// Shared key generator: IP + trimmed User-Agent
+// Shared key generator: IP + trimmed User-Agent (with non-production localhost test-run namespace isolation)
 function keyGenerator(req) {
+  const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+  const isNonProd = process.env.NODE_ENV !== 'production';
+
+  // In non-production localhost test environments, isolate rate limit state per test suite / test run
+  if (isLocalhost && isNonProd) {
+    const testId = req.get('x-test-suite') || req.get('x-test-run') || req.get('User-Agent') || '';
+    if (testId) {
+      return `test::${req.ip}::${testId.slice(0, 64)}`;
+    }
+  }
+
   const ua = (req.get('User-Agent') || '').slice(0, 64);
   return `${req.ip}::${ua}`;
 }
@@ -38,6 +49,17 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many login attempts. Please wait 5 minutes.' },
 });
 
+// ── Refresh Route Limiter ────────────────────────────────────────────────────
+const refreshLimiter = rateLimit({
+  windowMs,
+  max:             parseInt(process.env.REFRESH_RATE_LIMIT_MAX || '30', 10),
+  standardHeaders: true,
+  legacyHeaders:   false,
+  keyGenerator,
+  skipSuccessfulRequests: true,
+  message: { success: false, message: 'Too many refresh attempts. Please wait 5 minutes.' },
+});
+
 // ── Upload Limiter ────────────────────────────────────────────────────────────
 const uploadLimiter = rateLimit({
   windowMs,
@@ -48,4 +70,4 @@ const uploadLimiter = rateLimit({
   message: { success: false, message: 'Upload limit reached. Please try again later.' },
 });
 
-module.exports = { apiLimiter, authLimiter, uploadLimiter };
+module.exports = { apiLimiter, authLimiter, refreshLimiter, uploadLimiter };
