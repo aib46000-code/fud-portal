@@ -244,7 +244,7 @@ app.get('/api/health', async (_req, res) => {
     status:         dbStatus === 'connected' ? 'ok' : 'degraded',
     success:        true,
     message:        'FUD Portal API is running',
-    version:        process.env.npm_package_version || '1.1.0',
+    version:        process.env.npm_package_version || '1.1.1',
     database:       dbStatus,
     email_provider: provider,
     email_status:   emailStatus,

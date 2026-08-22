@@ -447,8 +447,8 @@
                     <i class="fas fa-undo"></i> Reset
                   </button>
                   <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-                    <button type="button" class="btn btn-secondary" id="btn-verify-smtp" onclick="verifySMTP()" title="Test SMTP connection without sending">
-                      <i class="fas fa-plug"></i> Verify SMTP
+                    <button type="button" class="btn btn-secondary" id="btn-verify-smtp" onclick="verifySMTP()" title="Verify email provider connection without sending">
+                      <i class="fas fa-plug"></i> Verify Connection
                     </button>
                     <button type="button" class="btn btn-secondary" id="btn-send-test" onclick="openSendTestModal()" title="Send a test email to verify delivery">
                       <i class="fas fa-vial"></i> Send Test Email
@@ -554,7 +554,7 @@
       <button class="btn btn-secondary" onclick="closeSendTestModal()" style="padding:6px 14px;font-size:13px"><i class="fas fa-times"></i> Close</button>
     </div>
     <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
-      <p style="font-size:13px;color:var(--text-muted)">Sends a real email immediately (bypassing the queue) to verify your SMTP configuration is working end-to-end.</p>
+      <p style="font-size:13px;color:var(--text-muted)">Sends a real email immediately (bypassing the queue) to verify your email configuration is working end-to-end.</p>
       <div class="form-group">
         <label class="form-label"><i class="fas fa-envelope" style="color:#6366f1"></i> Send test to</label>
         <input type="email" class="form-input" id="test-email-to" placeholder="e.g. yourname@gmail.com" autocomplete="email">
@@ -678,11 +678,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // FIX: Start auto-refresh ONLY after auth is confirmed and page is initialized
-  setInterval(() => {
-    loadStats();
-    if (document.getElementById('tab-queue').classList.contains('active')) loadQueue();
-  }, 30000);
+  // Visibility-aware auto-refresh polling (30s)
+  let pollInterval = null;
+  function startPolling() {
+    if (pollInterval) return;
+    pollInterval = setInterval(() => {
+      if (document.visibilityState !== 'hidden') {
+        loadStats();
+        if (document.getElementById('tab-queue')?.classList.contains('active')) loadQueue();
+      }
+    }, 30000);
+  }
+  function stopPolling() {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  }
+
+  startPolling();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      loadStats();
+      if (document.getElementById('tab-queue')?.classList.contains('active')) loadQueue();
+      startPolling();
+    } else {
+      stopPolling();
+    }
+  });
 });
 
 // ── Templates list ─────────────────────────────────────────────────

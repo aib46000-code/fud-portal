@@ -1,25 +1,22 @@
 # FUD Portal for Ahmaditech — Release Notes
 
-**Version:** 1.1.0
+**Version:** 1.1.1
 **Date:** August 22, 2026
 
 ## Overview
-We are proud to release **FUD Portal for Ahmaditech v1.1.0**. This release focuses on cloud infrastructure reliability, enhanced transactional email delivery via Brevo HTTPS API, dynamic provider detection across the administrative interface, and security and rate-limiting isolation improvements.
+**FUD Portal for Ahmaditech v1.1.1** is a minimal maintenance release delivering client logging cleanup, visibility-aware email manager polling, and provider-neutral UI terminology improvements.
 
-## Major Highlights
+## Maintenance Improvements
 
-### 1. Cloud-Native Email Delivery (Brevo HTTPS API)
-- Implemented `BrevoApiProvider` utilizing native Node 20 `fetch` over port 443.
-- Completely resolves outbound SMTP TCP port timeout issues common on cloud hosting environments (Railway / Render / VPS).
-- Seamless JSON payload mapping and clean error handling without credential leakage.
+### 1. Client Console Logging Cleanup
+- Stripped verbose development-only `console.log` statements in `frontend/js/api.js` to ensure clean client execution and prevent form/request logging in developer tools.
 
-### 2. Dynamic Email Provider Status & UI Recognition
-- The `/api/email/stats` endpoint dynamically detects the active provider (`brevo`, `resend`, `mailgun`, `smtp`).
-- The Email Management interface (`email.html`) accurately identifies Brevo API as live and active without erroneously prompting for SMTP credentials.
+### 2. Email Management UI Polish & Polling Optimization
+- Replaced legacy SMTP terminology in `frontend/email.html` with provider-neutral labels (`Verify Connection`).
+- Implemented visibility-aware polling using `document.visibilityState` to automatically pause queue stats polling when the browser tab is in the background and resume immediately when focused.
 
-### 3. Security & Test Isolation
-- Implemented rate-limit test namespace isolation for automated testing suites on localhost, ensuring no cross-test state leakage.
-- Added dedicated `refreshLimiter` (30 req / 5 min) for `/api/auth/refresh` to prevent token-stuffing attacks while preserving strict 10 req / 5 min limits on `/api/auth/login`.
+### 3. Architecture Preservation
+- 100% backward compatible with existing SQLite database, JWT authentication, CBT examinations, results, and Brevo HTTPS API email delivery flows.
 
 ## Upgrade Instructions
-This release is 100% backward compatible. No database migrations, schema modifications, or manual configuration changes are required. Set `EMAIL_PROVIDER=brevo` and `BREVO_API_KEY` in environment variables for Brevo HTTPS API delivery.
+This release is 100% backward compatible. No database migrations, schema modifications, or environment variable changes are required.

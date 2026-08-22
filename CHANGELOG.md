@@ -5,6 +5,16 @@ All notable changes to the FUD Portal Enterprise project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.1 — FUD Portal for Ahmaditech
+
+### Maintenance Improvements
+
+- Removed development-only client-side debug logging.
+- Improved Email Management provider-neutral terminology.
+- Optimized Email Management background polling.
+- Improved CBT timer resilience where safely applicable.
+- Preserved existing authentication, CBT, database, notification, and email architecture.
+
 ## v1.1.0 — FUD Portal for Ahmaditech
 
 ### Improvements
