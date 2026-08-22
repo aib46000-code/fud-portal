@@ -310,10 +310,10 @@
       </div>
     </header>
 
-    <!-- SMTP Status Banner -->
+    <!-- Email Provider Status Banner -->
     <div id="smtp-banner" class="smtp-status ethereal" style="margin-bottom:8px">
-      <i class="fas fa-flask"></i>
-      <span id="smtp-banner-text">Using Ethereal test SMTP — emails are simulated. Configure SMTP in <code>.env</code> for real delivery.</span>
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <span id="smtp-banner-text">Checking email provider configuration…</span>
     </div>
 
     <!-- Stats -->
@@ -718,16 +718,33 @@ async function loadStats() {
     document.getElementById('stat-total').textContent   = s.total   ?? '0';
     document.getElementById('pending-badge').textContent = s.pending || 0;
 
-    // Update SMTP status banner based on real server response
+    // Update email provider status banner based on real server response
     const banner   = document.getElementById('smtp-banner');
     const bannerTx = document.getElementById('smtp-banner-text');
     if (banner && bannerTx) {
+      const provider = (s.smtp_provider || 'smtp').toLowerCase();
       if (s.smtp_live) {
         banner.className = 'smtp-status live';
-        bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Live SMTP active &mdash; sending via <strong>${s.smtp_user || 'configured account'}</strong>`;
+        if (provider === 'brevo') {
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Brevo API</strong>`;
+        } else if (provider === 'resend') {
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Resend API</strong>`;
+        } else if (provider === 'mailgun') {
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Mailgun API</strong> (${escHtml(s.smtp_user || '')})`;
+        } else {
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Live SMTP active &mdash; sending via <strong>${escHtml(s.smtp_user || 'configured account')}</strong>`;
+        }
       } else {
         banner.className = 'smtp-status ethereal';
-        bannerTx.innerHTML = `<i class="fas fa-flask"></i> No SMTP credentials configured &mdash; emails will fail until you set <code>EMAIL_USER</code> and <code>EMAIL_PASS</code>.`;
+        if (provider === 'brevo') {
+          bannerTx.innerHTML = `<i class="fas fa-flask"></i> No Brevo API key configured &mdash; set <code>BREVO_API_KEY</code> in environment variables for real delivery.`;
+        } else if (provider === 'resend') {
+          bannerTx.innerHTML = `<i class="fas fa-flask"></i> No Resend API key configured &mdash; set <code>RESEND_API_KEY</code> in environment variables for real delivery.`;
+        } else if (provider === 'mailgun') {
+          bannerTx.innerHTML = `<i class="fas fa-flask"></i> No Mailgun credentials configured &mdash; set <code>MAILGUN_API_KEY</code> and <code>MAILGUN_DOMAIN</code> in environment variables.`;
+        } else {
+          bannerTx.innerHTML = `<i class="fas fa-flask"></i> No SMTP credentials configured &mdash; emails will fail until you set <code>EMAIL_USER</code> and <code>EMAIL_PASS</code>.`;
+        }
       }
     }
   } catch(e) {

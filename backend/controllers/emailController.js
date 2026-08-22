@@ -70,9 +70,26 @@ exports.sendTest = async (req, res, next) => {
 exports.stats = async (req, res, next) => {
   try {
     const stats = await EmailQueue.stats();
-    // Tell the frontend whether real SMTP is configured (used to update the status banner)
-    stats.smtp_live = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
-    stats.smtp_user = stats.smtp_live ? process.env.EMAIL_USER : null;
+    const provider = String(process.env.EMAIL_PROVIDER || 'smtp').toLowerCase().trim();
+
+    if (provider === 'brevo') {
+      stats.smtp_live = !!process.env.BREVO_API_KEY;
+      stats.smtp_provider = 'brevo';
+      stats.smtp_user = stats.smtp_live ? 'Brevo API' : null;
+    } else if (provider === 'resend') {
+      stats.smtp_live = !!process.env.RESEND_API_KEY;
+      stats.smtp_provider = 'resend';
+      stats.smtp_user = stats.smtp_live ? 'Resend API' : null;
+    } else if (provider === 'mailgun') {
+      stats.smtp_live = !!(process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN);
+      stats.smtp_provider = 'mailgun';
+      stats.smtp_user = stats.smtp_live ? `Mailgun (${process.env.MAILGUN_DOMAIN})` : null;
+    } else {
+      stats.smtp_live = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+      stats.smtp_provider = 'smtp';
+      stats.smtp_user = stats.smtp_live ? process.env.EMAIL_USER : null;
+    }
+
     return R.success(res, stats, 'Email queue stats');
   } catch (err) { next(err); }
 };
