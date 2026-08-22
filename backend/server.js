@@ -222,7 +222,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     success:   true,
     message:   'FUD Portal API is running',
-    version:   process.env.npm_package_version || '1.0.0',
+    version:   process.env.npm_package_version || '1.1.0',
     env:       process.env.NODE_ENV || 'development',
     uptime:    Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),

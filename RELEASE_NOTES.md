@@ -1,27 +1,25 @@
-# FUD Portal Enterprise - Release Notes
+# FUD Portal for Ahmaditech — Release Notes
 
-**Version:** 1.0.0-RC1
-**Date:** July 23, 2026
+**Version:** 1.1.0
+**Date:** August 22, 2026
 
 ## Overview
-We are extremely proud to announce the Release Candidate 1 (RC-1) for FUD Portal Enterprise. This release marks the culmination of 5 distinct development phases designed to upgrade the Federal University Dutse's student and admin portal into an enterprise-grade Computer-Based Testing (CBT) and Learning Management System.
+We are proud to release **FUD Portal for Ahmaditech v1.1.0**. This release focuses on cloud infrastructure reliability, enhanced transactional email delivery via Brevo HTTPS API, dynamic provider detection across the administrative interface, and security and rate-limiting isolation improvements.
 
 ## Major Highlights
 
-### Complete CBT Module
-A robust and highly scalable CBT engine supporting unlimited subjects, multi-pools, and randomization of both questions and options. Now natively supports KaTeX mathematical rendering directly from the backend to ensure seamless offline functionality.
+### 1. Cloud-Native Email Delivery (Brevo HTTPS API)
+- Implemented `BrevoApiProvider` utilizing native Node 20 `fetch` over port 443.
+- Completely resolves outbound SMTP TCP port timeout issues common on cloud hosting environments (Railway / Render / VPS).
+- Seamless JSON payload mapping and clean error handling without credential leakage.
 
-### Enterprise Features
-1. **Multiple Attempts:** Granular tracking of examination attempts (1, 2, or Unlimited).
-2. **Scheduling:** Granular exam scheduling, allowing early-access windows and enforcing late-entry lockouts.
-3. **Advanced Question Formats:** Administrators can assign purely objective (MCQ/True-False), subjective (Essays), and Practical (File upload) tasks inside a single unified exam environment.
+### 2. Dynamic Email Provider Status & UI Recognition
+- The `/api/email/stats` endpoint dynamically detects the active provider (`brevo`, `resend`, `mailgun`, `smtp`).
+- The Email Management interface (`email.html`) accurately identifies Brevo API as live and active without erroneously prompting for SMTP credentials.
 
-### Security and Analytics
-1. **Live Exam Monitor:** An optimized reactivity engine polling every 5 seconds provides administrators a live view of all students, progress, and immediate alerts for anti-cheat violations.
-2. **Result Verification:** Post-exam results generate offline PDF certificates verifiable via unique QR codes.
+### 3. Security & Test Isolation
+- Implemented rate-limit test namespace isolation for automated testing suites on localhost, ensuring no cross-test state leakage.
+- Added dedicated `refreshLimiter` (30 req / 5 min) for `/api/auth/refresh` to prevent token-stuffing attacks while preserving strict 10 req / 5 min limits on `/api/auth/login`.
 
 ## Upgrade Instructions
-This release is 100% backward compatible. No existing data is lost during the migration process. Run the built-in database migration scripts via `npm run migrate` to apply the Phase 5 enterprise tables (e.g. `exam_sessions`, `exam_attempts`, `question_pools`).
-
-## Known Issues
-- Currently, WebSockets are disabled in favor of lightweight short-polling. Full WebSocket real-time analytics will be introduced in `v1.1.0`.
+This release is 100% backward compatible. No database migrations, schema modifications, or manual configuration changes are required. Set `EMAIL_PROVIDER=brevo` and `BREVO_API_KEY` in environment variables for Brevo HTTPS API delivery.

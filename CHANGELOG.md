@@ -5,6 +5,21 @@ All notable changes to the FUD Portal Enterprise project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-22
+
+### Added
+- Brevo HTTPS API email delivery provider (`BrevoApiProvider`) using native Node 20 fetch over port 443.
+- Dynamic email provider detection across backend (`/api/email/stats`) and management UI (`email.html`).
+- Multi-provider support and status recognition for Brevo, Resend, Mailgun, and SMTP.
+
+### Security
+- Test rate-limit namespace isolation preventing cross-test state leakage while maintaining strict production throttling.
+- Dedicated refresh token rate limiter (`refreshLimiter`) to mitigate token-stuffing attacks.
+
+### Fixed
+- Fixed email management UI banner incorrectly requesting SMTP credentials when Brevo API is configured.
+- Resolved outbound SMTP TCP connection timeout issues on cloud container environments (Railway/Render).
+
 ## [1.0.0] - 2026-07-23
 
 ### Added
