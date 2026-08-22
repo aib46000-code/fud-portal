@@ -5,20 +5,19 @@ All notable changes to the FUD Portal Enterprise project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2026-08-22
+## v1.1.0 — FUD Portal for Ahmaditech
 
-### Added
-- Brevo HTTPS API email delivery provider (`BrevoApiProvider`) using native Node 20 fetch over port 443.
-- Dynamic email provider detection across backend (`/api/email/stats`) and management UI (`email.html`).
-- Multi-provider support and status recognition for Brevo, Resend, Mailgun, and SMTP.
-
-### Security
-- Test rate-limit namespace isolation preventing cross-test state leakage while maintaining strict production throttling.
-- Dedicated refresh token rate limiter (`refreshLimiter`) to mitigate token-stuffing attacks.
-
-### Fixed
-- Fixed email management UI banner incorrectly requesting SMTP credentials when Brevo API is configured.
-- Resolved outbound SMTP TCP connection timeout issues on cloud container environments (Railway/Render).
+### Improvements
+- Improved email provider detection across backend and administrative interfaces.
+- Added provider-aware email status reporting supporting Brevo, Resend, Mailgun, and SMTP.
+- Improved Brevo API status display with active status recognition.
+- Improved Email Management diagnostics and safe status reporting.
+- Improved email test reporting with clear success/failure feedback.
+- Improved email queue retry handling and provider delivery flows.
+- Added and updated application version information to v1.1.0.
+- Added production health/status verification (`/api/health`) with safe DB and email status.
+- Implemented test rate-limit namespace isolation and dedicated refresh token limiter.
+- Preserved existing authentication, CBT, database, and email architecture.
 
 ## [1.0.0] - 2026-07-23
 

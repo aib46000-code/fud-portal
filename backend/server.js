@@ -19,7 +19,8 @@ const compression = require('compression');
 // ─── Internal Modules ─────────────────────────────────────────────────────────
 const logger                 = require('./utils/logger');
 const { initialize,
-        purgeExpiredTokens } = require('./database/db');
+        purgeExpiredTokens,
+        get: dbGet } = require('./database/db');
 const errorHandler           = require('./middleware/errorHandler');
 const { apiLimiter }         = require('./middleware/rateLimiter');
 const requirePasswordChange  = require('./middleware/requirePasswordChange');
@@ -218,14 +219,38 @@ app.use('/api/email',         emailRoutes);
 app.use('/api/subjects',      subjectRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', async (_req, res) => {
+  let dbStatus = 'connected';
+  try {
+    const row = await dbGet('SELECT 1 AS ok');
+    if (!row || row.ok !== 1) dbStatus = 'disconnected';
+  } catch {
+    dbStatus = 'disconnected';
+  }
+
+  const provider = String(process.env.EMAIL_PROVIDER || 'smtp').toLowerCase().trim();
+  let emailStatus = 'unconfigured';
+  if (provider === 'brevo') {
+    emailStatus = process.env.BREVO_API_KEY ? 'active' : 'unconfigured';
+  } else if (provider === 'resend') {
+    emailStatus = process.env.RESEND_API_KEY ? 'active' : 'unconfigured';
+  } else if (provider === 'mailgun') {
+    emailStatus = (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) ? 'active' : 'unconfigured';
+  } else {
+    emailStatus = (process.env.EMAIL_USER && process.env.EMAIL_PASS) ? 'active' : 'unconfigured';
+  }
+
   res.json({
-    success:   true,
-    message:   'FUD Portal API is running',
-    version:   process.env.npm_package_version || '1.1.0',
-    env:       process.env.NODE_ENV || 'development',
-    uptime:    Math.floor(process.uptime()),
-    timestamp: new Date().toISOString(),
+    status:         dbStatus === 'connected' ? 'ok' : 'degraded',
+    success:        true,
+    message:        'FUD Portal API is running',
+    version:        process.env.npm_package_version || '1.1.0',
+    database:       dbStatus,
+    email_provider: provider,
+    email_status:   emailStatus,
+    env:            process.env.NODE_ENV || 'development',
+    uptime:         Math.floor(process.uptime()),
+    timestamp:      new Date().toISOString(),
   });
 });
 

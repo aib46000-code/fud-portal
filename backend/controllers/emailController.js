@@ -10,14 +10,14 @@ const { logActivity } = require('../database/db');
 const R = require('../utils/response');
 
 // ── GET /api/email/verify-smtp ────────────────────────────────────────────────
-// Test SMTP connectivity without sending a real email
+// Test email connectivity without sending a real email
 exports.verifySMTP = async (req, res, next) => {
   try {
     const result = await emailService.verifyTransporter();
     if (result.ok) {
-      return R.success(res, result, 'SMTP connection verified successfully');
+      return R.success(res, result, 'Email connection verified successfully');
     } else {
-      return R.error(res, `SMTP connection failed: ${result.error}`, 502);
+      return R.error(res, `Email provider verification failed: ${result.error}`, 502);
     }
   } catch (err) { next(err); }
 };
@@ -32,24 +32,24 @@ exports.sendTest = async (req, res, next) => {
     const templates = require('../services/emailTemplates');
     const html = templates.announcementEmail({
       recipient_name: to.split('@')[0],
-      subject_line:   'SMTP Test Email — FUD Portal',
-      message_html:   '<p>This is a <strong>test email</strong> sent from the FUD Portal Email Management page to verify that your SMTP configuration is working correctly.</p><p>If you received this email, your email system is <strong style="color:#22c55e">working correctly</strong>! ✅</p>',
+      subject_line:   'Test Email — FUD Portal',
+      message_html:   '<p>This is a <strong>test email</strong> sent from the FUD Portal Email Management page to verify that your email configuration is working correctly.</p><p>If you received this email, your email system is <strong style="color:#22c55e">working correctly</strong>! ✅</p>',
       cta_text:       'Go to Admin Panel',
       cta_url:        process.env.FRONTEND_URL + '/admin.html',
       category:       'info',
     });
 
-    // Send immediately (bypass the queue) so we get real-time SMTP feedback
+    // Send immediately (bypass the queue) so we get real-time delivery feedback
     let result;
     try {
       result = await emailService.sendMail({
         to,
         subject: '[TEST] FUD Portal Email Delivery Test',
         html,
-        text: 'This is a test email from FUD Portal. If you received this, SMTP is working correctly.',
+        text: 'This is a test email from FUD Portal. If you received this, your email system is working correctly.',
       });
-    } catch (smtpErr) {
-      return R.error(res, `SMTP delivery failed: ${smtpErr.message}`, 502);
+    } catch (sendErr) {
+      return R.error(res, `Test email delivery failed: ${sendErr.message}`, 502);
     }
 
     await logActivity({
@@ -61,7 +61,7 @@ exports.sendTest = async (req, res, next) => {
       to,
       messageId:  result.messageId,
       previewUrl: result.previewUrl || null,
-    }, `Test email sent to ${to}`);
+    }, `Test email sent successfully to ${to}`);
   } catch (err) { next(err); }
 };
 

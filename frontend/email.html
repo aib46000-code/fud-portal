@@ -730,9 +730,9 @@ async function loadStats() {
         } else if (provider === 'resend') {
           bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Resend API</strong>`;
         } else if (provider === 'mailgun') {
-          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Mailgun API</strong> (${escHtml(s.smtp_user || '')})`;
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Email service active &mdash; sending via <strong>Mailgun</strong>`;
         } else {
-          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Live SMTP active &mdash; sending via <strong>${escHtml(s.smtp_user || 'configured account')}</strong>`;
+          bannerTx.innerHTML = `<i class="fas fa-shield-alt"></i> Live SMTP active &mdash; sending via <strong>SMTP</strong> (${escHtml(s.smtp_user || 'configured account')})`;
         }
       } else {
         banner.className = 'smtp-status ethereal';
@@ -957,7 +957,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── SMTP Verification ─────────────────────────────────────────────
+// ── Email Provider Verification ──────────────────────────────────
 async function verifySMTP() {
   const btn = document.getElementById('btn-verify-smtp');
   const orig = btn.innerHTML;
@@ -965,9 +965,9 @@ async function verifySMTP() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking…';
   try {
     const r = await API.get('/email/verify-smtp');
-    Toast.success(`✅ SMTP OK — connected via ${r.data.user || 'configured account'}`);
+    Toast.success(`✅ Email provider active — connected via ${r.data.user || 'configured provider'}`);
   } catch(e) {
-    const msg = e.data?.message || e.message || 'SMTP check failed';
+    const msg = e.data?.message || e.message || 'Email provider verification failed.';
     Toast.error('❌ ' + msg, 7000);
   } finally {
     btn.disabled = false;
@@ -1009,20 +1009,20 @@ async function sendTestEmail() {
     resultEl.style.background = 'rgba(34,197,94,.12)';
     resultEl.style.border = '1px solid rgba(34,197,94,.3)';
     resultEl.style.color = '#15803d';
-    let msg = `✅ Test email sent to <strong>${escHtml(to)}</strong>`;
+    let msg = `✅ Test email sent successfully to <strong>${escHtml(to)}</strong>`;
     if (r.data?.previewUrl) {
       msg += `<br><a href="${r.data.previewUrl}" target="_blank" style="color:#6366f1;text-decoration:underline;font-size:12px">📬 View in Ethereal inbox (test mode)</a>`;
     }
     resultEl.innerHTML = msg;
-    Toast.success('Test email sent!');
+    Toast.success('Test email sent successfully.');
   } catch(e) {
-    const errMsg = e.data?.message || e.message || 'Send failed';
+    const errMsg = e.data?.message || e.message || 'Test email failed.';
     resultEl.style.display = 'block';
     resultEl.style.background = 'rgba(239,68,68,.1)';
     resultEl.style.border = '1px solid rgba(239,68,68,.3)';
     resultEl.style.color = '#dc2626';
     resultEl.innerHTML = `❌ ${escHtml(errMsg)}`;
-    Toast.error('Test send failed: ' + errMsg, 7000);
+    Toast.error('Test email failed: ' + errMsg, 7000);
   } finally {
     btn.disabled = false;
     btn.innerHTML = orig;
